@@ -25,7 +25,7 @@ func voteCreationRoutes(_ app: Application) throws {
 			
 			
 			
-			Vote(options: try voteHTTPData.getOptions(), votes: [], validators: try voteHTTPData.getValidators(), eligibleUsers: try voteHTTPData.getUserIDs(), tieBreakingRules: tieBreakers)
+			let vote = Vote(options: try voteHTTPData.getOptions(), votes: [], validators: try voteHTTPData.getValidators(), eligibleVoters: try voteHTTPData.getUserIDs(), tieBreakingRules: tieBreakers)
 			print(voteHTTPData)
 			print(voteHTTPData.getValidators().map(\.name))
 			
@@ -89,7 +89,7 @@ extension voteCreationReceivedData{
 			throw voteCreationError.optionAddedMultipleTimes
 		}
 		return options.map{
-			Option($0)}https://www.swift.org/download/
+			Option($0)}
 		}
 	
 	func getUserIDs() throws -> Set<UserID>{
