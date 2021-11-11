@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Create vote</title>
+</head>
+
+<body>
+  <h1>Create vote</h1>
+  <hr>
+  <b><h3>Validators:</h3></b>
+  <form method='post'>
+  		<b><label for="nameOfVote">Vote title</label></b><br>
+  		<input type="text" name="nameOfVote"><br>
+		
+		#for(validator in validators):
+		<input type="checkbox" name="validators[#(validator.id)]">
+		<label for="oneVotePerUser">#(validator.name)</label><br>
+		#endfor
+		<br>
+		<label for="options">Options, comma separated</label><br>
+		<textarea rows="10" cols="100" name = "options"></textarea><br>
+		
+		<label for="usernames">User ids allowed to vote, comma separated</label><br>
+		<textarea rows="10" cols="100" name = "usernames"></textarea><br>
+		
+		<input type="submit" value="Submit">
+	</form>
+	
+	#if(errorString != ""):
+	<b><p style="color:red">#unsafeHTML(errorString)</p></b>
+	#endif
+	<hr>
+</body>
+</html>

@@ -4,19 +4,21 @@ import PackageDescription
 let package = Package(
     name: "VoteServer",
     platforms: [
-       .macOS(.v10_15)
+       .macOS(.v12)
     ],
     dependencies: [
         // 💧 A server-side Swift web framework.
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
         .package(url: "https://github.com/vapor/leaf.git", from: "4.0.0"),
+		.package(url: "git@git.smkid.dk:Harcker/AltVoteKit.git", branch: "main")
     ],
     targets: [
         .target(
             name: "App",
             dependencies: [
                 .product(name: "Leaf", package: "leaf"),
-                .product(name: "Vapor", package: "vapor")
+				.product(name: "Vapor", package: "vapor"),
+				.product(name: "AltVoteKit", package: "AltVoteKit")
             ],
             swiftSettings: [
                 // Enable better optimizations when building in Release configuration. Despite the use of

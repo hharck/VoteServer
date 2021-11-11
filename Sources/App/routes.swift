@@ -1,11 +1,19 @@
 import Vapor
+import AsyncHTTPClient
+import AltVoteKit
+
+
+
 
 func routes(_ app: Application) throws {
-    app.get { req in
-        return req.view.render("index", ["title": "Hello Vapor!"])
-    }
+	app.get { req in
+		req.redirect(to: "/create/")
+	}
+	
 
-    app.get("hello") { req -> String in
+	
+	app.get("v", ":voteAcces") { req -> String in
         return "Hello, world!"
     }
+	try voteCreationRoutes(app)
 }

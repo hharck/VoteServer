@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>#(title)</title>
+
+
+
+<style>
+	.greenbutton{
+		background-color: #00DF00;
+		border: none;
+		color: black;
+		margin: 5px 2px;
+		padding: 5px 8px;
+	}
+	.redbutton{
+		background-color: #EE0000;
+		border: none;
+		color: white;
+		margin: 5px 2px;
+		padding: 5px 8px;
+}
+</style>
+
+
+</head>
+
+<body>
+<h1>#(title)</h1>
+<hr>
+
+<table>
+	<tr>
+		#for(head in headers):
+			<th>#(head)</th>
+		#endfor
+		</tr>
+		#for(user in userStatus):
+			<tr>
+				<td>#(user.userID)</td>
+				<td>#(user.hasVoted)</td>
+				<td>#(user.isEligibleToVote)</td>
+			</tr>
+		#endfor
+		</table>
+<hr>
+
+#if(showGetResults):
+<form method='post'>
+<input type="hidden" value="GetResults">
+<input type="submit" class="greenbutton" value="Get results">
+</form>
+#endif
+
+#if(showClose):
+<form method='post'>
+<input type="hidden" value="Closevote">
+<input type="submit" class="redbutton" value="Close vote">
+</form>
+#endif
+
+#if(showOpen):
+<form method='post'>
+<input type="hidden" value="Openvote">
+<input type="submit" class="greenbutton" value="Open vote">
+</form>
+#endif
+
+<hr>
+</body>
+</html>

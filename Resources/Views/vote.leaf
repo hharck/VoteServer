@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>#(title)</title>
+</head>
+
+<body>
+  <h1>#(title)</h1>
+	<form id="voteform" method='post'>
+		<input type="text" id="vote">
+		#for(number in numbers):
+			<select id="number" name="#(number) priority" form="vote">
+			#for(option in options):
+			<option value="#(option.id)">#(option.name)</option>
+			#endfor
+			</select>
+		#endfor
+		<input type="submit">
+	</form>
+</body>
+</html>
