@@ -1,0 +1,13 @@
+.greenbutton{
+	background-color: #00DF00;
+	border: none;
+	color: black;
+	margin: 5px 2px;
+	padding: 5px 8px;
+}
+.redbutton{
+	background-color: #EE0000;
+	border: none;
+	color: white;
+	margin: 5px 2px;
+	padding: 5px 8px;

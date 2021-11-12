@@ -1,7 +1,9 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+	<meta charset="utf-8">
+	<link rel="stylesheet" type="text/css" href="/css/css.css">
+
   <title>Create vote</title>
 </head>
 
@@ -24,7 +26,7 @@
 		<label for="usernames">User ids allowed to vote, comma separated</label><br>
 		<textarea rows="10" cols="100" name = "usernames"></textarea><br>
 		
-		<input type="submit" value="Submit">
+		<input type="submit" value="Submit" class="greenbutton">
 	</form>
 	
 	#if(errorString != ""):

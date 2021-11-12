@@ -2,27 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="stylesheet" type="text/css" href="/css/css.css">
 <title>#(title)</title>
-
-
-
-<style>
-	.greenbutton{
-		background-color: #00DF00;
-		border: none;
-		color: black;
-		margin: 5px 2px;
-		padding: 5px 8px;
-	}
-	.redbutton{
-		background-color: #EE0000;
-		border: none;
-		color: white;
-		margin: 5px 2px;
-		padding: 5px 8px;
-}
-</style>
-
 
 </head>
 

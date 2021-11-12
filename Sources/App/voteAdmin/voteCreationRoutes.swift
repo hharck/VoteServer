@@ -25,7 +25,7 @@ func voteCreationRoutes(_ app: Application) throws {
 			
 			
 			
-			let vote = Vote(options: try voteHTTPData.getOptions(), votes: [], validators: try voteHTTPData.getValidators(), eligibleVoters: try voteHTTPData.getUserIDs(), tieBreakingRules: tieBreakers)
+			let vote = Vote(options: try voteHTTPData.getOptions(), votes: [], validators: voteHTTPData.getValidators(), eligibleVoters: try voteHTTPData.getUserIDs(), tieBreakingRules: tieBreakers)
 			print(voteHTTPData)
 			print(voteHTTPData.getValidators().map(\.name))
 			
