@@ -40,6 +40,14 @@ Vote link: <a href="#(voteLink)">vote.smkid.dk#(voteLink)</a>
 					<span class="dot red"></span>
 				#endif
 				</td>
+				
+				<td align="center">
+				#if(user.hasVoted):
+				<form method='post' action="/reset/#(user.user.id)" onsubmit="lockButton()">
+				<input type="submit" class="button red" value="Reset vote">
+				</form>
+				#endif
+				</td>
 			</tr>
 		#endfor
 		</table>

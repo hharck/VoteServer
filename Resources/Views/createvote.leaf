@@ -13,8 +13,8 @@
   <hr>
   <form method='post' onsubmit="lockButton()">
   		<b><label for="nameOfVote">Vote title</label></b><br>
-  		<input type="text" name="nameOfVote"><br>
-		<b><h3>Validators:</h3></b
+  		<input type="text" name="nameOfVote">
+		<b><h3>Validators:</h3></b>
 		#for(validator in validators):
 		<input type="checkbox" name="validators[#(validator.id)]">
 		<label>#(validator.name)</label><br>

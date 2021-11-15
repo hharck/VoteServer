@@ -42,7 +42,7 @@ func ResultRoutes(_ app: Application, voteManager: VoteManager) throws {
 			let sessionID = req.session.authenticated(Session.self),
 			let vote = await voteManager.voteFor(session: sessionID)
 		else {
-			return req.redirect(to: "/voteadmin")
+			return req.redirect(to: "/voteadmin/")
 		}
 		
 		let csv = await vote.toCSV()
@@ -63,7 +63,7 @@ func ResultRoutes(_ app: Application, voteManager: VoteManager) throws {
 		let csv = await vote.constituentsToCSV()
 
 		var headers = HTTPHeaders()
-		headers.add(name: .contentDisposition, value: "attachment; filename=\"constituents.csv\"")
+		headers.add(name: .contentDisposition, value: "attachment; filename=\"verified_voters.csv\"")
 		return try await csv.encodeResponse(status: .ok, headers: headers, for: req)
 
 	}

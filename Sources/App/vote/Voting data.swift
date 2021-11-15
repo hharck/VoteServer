@@ -51,7 +51,7 @@ struct VotingData: Codable{
 				
 		//If it doesn't, create one, unless disallowed by validators
 		if constituent == nil{
-			if !(await vote.validators.contains(where: {$0.id == VoteValidator.noForeignVotes.id})) {
+			if !(await vote.validators.contains(where: {$0.id == VoteValidator.onlyVerifiedVotes.id})) {
 				constituent = Constituent(identifier:trimmedID)
 			} else {
 				throw VotingDataError.invalidUserId

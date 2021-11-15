@@ -82,6 +82,21 @@ func voteCreationRoutes(_ app: Application, voteManager: VoteManager) throws {
 			return try await req.view.render("voteadmin", pageController).encodeResponse(for: req)
 		}
 	}
+	
+	
+	app.post("reset", ":uuid") { req async -> Response in
+		guard
+			let sessionID = req.session.authenticated(Session.self),
+			let vote = await voteManager.voteFor(session: sessionID),
+			let idStr = req.parameters.get("uuid"),
+			let id = UUID(idStr)
+		else {
+			return req.redirect(to: "/voteadmin/")
+		}
+	
+		await vote.resetVoteForUser(id)
+		return req.redirect(to: "/voteadmin/")
+	}
 }
 
 struct voteCreationReceivedData: Codable{

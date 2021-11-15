@@ -14,7 +14,7 @@ struct voteUICreator: Codable{
 		}
 		
 		static let allValidators: [String: VoteValidator] = {
-			let allValidators: [VoteValidator] = [.everyoneHasVoted, .noForeignVotes, .preferenceForAllCandidates, .noBlankVotes]
+			let allValidators: [VoteValidator] = [.everyoneHasVoted, .onlyVerifiedVotes, .preferenceForAllCandidates, .noBlankVotes]
 			return allValidators.reduce(into: [String: VoteValidator]()) { partialResult, validator in
 				partialResult[validator.id] = validator
 			}
