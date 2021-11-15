@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" type="text/css" href="/css/css.css">
+<script src="/js/js.js"></script>
+<title>#(title)</title>
+
+</head>
+
+<body>
+	<h1>You voted in '<i>#(title)</i>'</h1>
+	<hr>
+
+	#(voterID):
+	<ol>
+	#for(i in priorities):
+				<li>#(i)</li>
+
+	#endfor
+	</ol>
+
+</body>
+</html>
