@@ -41,26 +41,31 @@ struct VotingData: Codable{
 			throw VotingDataError.invalidRequest
 		}
 		
-		let userID = userID.trimmingCharacters(in: .whitespacesAndNewlines)
-		guard !userID.isEmpty else {
+		let trimmedID = userID.trimmingCharacters(in: .whitespacesAndNewlines)
+		guard !trimmedID.isEmpty else {
 			throw VotingDataError.invalidUserId
 		}
 		
+		//If the user exists, find them
+		var constituent: Constituent! = await vote.eligibleVoters.first{$0.identifier == trimmedID}
+				
+		//If it doesn't, create one, unless disallowed by validators
+		if constituent == nil{
+			if !(await vote.validators.contains(where: {$0.id == VoteValidator.noForeignVotes.id})) {
+				constituent = Constituent(identifier:trimmedID)
+			} else {
+				throw VotingDataError.invalidUserId
+			}
+		}
 		
-		//Preliminary checks for some validators
+		//Check for preferenceForAllCandidates validator
 		if await vote.validators.contains(where: {$0.id == VoteValidator.preferenceForAllCandidates.id}){
 			guard Set(realOptions) == Set(await vote.options) else {
 				throw VotingDataError.allShouldBeFilledIn
 			}
 		}
 		
-		if await vote.validators.contains(where: {$0.id == VoteValidator.noForeignVotes.id}){
-			guard await vote.eligibleVoters.contains(userID) else {
-				throw VotingDataError.invalidUserId
-			}
-		}
-		
-		return SingleVote(userID, rankings: realOptions)
+		return SingleVote(constituent, rankings: realOptions)
 	}
 }
 

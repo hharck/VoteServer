@@ -37,5 +37,34 @@ func ResultRoutes(_ app: Application, voteManager: VoteManager) throws {
 		}
 	}
 	
+	app.get("results", "downloadcsv"){ req async throws -> Response in
+		guard
+			let sessionID = req.session.authenticated(Session.self),
+			let vote = await voteManager.voteFor(session: sessionID)
+		else {
+			return req.redirect(to: "/voteadmin")
+		}
+		
+		let csv = await vote.toCSV()
+		var headers = HTTPHeaders()
+		headers.add(name: .contentDisposition, value: "attachment; filename=\"votes.csv\"")
+		return try await csv.encodeResponse(status: .ok, headers: headers, for: req)
+		
+	}
+	
+	app.get("results", "downloadconst"){ req async throws -> Response in
+		guard
+			let sessionID = req.session.authenticated(Session.self),
+			let vote = await voteManager.voteFor(session: sessionID)
+		else {
+			return req.redirect(to: "/voteadmin")
+		}
 
+		let csv = await vote.constituentsToCSV()
+
+		var headers = HTTPHeaders()
+		headers.add(name: .contentDisposition, value: "attachment; filename=\"constituents.csv\"")
+		return try await csv.encodeResponse(status: .ok, headers: headers, for: req)
+
+	}
 }

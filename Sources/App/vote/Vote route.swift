@@ -56,7 +56,9 @@ func votingRoutes(_ app: Application, voteManager: VoteManager) throws {
 				throw VotingDataError.attemptedToVoteMultipleTimes
 			}
 			
-			return try await req.view.render("success", DidVote(title: await vote.name, voterID: singleVote.userID, priorities: singleVote.rankings.map{$0.name}))
+			let voterID = singleVote.user.name ?? singleVote.user.identifier
+			
+			return try await req.view.render("success", DidVote(title: await vote.name, voterID: voterID, priorities: singleVote.rankings.map{$0.name}))
 
 		} catch {
 			let options = await vote.options

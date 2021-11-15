@@ -13,7 +13,7 @@
 <hr>
 Vote link: <a href="#(voteLink)">vote.smkid.dk#(voteLink)</a>
 <br><br>
-<a href="" class="blue button">Update page</a><br><hr>
+<a href="" class="blue button">Reload page</a><br><hr>
 <br>
 <table>
 	<tr>
@@ -23,7 +23,9 @@ Vote link: <a href="#(voteLink)">vote.smkid.dk#(voteLink)</a>
 		</tr>
 		#for(user in userStatus):
 			<tr>
-				<td>#(user.userID)</td>
+				<td>#(user.user.identifier)</td>
+				<td>#(user.user.name)</td>
+
 				<td align="center">
 				#if(user.hasVoted):
 					<span class="dot green"></span>

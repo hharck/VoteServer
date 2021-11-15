@@ -9,8 +9,8 @@ struct VoteAdminUIController: Codable{
 	let showClose: Bool
 	let showOpen: Bool
 	
-	var headers = ["UserID", "Has voted", "Is allowed to vote"]
-	private	let userStatus: [UserAndStatus]
+	var headers = ["User id", "Name", "Has voted", "Is allowed to vote"]
+	let userStatus: [UserAndStatus]
 	
 	init?(votemanager: VoteManager, sessionID: UUID) async {
 		
@@ -36,36 +36,48 @@ struct VoteAdminUIController: Codable{
 		
 		
 		
-		var tempUsers = [UserID: UserAndStatus]()
+		var tempUsers = [Constituent: UserAndStatus]()
 		
 		let votes = await vote.votes
 		let voters = await vote.eligibleVoters
+		
+		print(voters)
 		votes.forEach { vote in
-			tempUsers[vote.userID] = UserAndStatus(userID: vote.userID, hasVoted: true, isEligibleToVote: false)
+			tempUsers[vote.user] = UserAndStatus(user: vote.user, hasVoted: true, isEligibleToVote: false)
 		}
 		
-		voters.forEach { userID in
-			if tempUsers[userID] != nil {
-				tempUsers[userID]!.isEligibleToVote = true
+		voters.forEach { user in
+			if tempUsers[user] != nil {
+				tempUsers[user]!.isEligibleToVote = true
 			} else {
-				tempUsers[userID] = UserAndStatus(userID: userID, hasVoted: false, isEligibleToVote: true)
+				tempUsers[user] = UserAndStatus(user: user, hasVoted: false, isEligibleToVote: true)
 			}
 		}
 		
 		userStatus = tempUsers.map(\.value).sorted(by: { lhs, rhs in
 			if lhs.isEligibleToVote == rhs.isEligibleToVote{
-				return lhs.userID < rhs.userID
+				return lhs.user.identifier < rhs.user.identifier
 			} else {
 				return lhs.isEligibleToVote
 			}
 		})
+		print(userStatus)
 		voteLink = "/v/\(joinPhrase)"
 	}
 }
 
-private struct UserAndStatus: Codable{
-	let userID: UserID
-	let hasVoted: Bool
+struct UserAndStatus: Codable{
+	internal init(user: Constituent, hasVoted: Bool, isEligibleToVote: Bool) {
+		self.user = user
+		if self.user.name == nil{
+			self.user.name = self.user.identifier
+		}
+		self.hasVoted = hasVoted
+		self.isEligibleToVote = isEligibleToVote
+	}
+	
+	var user: Constituent
+	var hasVoted: Bool
 	var isEligibleToVote: Bool
 }
 

@@ -23,7 +23,7 @@ func voteCreationRoutes(_ app: Application, voteManager: VoteManager) throws {
 			let session = Session()
 			
 			// Validates the data and generates a Vote object
-			let vote = Vote(id: session.sessionID, name: try voteHTTPData.getTitle(), options: try voteHTTPData.getOptions(), votes: [], validators: voteHTTPData.getValidators(), eligibleVoters: try voteHTTPData.getUserIDs(), tieBreakingRules: tieBreakers)
+			let vote = Vote(id: session.sessionID, name: try voteHTTPData.getTitle(), options: try voteHTTPData.getOptions(), votes: [], validators: voteHTTPData.getValidators(), eligibleVoters: try voteHTTPData.getConstituents(), tieBreakingRules: tieBreakers)
 			
 			//Stores the vote
 			await voteManager.addVote(vote: vote)
@@ -116,20 +116,42 @@ extension voteCreationReceivedData{
 			VoteOption($0)}
 	}
 	
-	func getUserIDs() throws -> Set<UserID>{
-		let usernames = self.usernames.split(separator: ",").map{
-			String($0.trimmingCharacters(in: .whitespacesAndNewlines))
+	func getConstituents() throws -> Set<Constituent>{
+		let individualVoters = self.usernames.split(whereSeparator: \.isNewline)
+		
+		let constituents = try individualVoters.compactMap{ voterString -> Constituent? in
+			let s = voterString.split(separator:",")
+			if s.count == 0 {
+				return nil
+			} else if s.count == 1 {
+				let id = s.first!.trimmingCharacters(in: .whitespacesAndNewlines)
+				guard !id.isEmpty else {
+					throw voteCreationError.invalidUsername
+				}
+				return Constituent(identifier: id)
+			} else if s.count == 2{
+				let id = s.first!.trimmingCharacters(in: .whitespacesAndNewlines)
+				
+				let name = s.last!.trimmingCharacters(in: .whitespacesAndNewlines)
+				guard !id.isEmpty, !name.isEmpty else {
+					throw voteCreationError.invalidUsername
+				}
+				
+				return Constituent(name: name, identifier: id)
+				
+			} else {
+				throw voteCreationError.invalidUsername
+			}
+			
 		}
 		
-		guard usernames.nonUniques.isEmpty else{
+		guard constituents.map(\.identifier).nonUniques.isEmpty else{
 			throw voteCreationError.userAddedMultipleTimes
 		}
 		
-		if usernames.contains(""){
-			throw voteCreationError.invalidUsername
-		} else {
-			return Set(usernames)
-		}
+		
+		return Set(constituents)
+		
 	}
 	
 	
