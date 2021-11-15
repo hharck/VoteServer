@@ -3,14 +3,18 @@
 <head>
 <meta charset="utf-8">
 <link rel="stylesheet" type="text/css" href="/css/css.css">
+<script src="/js/js.js"></script>
 <title>#(title)</title>
 
 </head>
 
 <body>
-<h1>#(title)</h1>
+<h1>Your '<i>#(title)</i>' vote</h1>
 <hr>
-
+Vote link: <a href="#(voteLink)">vote.smkid.dk#(voteLink)</a>
+<br><br>
+<a href="" class="blue button">Update page</a><br><hr>
+<br>
 <table>
 	<tr>
 		#for(head in headers):
@@ -20,8 +24,20 @@
 		#for(user in userStatus):
 			<tr>
 				<td>#(user.userID)</td>
-				<td>#(user.hasVoted)</td>
-				<td>#(user.isEligibleToVote)</td>
+				<td align="center">
+				#if(user.hasVoted):
+					<span class="dot green"></span>
+				#else:
+					<span class="dot red"></span>
+				#endif
+				</td>
+				<td align="center">
+				#if(user.isEligibleToVote):
+					<span class="dot green"></span>
+				#else:
+					<span class="dot red"></span>
+				#endif
+				</td>
 			</tr>
 		#endfor
 		</table>
@@ -29,22 +45,22 @@
 
 #if(showGetResults):
 <form method='post'>
-<input type="hidden" value="GetResults">
-<input type="submit" class="greenbutton" value="Get results">
+<input type="hidden" name="statusChange" value="getResults">
+<input type="submit" class="button green" value="Get results">
 </form>
 #endif
 
 #if(showClose):
 <form method='post'>
-<input type="hidden" value="Closevote">
-<input type="submit" class="redbutton" value="Close vote">
+<input type="hidden" name="statusChange" value="close">
+<input type="submit" class="button red" value="Close vote">
 </form>
 #endif
 
 #if(showOpen):
 <form method='post'>
-<input type="hidden" value="Openvote">
-<input type="submit" class="greenbutton" value="Open vote">
+<input type="hidden" name="statusChange" value="open">
+<input type="submit" class="button green" value="Open vote">
 </form>
 #endif
 

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" type="text/css" href="/css/css.css">
+<script src="/js/js.js"></script>
+<title>#(title)</title>
+</head>
+
+<body>
+<h1>Your '<i>#(title)</i>' vote results</h1>
+<hr>
+
+
+<h2>#(numberOfVotes) total votes.</h2><br><br>
+
+#if(hasMultipleWinners):
+The following where tied for first:<br>
+	<ul>
+	#for(winner in winners):
+		<li>#(winner.name)</li>
+	#endfor
+	</ul>
+									
+#else:
+		The first place goes to...
+	#for(winner in winners):
+		<b>"#(winner.name)"</b>
+	#endfor
+#endif
+								
+								
+#if(showDebug):
+<hr><br><br><br><br>
+<h3>Debug data</h3><br>
+Each row represents the votes of a user
+<table>
+	<tr>
+		#for(head in db2Headers):
+			<th>#(head)</th>
+		#endfor
+	</tr>
+	#for(line in debug2):
+	<tr>
+		#for(cell in line):
+		<td align="center">
+			#(cell)
+		</td>
+		#endfor
+	</tr>
+	#endfor
+	</table>
+#endif
+</body>
+</html>

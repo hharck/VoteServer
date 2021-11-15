@@ -7,41 +7,82 @@
 
 import Vapor
 import AltVoteKit
-func voteCreationRoutes(_ app: Application) throws {
+func voteCreationRoutes(_ app: Application, voteManager: VoteManager) throws {
 	
 	app.get("create") { req in
-		
-		return req.view.render("createvote", voteCreator())
+		return req.view.render("createvote", voteUICreator())
 	}
 	
-	app.post("create") { req -> EventLoopFuture<View> in
-	
-		
-		
+	app.post("create") { req async throws -> Response in
 		do {
 			let voteHTTPData = try req.content.decode(voteCreationReceivedData.self)
 			
 			let tieBreakers: [TieBreaker] = [.dropAll, .removeRandom, .keepRandom]
 			
+			// Creates an ID for the session
+			let session = Session()
 			
+			// Validates the data and generates a Vote object
+			let vote = Vote(id: session.sessionID, name: try voteHTTPData.getTitle(), options: try voteHTTPData.getOptions(), votes: [], validators: voteHTTPData.getValidators(), eligibleVoters: try voteHTTPData.getUserIDs(), tieBreakingRules: tieBreakers)
 			
-			let vote = Vote(options: try voteHTTPData.getOptions(), votes: [], validators: voteHTTPData.getValidators(), eligibleVoters: try voteHTTPData.getUserIDs(), tieBreakingRules: tieBreakers)
+			//Stores the vote
+			await voteManager.addVote(vote: vote)
+			
+			//Creates a session
+			req.session.authenticate(session)
+			
 			print(voteHTTPData)
 			print(voteHTTPData.getValidators().map(\.name))
 			
+			return req.redirect(to: "/voteadmin/")
 			
-			
-			fatalError()
 		} catch {
-			let er = (error as? voteCreationReceivedData.voteCreationError) ?? .unknownError
 			
-			return req.view.render("createvote", voteCreator(errorString: er.errorString()))
+			return try await req.view.render("createvote", voteUICreator(errorString: error.asString())).encodeResponse(for: req)
 		}
-
+		
 	}
 	
-}
+	app.get("voteadmin") { req async throws -> Response in
+		guard
+			let sessionID = req.session.authenticated(Session.self),
+			let pageController = await VoteAdminUIController(votemanager: voteManager, sessionID: sessionID)
+		else {
+			return req.redirect(to: "/create/")
+		}
+		
+		return try await req.view.render("voteadmin", pageController).encodeResponse(for: req)
+	}
+	
+	app.post("voteadmin") { req async throws -> Response in
 
+		
+		guard let sessionID = req.session.authenticated(Session.self) else {
+			return req.redirect(to: "/create/")
+		}
+		
+		
+		guard let status = (try req.content.decode([String:statusChange].self))["statusChange"] else {
+			let pageController = await VoteAdminUIController(votemanager: voteManager, sessionID: sessionID)
+			return try await req.view.render("voteadmin", pageController).encodeResponse(for: req)
+		}
+		
+		guard let vote = await voteManager.voteFor(session: sessionID) else {
+			throw "An error occured"
+		}
+		
+		
+
+		await voteManager.setStatusFor(vote, to: status == .open)
+
+		if status == .getResults{
+			return req.redirect(to: "/results/")
+		} else {
+			let pageController = await VoteAdminUIController(votemanager: voteManager, sessionID: sessionID)
+			return try await req.view.render("voteadmin", pageController).encodeResponse(for: req)
+		}
+	}
+}
 
 struct voteCreationReceivedData: Codable{
 	var nameOfVote: String
@@ -50,36 +91,19 @@ struct voteCreationReceivedData: Codable{
 	var validators: [String: String]
 }
 
-extension Array where Element : Equatable {
-	var nonUniques: [Self.Element] {
-		var allUnique: [Self.Element] = []
-		
-		
-		return self.compactMap{ element -> Self.Element? in
-			if allUnique.contains(element){
-				return element
-			} else {
-				allUnique.append(element)
-				return nil
-			}
-		}
-	}
-	
-	
-}
 
 extension voteCreationReceivedData{
 	func getValidators() -> [VoteValidator] {
 		return validators.compactMap { validator in
 			if validator.value == "on" {
-				return voteCreator.ValidatorData.allValidators[validator.key]
+				return voteUICreator.ValidatorData.allValidators[validator.key]
 			} else {
 				return nil
 			}
 		}
 	}
 	
-	func getOptions() throws -> [AltVoteKit.Option]{
+	func getOptions() throws -> [VoteOption]{
 		let options = self.options.split(separator: ",").compactMap{ opt -> String? in
 			let str = String(opt.trimmingCharacters(in: .whitespacesAndNewlines))
 			return str == "" ? nil : str
@@ -89,8 +113,8 @@ extension voteCreationReceivedData{
 			throw voteCreationError.optionAddedMultipleTimes
 		}
 		return options.map{
-			Option($0)}
-		}
+			VoteOption($0)}
+	}
 	
 	func getUserIDs() throws -> Set<UserID>{
 		let usernames = self.usernames.split(separator: ",").map{
@@ -108,18 +132,27 @@ extension voteCreationReceivedData{
 		}
 	}
 	
-	enum voteCreationError: Error{
-		case invalidName
+	
+	func getTitle() throws -> String{
+		let title = nameOfVote.trimmingCharacters(in: .whitespacesAndNewlines)
+		guard !title.isEmpty else {
+			throw voteCreationError.invalidTitle
+		}
+		return title
+	}
+	
+	
+	enum voteCreationError: ErrorString{
+		case invalidTitle
 		case invalidUsername
 		case userAddedMultipleTimes
 		case optionAddedMultipleTimes
 		case lessThanTwoOptions
-		case unknownError
 		
 		func errorString() -> String{
 			
 			switch self {
-			case .invalidName:
+			case .invalidTitle:
 				return "Invalid name detected for the vote"
 			case .invalidUsername:
 				return "Invalid username"
@@ -129,8 +162,6 @@ extension voteCreationReceivedData{
 				return "An option has been added multiple times"
 			case .lessThanTwoOptions:
 				return "A vote needs atleast 2 options"
-			case .unknownError:
-				return "An unknown error occured, check your input"
 			}
 		}
 		

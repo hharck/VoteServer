@@ -1,13 +1,33 @@
-.greenbutton{
-	background-color: #00DF00;
+.button{
 	border: none;
 	color: black;
 	margin: 5px 2px;
 	padding: 5px 8px;
+	border-radius: 10%;
 }
-.redbutton{
+
+.dot{
+	height: 10px;
+	width: 10px;
+	text-align: center;
+	border-radius: 50%;
+	display: inline-block;
+}
+
+.green {
+	background-color: #00DF00;
+}
+
+.red {
 	background-color: #EE0000;
-	border: none;
-	color: white;
-	margin: 5px 2px;
-	padding: 5px 8px;
+}
+
+.blue {
+	background-color: #0000F0;
+	color: #FFFFFF;
+}
+
+
+td, th {
+	padding: 5px;
+}

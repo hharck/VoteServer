@@ -1,6 +1,6 @@
 import AltVoteKit
 
-struct voteCreator: Codable{
+struct voteUICreator: Codable{
 	let validators: [ValidatorData]
 	let errorString: String
 	
@@ -14,15 +14,19 @@ struct voteCreator: Codable{
 		}
 		
 		static let allValidators: [String: VoteValidator] = {
-			let allValidators: [VoteValidator] = [.oneVotePerUser, .everyoneHasVoted, .noForeignVotes, .preferenceForAllCandidates, .noBlankVotes]
+			let allValidators: [VoteValidator] = [.everyoneHasVoted, .noForeignVotes, .preferenceForAllCandidates, .noBlankVotes]
 			return allValidators.reduce(into: [String: VoteValidator]()) { partialResult, validator in
 				partialResult[validator.id] = validator
-			}}()
+			}
+			
+		}()
 		
 		static let allData: [ValidatorData] = {
 			allValidators.map { _, val in
 				Self.init(val)
-			}}()
+			}
+			.sorted(by: {$0.name < $1.name})
+		}()
 		
 		func toValidator() -> VoteValidator?{
 			Self.allValidators[id]
