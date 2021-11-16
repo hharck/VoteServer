@@ -9,7 +9,7 @@ struct VoteAdminUIController: Codable{
 	let showClose: Bool
 	let showOpen: Bool
 	
-	var headers = ["User id", "Name", "Has voted", "Is allowed to vote"]
+	var headers = ["User id", "Name", "Has voted", "Is verified to vote", ""]
 	let userStatus: [UserAndStatus]
 	
 	init?(votemanager: VoteManager, sessionID: UUID) async {

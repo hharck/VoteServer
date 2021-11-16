@@ -6,6 +6,13 @@
 	border-radius: 10%;
 }
 
+.inlinebutton{
+	border: none;
+	color: black;
+	margin: 0px 0px;
+	padding: 2px 3px;
+	border-radius: 10%;
+}
 .dot{
 	height: 10px;
 	width: 10px;
@@ -31,3 +38,11 @@
 td, th {
 	padding: 5px;
 }
+
+
+body {
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+
+

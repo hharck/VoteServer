@@ -44,7 +44,7 @@ Vote link: <a href="#(voteLink)">vote.smkid.dk#(voteLink)</a>
 				<td align="center">
 				#if(user.hasVoted):
 				<form method='post' action="/reset/#(user.user.id)" onsubmit="lockButton()">
-				<input type="submit" class="button red" value="Reset vote">
+				<input type="submit" class="inlinebutton red" value="Reset vote">
 				</form>
 				#endif
 				</td>
