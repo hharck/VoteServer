@@ -30,28 +30,28 @@ The following were tied for first:<br>
 #endif
 								
 								
-#if(showDebug):
-<hr><br><br><br><br>
-<h3>Debug data</h3><br>
-Each row represents the votes of a user
-<table>
-	<tr>
-		#for(head in db2Headers):
-			<th>#(head)</th>
+
+
+<h2>Re count only with selected</h2>
+<form method='post' onsubmit="lockButton()">
+		#for(option in enabledOptions):
+		<input type="checkbox" name="options[#(option.id)]" checked>
+		<label>#(option.name)</label><br>
 		#endfor
-	</tr>
-	#for(line in debug2):
-	<tr>
-		#for(cell in line):
-		<td align="center">
-			#(cell)
-		</td>
+		#if(hasEnabledAndDisabled):
+		<hr style="opacity: 0.2;">
+		#endif
+		#for(option in disabledOptions):
+		<input type="checkbox" name="options[#(option.id)]">
+		<label>#(option.name)</label><br>
 		#endfor
-	</tr>
-	#endfor
-	</table>
-#endif
+		<input type="submit" id="lockableButton" class="button green">
+</form>
 <br>
+<hr>
+<br>
+
+
 <a href="downloadcsv" class="blue button" download>Download votes as CSV</a>
 <br><br>
 <a href="downloadconst" class="blue button" download>Download constituents as CSV</a>

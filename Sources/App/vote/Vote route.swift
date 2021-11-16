@@ -40,18 +40,15 @@ func votingRoutes(_ app: Application, voteManager: VoteManager) throws {
 			return try await req.view.render("vote", vpg)
 		}
 		
-		
-		
-		
 		do {
 			let votingData = try req.content.decode(VotingData.self)
 			
-			// Checks that the user hasn't vpted befpre
-		
-			
+			// Checks that the user hasn't voted befpre
+
+			/// The vote as a SingleVote
 			let singleVote = try await votingData.asSingleVote(for: vote)
-		
 			
+			/// Saves the singleVote to the vote
 			guard await vote.addVotes(singleVote) else {
 				throw VotingDataError.attemptedToVoteMultipleTimes
 			}
