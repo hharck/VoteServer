@@ -59,7 +59,8 @@ USER vapor:vapor
 
 # Let Docker bind to port 80
 EXPOSE 80
+EXPOSE 8080
 
 # Start the Vapor service when the image is run, default to listening on 8080 in production environment
 ENTRYPOINT ["./Run"]
-CMD ["serve", "--env", "production", "--hostname", "vote.smkid.dk", "--port", "80"]
+CMD ["serve", "--env", "production", "--hostname", "0.0.0.0", "--port", "80"]
