@@ -11,7 +11,7 @@
 <body>
 <h1>Your '<i>#(title)</i>' vote</h1>
 <hr>
-Vote link: <a href="#(voteLink)">vote.smkid.dk#(voteLink)</a>
+Vote link: <a href="#(voteLink)">vote.smkid.dk#(voteLink)</a> #if(showOpen):(Closed)#endif
 <br><br>
 <a href="" class="blue button">Reload page</a><br><hr>
 <br>
