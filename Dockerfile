@@ -12,8 +12,8 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
 # Set up a build area
 WORKDIR /build
 
-swift package update
 
+RUN swift package update
 
 # First just resolve dependencies.
 # This creates a cached layer that can be reused
