@@ -13,7 +13,6 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
 WORKDIR /build
 
 
-RUN swift package update
 
 # First just resolve dependencies.
 # This creates a cached layer that can be reused
@@ -21,6 +20,8 @@ RUN swift package update
 # files do not change.
 COPY ./Package.* ./
 RUN swift package resolve
+RUN swift package update
+
 
 # Copy entire repo into container
 COPY . .
