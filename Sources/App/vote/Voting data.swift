@@ -37,10 +37,12 @@ struct VotingData: Codable{
 			}
 		}
 		
+		//Checks that all of the supplied priorities are used
 		guard treatedPriorities.count == realOptions.count else {
 			throw VotingDataError.invalidRequest
 		}
 		
+		// Finds the identifier of the user
 		let trimmedID = userID.trimmingCharacters(in: .whitespacesAndNewlines)
 		guard !trimmedID.isEmpty else {
 			throw VotingDataError.invalidUserId

@@ -10,7 +10,7 @@ extension Error {
 			if let str = self as? LosslessStringConvertible{
 				return str.description
 			} else {
-				return "Unknown error"
+				return "Unknown error: \(self.localizedDescription)"
 			}
 		}
 	}
