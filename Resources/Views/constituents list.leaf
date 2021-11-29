@@ -1,0 +1,39 @@
+#extend("outerHTML"):
+		#export("body"):
+			<br><hr>
+			#extend("table"):
+				#export("tablerow"):
+					<td>#(row.userID)</td>
+					<td>#(row.name)</td>
+					
+					<td align="center">
+					#if(row.isVerified):
+						<span class="dot green"></span>
+					#else:
+						<span class="dot red"></span>
+					#endif
+					</td>
+					<td align="center">
+					
+					#if(row.hasJoined):
+					<form method="post" onsubmit="lockButton()" action="/voteadmin/resetaccess/#(row.userID)">
+					
+						<input type="submit" name="lockableButton" class="button red" value="Reset access">
+					</form>
+					#endif
+					</td>
+				#endexport
+			#endextend
+			<br>
+			<form method='post' onsubmit="lockButton()">
+			#if(allowsNonVerified):
+				<input type="hidden" name="setVerifiedRequirement" value="false">
+				<input type="submit" name="lockableButton" class="button red" value="Deactivate and kick non verified constituents">
+			#else:
+				<input type="hidden" name="setVerifiedRequirement" value="true">
+				<input type="submit" name="lockableButton" class="button green" value="Enable non verified constituents">
+			#endif
+			</form>
+		#endexport
+#endextend
+

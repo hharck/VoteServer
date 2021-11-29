@@ -1,0 +1,27 @@
+#extend("outerHTML"):
+		#export("body"):
+			<br><hr><br>
+			<h3>Hi #(name), welcome to '#(groupName)'</h3>
+			
+			#extend("table"):
+			#export("tablerow"):
+			
+				<td>#if(row.showLink):<a href="/vote/#(row.voteID)">#(row.name)</a>#else:#(row.name)#endif</td>
+				<td>Alternative vote</td>	
+				<td align="center">
+				#if(row.isOpen):
+					<span class="dot green"></span>
+				#else:
+					<span class="dot red"></span>
+				#endif
+				</td>
+				<td align="center">
+				#if(row.hasVoted):
+					<span class="dot green"></span>
+				#else:
+					<span class="dot red"></span>
+				#endif
+			#endexport
+		#endextend
+		#endexport
+#endextend

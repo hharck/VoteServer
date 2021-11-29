@@ -3,18 +3,20 @@ import AsyncHTTPClient
 import AltVoteKit
 
 func routes(_ app: Application) throws {
-	let voteManager = VoteManager()
+	let groupsManager = GroupsManager()
 
 	app.get { req in
-		req.redirect(to: "/create/")
+		req.redirect(to: .create)
 	}
 	
 	app.get("version"){req async in
-		return "Server version: 0.1.0\nAltVoteKit version \(AltVoteKitVersion)"
+		return "Server version: 2.0.0\nAltVoteKit version \(AltVoteKitVersion)"
 	}
 
-	try voteCreationRoutes(app, voteManager: voteManager)
-	try votingRoutes(app, voteManager: voteManager)
-	try ResultRoutes(app, voteManager: voteManager)
-
+	try groupCreationRoutes(app, groupsManager: groupsManager)
+	try voteCreationRoutes(app, groupsManager: groupsManager)
+	try votingRoutes(app, groupsManager: groupsManager)
+	try ResultRoutes(app, groupsManager: groupsManager)
+	try adminRoutes(app, groupsManager: groupsManager)
+	try groupJoinRoutes(app, groupsManager: groupsManager)
 }

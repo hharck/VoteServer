@@ -1,5 +1,13 @@
 import Vapor
 typealias SessionID = UUID
-struct Session: SessionAuthenticatable{
+struct AdminSession: SessionAuthenticatable{
 	var sessionID: SessionID = SessionID()
+}
+
+struct VoterSession: SessionAuthenticatable{
+	var sessionID: SessionID = SessionID()
+}
+
+struct GroupSession: SessionAuthenticatable{
+	var sessionID: SessionID
 }

@@ -1,0 +1,13 @@
+
+#extend("outerHTML"):
+#export("body"):
+	<form method="post" onsubmit="lockButton()">
+		<label for="joinPhrase">Join code </label>
+		<input type="text" name="joinPhrase" value="#(prefilledJF)">
+		<label for="userID">UserID</label>
+		<input type="text" name="userID" value="#(prefilledUserid)">
+		<br>
+		<input type="submit" name="lockableButton" class="button green">
+	</form>
+#endexport
+#endextend

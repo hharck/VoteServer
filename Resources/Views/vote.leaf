@@ -1,34 +1,27 @@
-<!doctype html>
-<html lang="en">
-<head>
-	<meta charset="utf-8">
-	<link rel="stylesheet" type="text/css" href="/css/css.css">
-	<script src="/js/js.js"></script>
-	<title>#(title)</title>
-</head>
-
-<body>
-  <h1>#(title)</h1>
-  
-  	#if(errorString != ""):
-	<b><p style="color:red">#unsafeHTML(errorString)</p></b>
-	#endif
-	#if(!hideUI):
-	<form id="voteform" method="post" onsubmit="lockButton()">
-		<input type="text" name="userID"><br>
-		<b>Order of priorities (1 is highest priority)</b><br>
-		#for(number in numbers):
-			<label for="number">#(number).	</label>
-			<select id="number" form="voteform" name="priorities[#(number)]" value="3196F9B8-935C-4018-846F-037D741C0057">
-			<option value="3196F9B8-935C-4018-846F-037D741C0057">Select one of the options below</option>
-			#for(option in options):
-			<option value="#(option.id)">#(option.name)</option>
-			#endfor
-			</select><br>
-		#endfor
-		<input type="submit" id="lockableButton" class="button green">
-	</form>
-	#endif
-	<a href="https://www.digitalocean.com/?refcode=2c4d16fe910d&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge"><img src="https://web-platforms.sfo2.digitaloceanspaces.com/WWW/Badge%202.svg" alt="DigitalOcean Referral Badge" /></a>
-</body>
-</html>
+#extend("outerHTML"):
+		#export("body"):
+			#if(!hideUI):
+			<form id="voteform" method="post" onsubmit="lockButton()">
+				#for(priority in numbers):
+					<label for="#(priority.number)">#(priority.number).</label>
+					<select id="#(priority.number)" form="voteform" name="priorities[#(priority.number)]" value="#(priority.value)">
+					<option value="default">Select one of the options below</option>
+					#for(option in options):
+					<option value="#(option.id)"#if(priority.selected == option.id): selected#endif>#(option.name)</option>
+					#endfor
+					</select><br>
+				#endfor
+				<input type="submit" name="lockableButton" class="button green">
+			</form>
+			
+			
+			#if(canVoteBlank):
+			<form id="voteblankform" method="post" onsubmit="lockButton()">
+				<input type="hidden" id="blank" name="blank" value="true">
+				<input type="submit" name="lockableButton" class="gray button" value="Vote blank">
+			</form>
+			#endif
+			
+			#endif
+		#endexport
+#endextend

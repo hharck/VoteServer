@@ -1,0 +1,19 @@
+#extend("outerHTML"):
+		#export("body"):
+			<form method='post' onsubmit="lockButton()">
+				<b><label for="groupName">Group name</label></b><br>
+				<input type="text" id="groupName" name="groupName" value="#(groupName)">
+				<br>
+				<b><label for="adminpw">Admin password</label></b><br>
+				<input type="password" id="adminpw" name="adminpw" value="">
+				<br><br>
+				<label for="usernames">User ids allowed to vote
+				Each user id needs to be on its own line, if needed a user can have both an id and a name, if so enter the line as "[id], [name]⏎"</label><br>
+				<textarea rows="10" cols="100" name="usernames">#(usernames)</textarea><br>
+				
+				<input type="checkbox" id="allowsNonVerifiedUsers" name="allowsNonVerifiedUsers" #if(allowsNonVerifiedUsers):checked#endif>
+				<label for="allowsNonVerifiedUsers">Allow access for unverified users</label><br>
+				<input type="submit" name="lockableButton" class="button green">
+			</form>
+		#endexport
+#endextend

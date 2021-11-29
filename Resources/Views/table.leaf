@@ -1,0 +1,14 @@
+
+<table>
+	<tr>
+	#for(head in tableHeaders):
+		<th>#(head)</th>
+	#endfor
+	</tr>
+			
+	#for(row in rows):
+		<tr>
+		#import("tablerow")
+		</tr>
+	#endfor
+</table>
