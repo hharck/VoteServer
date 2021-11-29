@@ -1,38 +1,18 @@
-<!doctype html>
-<html lang="en">
-<head>
-	<meta charset="utf-8">
-	<link rel="stylesheet" type="text/css" href="/css/css.css">
-	<script src="/js/js.js"></script>
-
-  <title>Create vote</title>
-</head>
-
-<body>
-  <h1>Create vote</h1>
-  <hr>
-  <form method='post' onsubmit="lockButton()">
-  		<b><label for="nameOfVote">Vote title</label></b><br>
-  		<input type="text" name="nameOfVote">
-		<b><h3>Validators:</h3></b>
-		#for(validator in validators):
-		<input type="checkbox" name="validators[#(validator.id)]">
-		<label>#(validator.name)</label><br>
-		#endfor
-		<br>
-		<label for="options">Options, comma separated</label><br>
-		<textarea rows="10" cols="100" name = "options"></textarea><br>
-		
-		<label for="usernames">User ids allowed to vote, comma separated</label><br>
-		<textarea rows="10" cols="100" name="usernames"></textarea><br>
-		
-		<input type="submit" id="lockableButton" class="button green">
-	</form>
+#extend("outerHTML"):
+		#export("body"):
+			<form method='post' onsubmit="lockButton()">
+				<b><label for="nameOfVote">Vote title</label></b><br>
+				<input type="text" name="nameOfVote" value="#(nameOfVote)">
+				<b><h3>Validators:</h3></b>
+				#for(validator in validators):
+				<input type="checkbox" id="validators[#(validator.id)]" name="validators[#(validator.id)]" #if(validator.isEnabled):checked#endif>
+				<label for="validators[#(validator.id)]">#(validator.name)</label><br>
+				#endfor
+				<br>
+				<label for="options">Options, comma separated</label><br>
+				<textarea rows="10" cols="100" name = "options">#(options)</textarea><br>
 	
-	#if(errorString != ""):
-	<b><p style="color:red">#unsafeHTML(errorString)</p></b>
-	#endif
-	<hr>
-	<a href="https://www.digitalocean.com/?refcode=2c4d16fe910d&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge"><img src="https://web-platforms.sfo2.digitaloceanspaces.com/WWW/Badge%202.svg" alt="DigitalOcean Referral Badge" /></a>
-</body>
-</html>
+				<input type="submit" name="lockableButton" class="button green">
+			</form>
+		#endexport
+#endextend

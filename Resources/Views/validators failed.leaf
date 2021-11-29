@@ -1,29 +1,16 @@
-<!doctype html>
-<html lang="en">
-<head>
-	<meta charset="utf-8">
-	<link rel="stylesheet" type="text/css" href="/css/css.css">
-	<script src="/js/js.js"></script>
-	<title>#(title)</title>
-</head>
-
-<body>
-	<h1>Your '<i>#(title)</i>' vote results</h1>
-	<hr>
-
-
-	<h2>#(errorCount) violations detected!</h2><br>
-
-	<a href="/results?force=1" class="red button" onClick="lockButton()" id="lockableButton">Force count</a><br><hr>
-
-	#for(validator in validationResults):
-		<b>#(validator.name)<b><br>
-		<ul>
-		#for(error in validator.errors):
-			<li>#(error)</li>
-		#endfor
-		</ul>
-		<br><br>
-	#endfor
-</body>
-</html>
+#extend("outerHTML"):
+		#export("body"):
+			<h2>#(errorCount) violations detected!</h2><br>
+			<hr>
+		
+			#for(validator in validationResults):
+				<b>#(validator.name)<b><br>
+				<ul>
+				#for(error in validator.errors):
+					<li>#(error)</li>
+				#endfor
+				</ul>
+				<br><br>
+			#endfor
+		#endexport
+#endextend

@@ -14,7 +14,9 @@ public func configure(_ app: Application) throws {
 	app.sessions.use(.memory)
 	app.middleware.use(app.sessions.middleware)
 
-
+	//Defines password hashing function
+	app.passwords.use(.bcrypt)
+	
     // register routes
     try routes(app)
 }

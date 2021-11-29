@@ -1,30 +1,91 @@
-# Docker Compose file for Vapor
-#
-# Install Docker on your system to run and test
-# your Vapor app in a production-like environment.
-#
-# Note: This file is intended for testing and does not
-# implement best practices for a production deployment.
-#
-# Learn more: https://docs.docker.com/compose/reference/
-#
-#   Build images: docker-compose build
-#      Start app: docker-compose up app
-#       Stop all: docker-compose down
-#
-version: '3.7'
+version: '2.4'
 
-x-shared_environment: &shared_environment
-  LOG_LEVEL: ${LOG_LEVEL:-debug}
-  
 services:
   app:
-    image: vote-server:latest
+    image: git.smkid.dk:5050/harcker/voteserver:latest
+    restart: always
     build:
       context: .
+    ports:
+      - '8080:8080'
+    # user: '0' # uncomment to run as root for testing purposes even though Dockerfile defines 'vapor' user.
+    command: ["serve", "--env", "production", "--hostname", "0.0.0.0", "--port", "8080"]
+    networks:
+      - vote
+      - proxy
+
+    depends_on:
+      - proxy-ssl
     environment:
-      <<: *shared_environment
+      VIRTUAL_HOST: vote.smkid.dk
+      LETSENCRYPT_HOST: vote.smkid.dk
+      LETSENCRYPT_EMAIL: admin@smkid.dk
+
+
+  ###################
+  ## - Proxy
+  ###################
+  proxy:
+    # Reverse Proxy for exposing services to the WWW.
+    
+    image: nginxproxy/nginx-proxy
+    container_name: proxy
+    restart: unless-stopped
+    
+    volumes:
+      - /opt/conf:/etc/nginx/conf.d
+      - /opt/vhost:/etc/nginx/vhost.d
+      - /opt/html:/usr/share/nginx/html
+      - /opt/dhparam:/etc/nginx/dhparam
+      - /opt/certs:/etc/nginx/certs:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+
+    environment:
+      - TZ=Europe/Amsterdam
+    
+    networks:
+      - proxy
+ 
     ports:
       - '80:80'
-    # user: '0' # uncomment to run as root for testing purposes even though Dockerfile defines 'vapor' user.
-    command: ["serve", "--env", "production", "--hostname", "0.0.0.0", "--port", "80"]
+      - '443:443'
+  
+  proxy-ssl:
+    # SSL Automator for nginx-proxy. Auto-detects container's SSL Needs.
+    
+    image: nginxproxy/acme-companion
+    container_name: proxy-ssl
+    restart: unless-stopped
+    
+    volumes_from:
+      - proxy
+    
+    volumes:
+      - /opt/certs:/etc/nginx/certs:rw
+      - /opt/acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    environment:
+      - TZ=Europe/Amsterdam
+        
+      - DEFAULT_EMAIL=admin@smkid.dk
+    
+    networks:
+      - proxy-ssl
+    
+    depends_on:
+      - proxy
+  
+
+networks:
+  proxy:
+  proxy-ssl:
+  vote:
+
+volumes:
+  conf:
+  vhost:
+  html:
+  dhparam:
+  certs:
+  acme:

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" type="text/css" href="/css/css.css">
+<script src="/js/js.js"></script>
+#import("extraHead")
+<title>#(title)</title>
+</head>
+
+<body>
+<h1>#(title)</h1><hr>
+
+#if(buttons):
+#for(button in buttons):
+	<a href="#(button.uri)" class="#(button.color) button"#if(button.lockable): name="lockableButton" onClick="lockButton()"#endif>#(button.text)</a>
+#endfor
+<br>
+#endif
+<br>
+#import("body")
+#if(errorString):
+<br><b><p style="color:red">#(errorString)</p></b>
+#endif
+<br>
+<br><a href="https://www.digitalocean.com/?refcode=2c4d16fe910d&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge"><img src="https://web-platforms.sfo2.digitaloceanspaces.com/WWW/Badge%202.svg" alt="DigitalOcean Referral Badge" /></a>
+</body>
+</html>

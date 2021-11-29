@@ -1,4 +1,5 @@
 .button{
+	text-decoration:none;
 	border: none;
 	color: black;
 	margin: 5px 2px;
@@ -7,6 +8,7 @@
 }
 
 .inlinebutton{
+	text-decoration:none;
 	border: none;
 	color: black;
 	margin: 0px 0px;
@@ -34,6 +36,9 @@
 	color: #FFFFFF;
 }
 
+.gray {
+	background-color: 787878;
+}
 
 td, th {
 	padding: 5px;

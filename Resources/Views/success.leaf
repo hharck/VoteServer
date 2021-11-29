@@ -1,24 +1,16 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<link rel="stylesheet" type="text/css" href="/css/css.css">
-<script src="/js/js.js"></script>
-<title>#(title)</title>
-
-</head>
-
-<body>
-	<h1>You voted in '<i>#(title)</i>'</h1>
-	<hr>
-
-	#(voterID):
-	<ol>
-	#for(i in priorities):
-				<li>#(i)</li>
-
-	#endfor
-	</ol>
-<a href="https://www.digitalocean.com/?refcode=2c4d16fe910d&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge"><img src="https://web-platforms.sfo2.digitaloceanspaces.com/WWW/Badge%202.svg" alt="DigitalOcean Referral Badge" /></a>
-</body>
-</html>
+#extend("outerHTML"):
+		#export("body"):
+			<h1>You voted in '<i>#(title)</i>'</h1>
+			<hr>
+			#(voterID):
+			#if(count(priorities) == 0):
+				<p>Voted blank</p>
+			#else:
+				<ol>
+				#for(i in priorities):
+					<li>#(i)</li>
+				#endfor
+				</ol>
+			#endif
+		#endexport
+#endextend

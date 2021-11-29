@@ -1,0 +1,34 @@
+#extend("outerHTML"):
+		#export("body"):
+			Join link: <b><a href="/join/#(groupJoinLink)/">vote.smkid.dk/join/#(groupJoinLink)/</a></b>
+			<br>
+			Join phrase: <b>#(groupJoinLink)</b>
+			<br><img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://vote.smkid.dk/join/#(groupJoinLink)" border="2">
+			<br><br>
+			#extend("table"):
+				#export("tablerow"):
+					<td><a href="/voteadmin/#(row.voteID)">#(row.name)</a></td>
+					<td>#(row.totalVotesCast)</td>
+					
+					<td align="center">
+					#if(row.isOpen):
+						<span class="dot green"></span>
+					#else:
+						<span class="dot red"></span>
+					#endif
+					</td>
+					<td align="center">
+					
+					#if(row.isOpen):
+						<a class="red button" href="/voteadmin/close/#(row.voteID)">Close vote</a>
+					#else:
+						<a class="green button" href="/voteadmin/open/#(row.voteID)">Open vote</a>
+					#endif
+					</td>
+				#endexport
+			#endextend
+		#endexport
+#endextend
+
+
+
