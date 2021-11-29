@@ -114,6 +114,18 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		}
 	}
 	
+	app.get("voteadmin", "constituents", "downloadcsv") {req async throws -> Response in
+		guard
+			let sessionID = req.session.authenticated(AdminSession.self),
+			let group = await groupsManager.groupForSession(sessionID)
+		else {
+			return req.redirect(to: .constituents)
+		}
+		
+		let csv = Vote.constituentsToCSV(await group.allPossibleConstituents())
+		return try await downloadResponse(for: req, content: csv, filename: "constituents.csv")
+
+	}
 
 	
 	app.post("voteadmin", "resetaccess", ":userID"){req async throws -> Response in

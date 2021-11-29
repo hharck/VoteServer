@@ -7,7 +7,7 @@
 			<br><br>
 			#extend("table"):
 				#export("tablerow"):
-					<td><a href="/voteadmin/#(row.voteID)">#(row.name)</a></td>
+					<td><a href="/voteadmin/#(row.voteID)/">#(row.name)</a></td>
 					<td>#(row.totalVotesCast)</td>
 					
 					<td align="center">
@@ -20,9 +20,9 @@
 					<td align="center">
 					
 					#if(row.isOpen):
-						<a class="red button" href="/voteadmin/close/#(row.voteID)">Close vote</a>
+						<a class="red button" href="/voteadmin/close/#(row.voteID)/">Close vote</a>
 					#else:
-						<a class="green button" href="/voteadmin/open/#(row.voteID)">Open vote</a>
+						<a class="green button" href="/voteadmin/open/#(row.voteID)/">Open vote</a>
 					#endif
 					</td>
 				#endexport

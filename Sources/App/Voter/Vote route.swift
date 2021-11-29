@@ -50,7 +50,7 @@ func votingRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 				throw VotingDataError.attemptedToVoteMultipleTimes
 			}
 
-			let voterID = singleVote.constituent.name ?? singleVote.constituent.identifier
+			let voterID = singleVote.constituent.name ?? ""
 
 			return try await SuccessfullVoteUI(title: await vote.name, voterID: voterID, priorities: singleVote.rankings.map{$0.name}).encodeResponse(for: req)
 

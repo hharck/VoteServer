@@ -23,7 +23,7 @@ extension GroupCreatorData{
 		let trimmedPW = adminpw.trimmingCharacters(in: .whitespacesAndNewlines)
 		let trimmedGN = try self.getGroupName()
 		
-		guard trimmedPW.count >= 7, !trimmedPW.contains(trimmedGN), !trimmedGN.contains(trimmedPW) else {
+		guard trimmedPW.count >= 7, trimmedGN.count < 3 || (!trimmedPW.contains(trimmedGN) && !trimmedGN.contains(trimmedPW)) else {
 			throw GroupCreationError.invalidPassword
 		}
 		

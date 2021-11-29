@@ -108,10 +108,8 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		}
 		
 		let csv = await vote.toCSV()
-		var headers = HTTPHeaders()
-		headers.add(name: .contentDisposition, value: "attachment; filename=\"votes.csv\"")
-		return try await csv.encodeResponse(status: .ok, headers: headers, for: req)
 		
+		return try await downloadResponse(for: req, content: csv, filename: "votes.csv")
 	}
 	
 	app.get("results", ":voteID", "downloadconst"){ req async throws -> Response in
@@ -127,13 +125,15 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 			return req.redirect(to: .results(voteIDStr))
 		}
 
-
 		let csv = Vote.constituentsToCSV(await vote.constituents)
 
-
-		var headers = HTTPHeaders()
-		headers.add(name: .contentDisposition, value: "attachment; filename=\"constituents.csv\"")
-		return try await csv.encodeResponse(status: .ok, headers: headers, for: req)
-
+		return try await downloadResponse(for: req, content: csv, filename: "constituents.csv")
+		
 	}
+}
+
+func downloadResponse(for req: Request, content: String, filename: String) async throws -> Response{
+	var headers = HTTPHeaders()
+	headers.add(name: .contentDisposition, value: "attachment; filename=\"\(filename)\"")
+	return try await content.encodeResponse(status: .ok, headers: headers, for: req)
 }

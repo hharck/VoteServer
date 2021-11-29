@@ -16,7 +16,7 @@
 					<td align="center">
 					
 					#if(row.hasJoined):
-					<form method="post" onsubmit="lockButton()" action="/voteadmin/resetaccess/#(row.userID)">
+					<form method="post" onsubmit="lockButton()" action="/voteadmin/resetaccess/#(row.userID)/">
 					
 						<input type="submit" name="lockableButton" class="button red" value="Reset access">
 					</form>

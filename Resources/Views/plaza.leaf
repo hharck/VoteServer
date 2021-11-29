@@ -6,7 +6,7 @@
 			#extend("table"):
 			#export("tablerow"):
 			
-				<td>#if(row.showLink):<a href="/vote/#(row.voteID)">#(row.name)</a>#else:#(row.name)#endif</td>
+				<td>#if(row.showLink):<a href="/vote/#(row.voteID)/">#(row.name)</a>#else:#(row.name)#endif</td>
 				<td>Alternative vote</td>	
 				<td align="center">
 				#if(row.isOpen):

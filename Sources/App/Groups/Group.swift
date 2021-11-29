@@ -63,6 +63,13 @@ extension Group{
 		}
 	}
 	
+	// Returns a set of all constituents who has ever been in this group
+	func allPossibleConstituents() -> Set<Constituent>{
+		verifiedConstituents
+			.union(unVerifiedConstituents)
+		//Converts the previously joined into "real" constituents
+			.union(previouslyJoinedUnverifiedConstituents.map{Constituent(identifier: $0)})
+	}
 	
 	func constituentIsVerified(_ const: Constituent) -> Bool{
 		verifiedConstituents.contains(const)
