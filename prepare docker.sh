@@ -64,5 +64,5 @@ cd VoteServer
 
 chmod 777 ./upgrade.sh
 # Runs the app
-echo "Attempts to build or run VoteServer"
+docker-compose pull
 docker-compose up -d
