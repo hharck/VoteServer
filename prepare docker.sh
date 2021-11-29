@@ -58,7 +58,7 @@ mkdir -p /opt/acme
 echo "Downloads VoteServer project"
 cd /opt
 
-git clone -b Grouped-votes https://git.smkid.dk/Harcker/VoteServer.git
+git clone https://git.smkid.dk/Harcker/VoteServer.git
 
 cd VoteServer
 
