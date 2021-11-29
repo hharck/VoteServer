@@ -1,5 +1,6 @@
 import Foundation
 import AltVoteKit
+import Logging
 
 actor Group{
 	typealias VoteID = UUID
@@ -10,6 +11,8 @@ actor Group{
 		self.verifiedConstituents = constituents
 		self.joinPhrase = joinPhrase
 		self.allowsUnVerifiedVoters = allowsUnVerifiedVoters
+		
+		self.logger = Logger(label: "Group \"\(name)\":\"\(joinPhrase)\"")
 	}
 	
 	/// The name of the group as shown in the UI
@@ -37,6 +40,12 @@ actor Group{
 	
 	var constituentsSessionID: [UUID: Constituent] = [:]
 	
+	private let logger: Logger
+}
+
+
+//MARK: Get constituents and their status
+extension Group{
 	
 	func verifiedConstituent(for identifier: ConstituentID) -> Constituent?{
 		verifiedConstituents.first(where: {$0.identifier == identifier})
@@ -55,6 +64,18 @@ actor Group{
 	}
 	
 	
+	func constituentIsVerified(_ const: Constituent) -> Bool{
+		verifiedConstituents.contains(const)
+	}
+	
+	
+	func constituentHasJoined(_ identifier: ConstituentID) -> Bool{
+		joinedConstituentsByID.values.contains(where: {$0.identifier == identifier})
+	}
+}
+
+//MARK: Reset/disallow constituents
+extension Group{
 	func resetConstituent(_ constituent: Constituent) async{
 		if unVerifiedConstituents.contains(constituent){
 			self.unVerifiedConstituents.remove(constituent)
@@ -77,48 +98,10 @@ actor Group{
 		constituentsSessionID = constituentsSessionID.filter{ ID, const in
 			return constituent.identifier != const.identifier
 		}
+		
+		logger.info("Constituent \"\(constituent.identifier)\" was reset")
 	}
 	
-	
-	func constituentIsVerified(_ const: Constituent) -> Bool{
-		verifiedConstituents.contains(const)
-	}
-	
-	
-	func constituentHasJoined(_ identifier: ConstituentID) -> Bool{
-		joinedConstituentsByID.values.contains(where: {$0.identifier == identifier})
-	}
-	
-	
-	func joinConstituent(_ const: Constituent, for sessionId: SessionID) async -> Bool {
-		guard joinedConstituentsByID[const.identifier] == nil else {
-			return false
-		}
-		
-		if !verifiedConstituents.contains(const){
-			assert(!unVerifiedConstituents.contains(const))
-			
-			guard allowsUnVerifiedVoters else {
-				assertionFailure("joinConstituent was called with an unverified constituent")
-				return false
-			}
-			
-			unVerifiedConstituents.insert(const)
-			previouslyJoinedUnverifiedConstituents.remove(const.identifier)
-			
-			for vote in votesByID.values{
-				await vote.addConstituents(const)
-			}
-		}
-		
-		
-		constituentsSessionID[sessionId] = const
-		
-		joinedConstituentsByID[const.identifier] = const
-		return true
-	}
-	
-
 	/// - Parameter state: if false every constituent that isn't on the verified list will be removed else allowsUnVerifiedVoters will be set to true
 	func setAllowsUnVerifiedVoters(_ state: Bool) async{
 		guard state != self.allowsUnVerifiedVoters else {return}
@@ -148,9 +131,47 @@ actor Group{
 			}
 		}
 		self.allowsUnVerifiedVoters = state
+		
+		logger.info("Access for unverified was set to: \(state)")
+	}
+}
+
+//MARK: Join
+extension Group{
+	func joinConstituent(_ const: Constituent, for sessionId: SessionID) async -> Bool {
+		guard joinedConstituentsByID[const.identifier] == nil else {
+			return false
+		}
+		
+		if !verifiedConstituents.contains(const){
+			assert(!unVerifiedConstituents.contains(const))
+			
+			guard allowsUnVerifiedVoters else {
+				assertionFailure("joinConstituent was called with an unverified constituent")
+				return false
+			}
+			
+			unVerifiedConstituents.insert(const)
+			previouslyJoinedUnverifiedConstituents.remove(const.identifier)
+			
+			for vote in votesByID.values{
+				await vote.addConstituents(const)
+			}
+		}
+		defer{
+			logger.info("Constituent \(const.identifier) joined the group")
+		}
+		
+		constituentsSessionID[sessionId] = const
+		
+		joinedConstituentsByID[const.identifier] = const
+		return true
 	}
 	
-	
+}
+
+//MARK: Handle votes (elections)
+extension Group {
 	func voteForID(_ id: String) async -> AltVote?{
 		if let voteID = VoteID(id){
 			return votesByID[voteID]
@@ -173,13 +194,17 @@ actor Group{
 	
 	func setStatusFor(_ vote: AltVote, to value: VoteStatus) async{
 		statusForVote[await vote.id] = value
+		
+		logger.info("\"\(Task{await vote.name})\" was set to \"\(value)\"")
 	}
-
+	
 	/// Adds new votes to the group
 	func addVoteToGroup(vote: AltVote) async{
 		let voteID = await vote.id
 		votesByID[voteID] = vote
 		statusForVote[voteID] = .closed
+		
+		logger.info("Vote named \"\(Task{await vote.name})\" was added to the group")
 	}
 	
 	/// The session used for "proving" membership of a group

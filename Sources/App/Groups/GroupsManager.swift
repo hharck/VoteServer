@@ -1,5 +1,7 @@
 import AltVoteKit
 import Vapor
+import Logging
+
 typealias JoinPhrase = String
 actor GroupsManager{
 	/// Groups represented by the session ID of the admin(s)
@@ -14,6 +16,8 @@ actor GroupsManager{
 	public var reservedPhrases = Set<JoinPhrase>()
 	/// The hashed password for the given JoinPhrase
 	public var pwdigestForJF = [JoinPhrase: String]()
+	
+	private let logger = Logger(label: "Groups")
 }
 
 
@@ -65,6 +69,8 @@ extension GroupsManager{
 		groupsByUUID[group.id] = group
 		updateAccessTimeFor(group)
 		pwdigestForJF[jf] = pwdigest
+		
+		logger.info("Group \"\(name)\" was created, with the joinphrase \"\(jf)\"")
 	}
 	
 	/// Attempts to login using a joinphrase and the corresponding password
@@ -73,7 +79,7 @@ extension GroupsManager{
 		   (try? request.password.verify(password, created: digest)) == true,
 		   let sessionID = groupForJoinPhrase(joinphrase)?.adminSessionID
 		{
-			
+			logger.info("An admin logged in to a group with the joinphrase \"\(joinphrase)\"")
 			return AdminSession(sessionID: sessionID)
 		} else {
 			return nil
