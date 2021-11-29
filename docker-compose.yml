@@ -17,6 +17,7 @@ services:
     depends_on:
       - proxy-ssl
     environment:
+      LOG_LEVEL: info
       VIRTUAL_HOST: vote.smkid.dk
       LETSENCRYPT_HOST: vote.smkid.dk
       LETSENCRYPT_EMAIL: admin@smkid.dk

@@ -151,10 +151,15 @@ extension Group{
 		}
 		
 		if !verifiedConstituents.contains(const){
-			assert(!unVerifiedConstituents.contains(const))
+			if unVerifiedConstituents.contains(const){
+				assertionFailure()
+				logger.warning("\"\(const.name)\" is contained unVerifiedConstituents eventhough it's not joined")
+			}
+			
 			
 			guard allowsUnVerifiedVoters else {
 				assertionFailure("joinConstituent was called with an unverified constituent")
+				logger.warning("joinConstituent was called with an unverified constituent")
 				return false
 			}
 			

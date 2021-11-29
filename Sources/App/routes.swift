@@ -10,7 +10,7 @@ func routes(_ app: Application) throws {
 	}
 	
 	app.get("version"){req async in
-		return "Server version: 2.0.0\nAltVoteKit version \(AltVoteKitVersion)"
+		return "Server version: 2.0.2\nAltVoteKit version \(AltVoteKitVersion)"
 	}
 
 	try groupCreationRoutes(app, groupsManager: groupsManager)
