@@ -2,7 +2,7 @@ version: '2.4'
 
 services:
   app:
-    image: git.smkid.dk:5050/harcker/voteserver:latest
+    image: git.smkid.dk:5050/harcker/voteserver:master
     restart: always
     build:
       context: .

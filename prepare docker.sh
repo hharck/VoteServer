@@ -58,11 +58,11 @@ mkdir -p /opt/acme
 echo "Downloads VoteServer project"
 cd /opt
 
-git clone -b Grouped-votes https://git.smkid.dk/Harcker/VoteServer.git
+git clone https://git.smkid.dk/Harcker/VoteServer.git
 
 cd VoteServer
 
 chmod 777 ./upgrade.sh
 # Runs the app
-echo "Attempts to build or run VoteServer"
+docker-compose pull
 docker-compose up -d
