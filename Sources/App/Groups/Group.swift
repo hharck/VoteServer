@@ -1,5 +1,6 @@
 import Foundation
 import AltVoteKit
+import VoteKit
 import Logging
 
 actor Group{
@@ -26,18 +27,25 @@ actor Group{
 	let adminSessionID: SessionID
 	/// The open/closedness status of a vote
 	private var statusForVote = [VoteID: VoteStatus]()
-	private var votesByID = [VoteID: AltVote]()
+	
+    /// The different kinds of votes, stored by their id
+	private var AltVotesByID = [VoteID: AlternativeVote]()
+	private var SimMajVotesByID = [VoteID: SimpleMajority]()
+	private var YNVotesByID = [VoteID: yesNoVote]()
 	
 	private(set) var verifiedConstituents: Set<Constituent>
-	private(set) var unVerifiedConstituents: Set<Constituent> = []
+	private(set) var unverifiedConstituents: Set<Constituent> = []
 	
+    /// If this group allows unverified constituents to join
 	var allowsUnVerifiedVoters: Bool
 	
-	var joinedConstituentsByID = [ConstituentID: Constituent]()
+    
+	var joinedConstituentsByID = [ConstituentIdentifier: Constituent]()
 	
 	/// A dictionary of unverified constituents who has been removed one way or another
-	var previouslyJoinedUnverifiedConstituents = Set<ConstituentID>()
+	var previouslyJoinedUnverifiedConstituents = Set<ConstituentIdentifier>()
 	
+    /// The session id associated with each constituent
 	var constituentsSessionID: [UUID: Constituent] = [:]
 	
 	private let logger: Logger
@@ -47,26 +55,28 @@ actor Group{
 //MARK: Get constituents and their status
 extension Group{
 	
-	func verifiedConstituent(for identifier: ConstituentID) -> Constituent?{
+    //Retrieves verified constituents by their identifier
+	func verifiedConstituent(for identifier: ConstituentIdentifier) -> Constituent?{
 		verifiedConstituents.first(where: {$0.identifier == identifier})
 	}
-	
-	func unVerifiedConstituent(for identifier: ConstituentID) -> Constituent?{
-		unVerifiedConstituents.first(where: {$0.identifier == identifier})
+    //Retrieves unverified constituents by their identifier
+	func unverifiedConstituent(for identifier: ConstituentIdentifier) -> Constituent?{
+		unverifiedConstituents.first(where: {$0.identifier == identifier})
 	}
 	
-	func constituent(for identifier: ConstituentID) -> Constituent?{
+    //Retrieves constituents by their identifier, not regarding whether they're verified
+	func constituent(for identifier: ConstituentIdentifier) -> Constituent?{
 		if let v = verifiedConstituent(for: identifier){
 			return v
 		} else {
-			return unVerifiedConstituent(for: identifier)
+			return unverifiedConstituent(for: identifier)
 		}
 	}
 	
 	// Returns a set of all constituents who has ever been in this group
 	func allPossibleConstituents() -> Set<Constituent>{
 		verifiedConstituents
-			.union(unVerifiedConstituents)
+			.union(unverifiedConstituents)
 		//Converts the previously joined into "real" constituents
 			.union(previouslyJoinedUnverifiedConstituents.map{Constituent(identifier: $0)})
 	}
@@ -75,8 +85,7 @@ extension Group{
 		verifiedConstituents.contains(const)
 	}
 	
-	
-	func constituentHasJoined(_ identifier: ConstituentID) -> Bool{
+	func constituentHasJoined(_ identifier: ConstituentIdentifier) -> Bool{
 		joinedConstituentsByID.values.contains(where: {$0.identifier == identifier})
 	}
 }
@@ -84,55 +93,70 @@ extension Group{
 //MARK: Reset/disallow constituents
 extension Group{
 	func resetConstituent(_ constituent: Constituent) async{
-		if unVerifiedConstituents.contains(constituent){
-			self.unVerifiedConstituents.remove(constituent)
+		if unverifiedConstituents.contains(constituent){
+			self.unverifiedConstituents.remove(constituent)
 			self.previouslyJoinedUnverifiedConstituents.insert(constituent.identifier)
+
 			
-			for i in self.votesByID.values{
-				// If the constituent hasn't cast a vote it will be removed from the list of eligible voters in a vote
-				if !(await i.votes.map(\.constituent.identifier).contains(constituent.identifier)){
-					//FIXME: Compiler workaround for "await i.constituents.remove(constituent)"
-					await i.constituents = await i.constituents.filter{ const in
-						const != constituent
-					}
-				}
+			for v in AltVotesByID.values{
+				await v.removeConstituent(constituent)
 			}
+			for v in YNVotesByID.values{
+				await v.removeConstituent(constituent)
+			}
+			for v in SimMajVotesByID.values{
+				await v.removeConstituent(constituent)
+			}
+			
 		}
 		
 		self.joinedConstituentsByID[constituent.identifier] = nil
 		
 		// Removes all sessionIDs referencing the one being deleted
-		constituentsSessionID = constituentsSessionID.filter{ ID, const in
+		constituentsSessionID = constituentsSessionID.filter{ _, const in
 			return constituent.identifier != const.identifier
 		}
 		
 		logger.info("Constituent \"\(constituent.identifier)\" was reset")
 	}
 	
-	/// - Parameter state: if false every constituent that isn't on the verified list will be removed else allowsUnVerifiedVoters will be set to true
+    /// Changes whether unverified constituents are allowed in this group.
+    ///  Handles rule changes and removes unverified constituents from all votes they haven't cast a vote in
+    /// - Parameter state: if false every constituent that isn't on the verified list will be removed else allowsUnVerifiedVoters will be set to true
 	func setAllowsUnVerifiedVoters(_ state: Bool) async{
 		guard state != self.allowsUnVerifiedVoters else {return}
 		if !state{
 			/// Adds all unverified constituens to previouslyJoinedUnverifiedConstituents
-			previouslyJoinedUnverifiedConstituents.formUnion(unVerifiedConstituents.map(\.identifier))
+			previouslyJoinedUnverifiedConstituents.formUnion(unverifiedConstituents.map(\.identifier))
 			
 			//Removes all unverified constituents who hasn't cast a vote
-			for vote in allVotes() {
+			func procedure<V: SupportedVoteType>(_ vote: V) async{
 				await vote
 					.setConstituents(vote.constituents
 									 // Removes all unverified
-										.subtracting(unVerifiedConstituents)
+										.subtracting(unverifiedConstituents)
 									 // Adds everyone who has already voted, including unverified
 										.union(vote.votes.map(\.constituent)))
 			}
 			
+			
+			for v in AltVotesByID.values{
+				await procedure(v)
+			}
+			for v in YNVotesByID.values{
+				await procedure(v)
+			}
+			for v in SimMajVotesByID.values{
+				await procedure(v)
+			}
+			
 			// Removes all sessionIDs referencing the one being deleted
-			let unverifiedIdentifiers = unVerifiedConstituents.map(\.identifier)
+			let unverifiedIdentifiers = unverifiedConstituents.map(\.identifier)
 			constituentsSessionID = constituentsSessionID.filter{ _, const in
 				return unverifiedIdentifiers.contains(const.identifier)
 			}
 			
-			unVerifiedConstituents = []
+			unverifiedConstituents = []
 			joinedConstituentsByID = joinedConstituentsByID.filter{(_, value) in
 				verifiedConstituents.contains(value)
 			}
@@ -145,17 +169,23 @@ extension Group{
 
 //MARK: Join
 extension Group{
+    
+    /// Adds a constituent to the group
+    /// - Parameters:
+    ///   - const: The constituent to add
+    ///   - sessionId: The session from which a client signed in
+    /// - Returns: True if the constituent could be added
 	func joinConstituent(_ const: Constituent, for sessionId: SessionID) async -> Bool {
 		guard joinedConstituentsByID[const.identifier] == nil else {
 			return false
 		}
 		
 		if !verifiedConstituents.contains(const){
-			if unVerifiedConstituents.contains(const){
+			if unverifiedConstituents.contains(const){
 				assertionFailure()
-				logger.warning("\"\(const.name)\" is contained unVerifiedConstituents eventhough it's not joined")
+				logger.warning("\"\(const.name ?? const.identifier)\" is stored in unVerifiedConstituents eventhough it's not joined")
+                return false
 			}
-			
 			
 			guard allowsUnVerifiedVoters else {
 				assertionFailure("joinConstituent was called with an unverified constituent")
@@ -163,12 +193,20 @@ extension Group{
 				return false
 			}
 			
-			unVerifiedConstituents.insert(const)
+			unverifiedConstituents.insert(const)
 			previouslyJoinedUnverifiedConstituents.remove(const.identifier)
 			
-			for vote in votesByID.values{
-				await vote.addConstituents(const)
+			
+			for v in AltVotesByID.values{
+				await v.addConstituents(const)
 			}
+			for v in YNVotesByID.values{
+				await v.addConstituents(const)
+			}
+			for v in SimMajVotesByID.values{
+				await v.addConstituents(const)
+			}
+			
 		}
 		defer{
 			logger.info("Constituent \(const.identifier) joined the group")
@@ -184,39 +222,69 @@ extension Group{
 
 //MARK: Handle votes (elections)
 extension Group {
-	func voteForID(_ id: String) async -> AltVote?{
-		if let voteID = VoteID(id){
-			return votesByID[voteID]
-		} else {
-			return nil
-		}
-	}
+    /// Finds a vote by its id
+    func voteForID(_ id: VoteID) -> VoteTypes?{
+        if let v = AltVotesByID[id]{
+            return VoteTypes(vote: v)
+        } else if let v = YNVotesByID[id]{
+            return VoteTypes(vote: v)
+        } else if let v = SimMajVotesByID[id]{
+            return VoteTypes(vote: v)
+        } else {
+            return nil
+        }
+    }
 	
-	func voteForID(_ id: VoteID) -> AltVote?{
-		votesByID[id]
+    /// Finds a vote by a string representation of its id
+    func voteForID(_ id: String) -> VoteTypes?{
+        guard let voteID = VoteID(id) else {
+            return nil
+        }
+        return voteForID(voteID)
+    }
+    
+    
+	/// Returns three arrays, all containing all instances for each kind of vote
+	func allVotes() -> ([AlternativeVote],[yesNoVote],[SimpleMajority]){
+		return (Array(AltVotesByID.values), Array(YNVotesByID.values), Array(SimMajVotesByID.values))
 	}
-	
-	func allVotes() -> [AltVote]{
-		Array(self.votesByID.values)
+
+    /// Gets the status for the id of a vote
+    func statusFor(_ id: VoteID) async -> VoteStatus?{
+        return statusForVote[id]
+    }
+    
+	/// Gets the status of a vote
+	func statusFor<V: SupportedVoteType>(_ vote: V) async -> VoteStatus?{
+        statusForVote[await vote.id]
 	}
-	/// Get the status of a vote
-	func statusFor(_ vote: AltVote) async -> VoteStatus?{
-		statusForVote[await vote.id]
+
+
+
+
+	func setStatusFor<V: SupportedVoteType>(_ vote: V, to value: VoteStatus) async{
+        setStatusFor(await vote.id, to: value)
 	}
-	
-	func setStatusFor(_ vote: AltVote, to value: VoteStatus) async{
-		statusForVote[await vote.id] = value
-		
-		logger.info("\"\(Task{await vote.name})\" was set to \"\(value)\"")
-	}
+    func setStatusFor(_ vote: VoteID, to value: VoteStatus){
+        statusForVote[vote] = value
+    }
 	
 	/// Adds new votes to the group
-	func addVoteToGroup(vote: AltVote) async{
+	func addVoteToGroup<V: SupportedVoteType>(vote: V) async{
 		let voteID = await vote.id
-		votesByID[voteID] = vote
+		
+		switch V.enumCase{
+        case .alternative:
+			AltVotesByID[voteID] = vote as? AlternativeVote
+        case .yesNo:
+			YNVotesByID[voteID] = vote as? yesNoVote
+        case .simpleMajority:
+			SimMajVotesByID[voteID] = vote as? SimpleMajority
+		}
+		
 		statusForVote[voteID] = .closed
 		
-		logger.info("Vote named \"\(Task{await vote.name})\" was added to the group")
+		logger.info("Vote of kind \"\(V.typeName)\" named \"\(Task{await vote.name})\" was added to the group")
 	}
 	
 	/// The session used for "proving" membership of a group

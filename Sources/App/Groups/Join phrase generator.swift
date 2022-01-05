@@ -1,4 +1,7 @@
-func joinPhraseGenerator(chars: Int = 8) -> String{
+/// Generates a join phrase with the characters [a-z, A-Z, 0-9]
+/// - Parameter chars: The number of characters in the final string
+/// - Returns: A join phrase with the characters [a-z, A-Z, 0-9]
+func joinPhraseGenerator(chars: Int = 6) -> String{
 	let possibleChars: Set<Character> = {
 		var set = Set<Character>()
 		for i in 0...9{

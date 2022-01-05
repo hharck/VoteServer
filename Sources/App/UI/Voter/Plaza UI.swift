@@ -1,20 +1,38 @@
 import Foundation
-import AltVoteKit
+import VoteKit
 struct PlazaUI: UITableManager{
 	internal init(errorString: String? = nil, constituent: Constituent, group: Group) async {
 		self.errorString = errorString
 		self.name = constituent.name ?? constituent.identifier
 		self.groupName = group.name
 		
-		
-		for vote in await group.allVotes() {
-			let hasVoted = await vote.hasConstituentVoted(constituent)
+	
+		func setup<V: SupportedVoteType>(_ vote: V) async{
+			let hasVoted: Bool = await vote.hasConstituentVoted(constituent)
 			guard let status = await group.statusFor(vote) else {
-				continue
+				return
 			}
 			
-			await rows.append(VoteListElement(voteID: vote.id, name: vote.name, isOpen: status == .open, hasVoted: hasVoted))
+			await rows.append(VoteListElement(voteID: vote.id, name: vote.name, isOpen: status == .open, hasVoted: hasVoted, voteType: V.typeName))
 		}
+		
+		
+		
+		let (alt, yn, simmaj) = await group.allVotes()
+		
+		for vote in alt {
+			await setup(vote)
+		}
+		
+		for vote in yn {
+			await setup(vote)
+		}
+		
+		for vote in simmaj {
+			await setup(vote)
+		}
+		
+	
 		rows.sort(by: {$0.name < $1.name})
 	}
 	
@@ -33,12 +51,13 @@ struct PlazaUI: UITableManager{
 	static var template: String = "plaza"
 	
 	struct VoteListElement: Codable{
-		internal init(voteID: UUID, name: String, isOpen: Bool, hasVoted: Bool) {
+		init(voteID: UUID, name: String, isOpen: Bool, hasVoted: Bool, voteType: String) {
 			self.voteID = voteID
 			self.name = name
 			self.isOpen = isOpen
 			self.hasVoted = hasVoted
 			self.showLink = isOpen && !hasVoted
+			self.voteType = voteType
 		}
 		
 		let voteID: UUID
@@ -46,6 +65,8 @@ struct PlazaUI: UITableManager{
 		let isOpen: Bool
 		let hasVoted: Bool
 		let showLink: Bool
+		let voteType: String
 	}
 }
+
 

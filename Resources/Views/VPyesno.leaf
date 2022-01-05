@@ -1,0 +1,14 @@
+#extend("votePage"):
+        #export("VPbody"):
+            <form id="voteform" method="POST" onsubmit="lockButton()">
+                #extend("table"):
+                    #export("tablerow"):
+                       <td><b>#(row.name)</b></td>
+                       <td><input type="radio" id="#(row.id)" name="votes[#(row.id)]" value="yes" #if(row.status == "yes"): checked#endif></td>
+                       <td><input type="radio" id="#(row.id)" name="votes[#(row.id)]" value="no" #if(row.status == "no"): checked#endif><br></td>
+                    #endexport
+                #endextend
+                <input type="submit" name="lockableButton" class="button green">
+            </form>
+        #endexport
+#endextend

@@ -1,23 +1,53 @@
-import AltVoteKit
-struct VoteCreationReceivedData: Codable{
+import VoteKit
+struct VoteCreationReceivedData<V: SupportedVoteType>: Codable{
 	var nameOfVote: String
 	var options: String
-	var validators: [String: String]
+	
+	var particularValidators: [String: String]
+	var genericValidators: [String: String]
 }
 
 
 extension VoteCreationReceivedData{
-	func getValidators() -> [VoteValidator] {
-		return validators.compactMap { validator in
+    func getAllEnabledIDs() -> [String]{
+        particularValidators.compactMap { validator in
+            if validator.value == "on" {
+                return validator.key
+            } else {
+                return nil
+            }
+        }
+        +
+        genericValidators.compactMap { validator in
+            if validator.value == "on" {
+                return validator.key
+            } else {
+                return nil
+            }
+        }
+    }
+    
+	func getPartValidators() -> [V.particularValidator] {
+		return particularValidators.compactMap { validator in
 			if validator.value == "on" {
-				return VoteUICreator.ValidatorData.allValidators[validator.key]
+                return V.particularValidator.allValidators.first{$0.id == validator.key}
 			} else {
 				return nil
 			}
 		}
 	}
 	
-	func getOptions() throws -> [VoteOption]{
+	func getGenValidators() -> [GenericValidator<V.voteType>] {
+		return genericValidators.compactMap { validator in
+			if validator.value == "on" {
+                return GenericValidator.allValidators.first{$0.id == validator.key}
+			} else {
+				return nil
+			}
+		}
+	}
+	
+    func getOptions(minimumRequired: Int) throws -> [VoteOption]{
 		let options = self.options
 			.split(separator: ",")
 			.compactMap{ opt -> String? in
@@ -30,8 +60,8 @@ extension VoteCreationReceivedData{
 			throw voteCreationError.optionAddedMultipleTimes
 		}
 		
-		guard options.count >= 2 else {
-			throw voteCreationError.lessThanTwoOptions
+		guard options.count >= minimumRequired else {
+			throw voteCreationError.lessThanNOptions(minimumRequired)
 		}
 		
 		return options.map{
@@ -50,7 +80,7 @@ extension VoteCreationReceivedData{
 	enum voteCreationError: ErrorString{
 		case invalidTitle
 		case optionAddedMultipleTimes
-		case lessThanTwoOptions
+		case lessThanNOptions(Int)
 		
 		func errorString() -> String{
 			
@@ -59,8 +89,8 @@ extension VoteCreationReceivedData{
 				return "Invalid name detected for the vote"
 			case .optionAddedMultipleTimes:
 				return "An option has been added multiple times"
-			case .lessThanTwoOptions:
-				return "A vote needs atleast 2 options"
+			case .lessThanNOptions(let n):
+				return "A vote needs atleast \(n) options"
 			}
 		}
 		

@@ -4,12 +4,19 @@
 				<b><label for="nameOfVote">Vote title</label></b><br>
 				<input type="text" name="nameOfVote" value="#(nameOfVote)">
 				<b><h3>Validators:</h3></b>
-				#for(validator in validators):
-				<input type="checkbox" id="validators[#(validator.id)]" name="validators[#(validator.id)]" #if(validator.isEnabled):checked#endif>
-				<label for="validators[#(validator.id)]">#(validator.name)</label><br>
+
+				#for(validator in validatorsGeneric):
+				<input type="checkbox" id="#(validator.stack)[#(validator.id)]" name="#(validator.stack)[#(validator.id)]" #if(validator.isEnabled):checked#endif>
+				<label for="#(validator.stack)[#(validator.id)]">#(validator.name)</label><br>
 				#endfor
 				<br>
-				<label for="options">Options, comma separated</label><br>
+                #for(validator in validatorsParticular):
+                <input type="checkbox" id="#(validator.stack)[#(validator.id)]" name="#(validator.stack)[#(validator.id)]" #if(validator.isEnabled):checked#endif>
+                <label for="#(validator.stack)[#(validator.id)]">#(validator.name)</label><br>
+                #endfor
+    
+				<br>
+				<label for="options">Options (Comma separated)</label><br>
 				<textarea rows="10" cols="100" name = "options">#(options)</textarea><br>
 	
 				<input type="submit" name="lockableButton" class="button green">

@@ -1,0 +1,22 @@
+#extend("outerHTML"):
+        #export("body"):
+            <h2>#(numberOfVotes) total votes.</h2><br><br>
+           
+            #extend("table"):
+                #export("tablerow"):
+                    <td><b>#(row.name)</b></td>
+                    <td>#(row.yesCount)</td>
+                    <td>#(row.noCount)</td>
+                    #if(showBlank):
+                    <td>#(row.blankCount)</td>
+                    #endif
+                #endexport
+            #endextend
+                
+                
+                
+            <a href="downloadcsv" class="blue button" download>Download votes as CSV</a>
+            <br><br>
+            <a href="downloadconst" class="blue button" download>Download constituents as CSV</a>
+        #endexport
+#endextend

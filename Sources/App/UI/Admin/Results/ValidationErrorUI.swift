@@ -1,4 +1,4 @@
-import AltVoteKit
+import VoteKit
 import Foundation
 struct ValidationErrorUI: UIManager{
 	

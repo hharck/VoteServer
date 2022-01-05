@@ -7,7 +7,7 @@
 			#export("tablerow"):
 			
 				<td>#if(row.showLink):<a href="/vote/#(row.voteID)/">#(row.name)</a>#else:#(row.name)#endif</td>
-				<td>Alternative vote</td>	
+				<td>#(row.voteType)</td>	
 				<td align="center">
 				#if(row.isOpen):
 					<span class="dot green"></span>

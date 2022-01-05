@@ -17,6 +17,7 @@ struct UIButton: Codable{
 	let lockable: Bool
 	let downloadable: Bool
 	
+    // Colors as defined in /Public/css/css.css
 	enum ButtonColors: String, Codable{
 		case blue, green, red, grey
 	}

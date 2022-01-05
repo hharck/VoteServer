@@ -1,5 +1,5 @@
 import Vapor
-import AltVoteKit
+import VoteKit
 import Foundation
 func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 	app.get("join"){_ in
@@ -53,7 +53,7 @@ enum joinGroupErrors: ErrorString{
 		case .noGroupForJF(let joinPhrase):
 			return "No group was found for '\(joinPhrase.htmlEscaped())'"
 		case .constituentIsAlreadyIn:
-			return "This user has already joined\nIf you think this is an error ask the admin to reset your access"
+			return "This user has already joined, if you think this is an error ask the admin to reset your access"
 		}
 	}
 }

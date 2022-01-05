@@ -1,10 +1,12 @@
-import AltVoteKit
-struct ShowWinnerUI: UIManager{
-	internal init(title: String, winners: [VoteOption], numberOfVotes: Int, enabledOptions: Set<VoteOption>, disabledOptions: Set<VoteOption>) {
+import VoteKit
+struct AVResultsUI: UIManager{
+	internal init(title: String, winners: WinnerWrapper, numberOfVotes: Int, enabledOptions: Set<VoteOption>, disabledOptions: Set<VoteOption>) {
 		assert(enabledOptions.isDisjoint(with: disabledOptions), "ShowWinnerUI received the option (\(enabledOptions.intersection(disabledOptions))) as both enabled and disabled")
 		
+        
+        
 		self.title = title
-		self.winners = winners
+		self.winners = Array(winners.winners())
 		
 		self.enabledOptions = Array(enabledOptions).sorted(by: {$0.name<$1.name})
 		self.disabledOptions = Array(disabledOptions).sorted(by: {$0.name<$1.name})
@@ -12,13 +14,18 @@ struct ShowWinnerUI: UIManager{
 		self.hasEnabledAndDisabled = !enabledOptions.isEmpty && !disabledOptions.isEmpty
 
 		self.numberOfVotes = numberOfVotes
-		hasMultipleWinners = winners.count != 1
+		
+		if case .tie = winners{
+			hasMultipleWinners = true
+		} else {
+			hasMultipleWinners = false
+		}
 	}
 	
 	var title: String
 	var errorString: String? = nil
-	static var template: String = "results"
-
+    var buttons: [UIButton] = [.backToVoteadmin]
+	static var template: String = "RESav"
 	
 	var winners: [VoteOption]
 	var hasMultipleWinners: Bool

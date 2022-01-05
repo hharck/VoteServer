@@ -11,8 +11,8 @@
 				Each user id needs to be on its own line, if needed a user can have both an id and a name, if so enter the line as "[id], [name]⏎"</label><br>
 				<textarea rows="10" cols="100" name="usernames">#(usernames)</textarea><br>
 				
-				<input type="checkbox" id="allowsNonVerifiedUsers" name="allowsNonVerifiedUsers" #if(allowsNonVerifiedUsers):checked#endif>
-				<label for="allowsNonVerifiedUsers">Allow access for unverified users</label><br>
+				<input type="checkbox" id="allowsNonVerifiedConstituents" name="allowsNonVerifiedConstituents" #if(allowsNonVerifiedConstituents):checked#endif>
+				<label for="allowsNonVerifiedConstituents">Allow access for unverified users</label><br>
 				<input type="submit" name="lockableButton" class="button green">
 			</form>
 		#endexport

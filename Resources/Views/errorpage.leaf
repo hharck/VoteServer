@@ -1,0 +1,4 @@
+#extend("outerHTML"):
+#export("body"):
+#endexport
+#endextend

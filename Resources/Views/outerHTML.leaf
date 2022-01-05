@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <link rel="stylesheet" type="text/css" href="/css/css.css">
+
+<link rel="shortcut icon" type="image/png" href="/img/icon.png">
+<link rel="shortcut icon" sizes="192x192" href="/img/icon.png">
+<link rel="apple-touch-icon" href="/img/icon.png">
+
 <script src="/js/js.js"></script>
 #import("extraHead")
 <title>#(title)</title>

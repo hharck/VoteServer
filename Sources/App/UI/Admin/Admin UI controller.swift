@@ -1,12 +1,12 @@
-import AltVoteKit
-import Foundation
 struct AdminUIController: UITableManager{
 	var title: String
 	var errorString: String? = nil
 	
 	var buttons: [UIButton] = [
 		.reload,
-		.init(uri: .createvote, text: "Create vote", color: .green),
+        .init(uri: .createvote(.alternative), text: "Create \"Alternative vote\"", color: .green),
+        .init(uri: .createvote(.simpleMajority), text: "Create \"Simple majority\"vote", color: .green),
+        .init(uri: .createvote(.yesNo), text: "Create \"Yes no\" vote", color: .green),
 		.init(uri: "/voteadmin/constituents/", text: "Manage constituents", color: .blue)
 	]
 	
@@ -18,28 +18,46 @@ struct AdminUIController: UITableManager{
 	init(for group: Group) async{
 		self.title = group.name
 		groupJoinLink = group.joinPhrase
-		tableHeaders = ["Name", "No. of votes cast", "Open/closed"]
+		tableHeaders = ["Name", "Vote type", "No. of votes cast", "Open/closed"]
 		
-		let votes = await group.allVotes()
-		for vote in votes {
-			guard let status = await group.statusFor(vote) else{
+		let (alt, yn, simMaj) = await group.allVotes()
+		for vote in alt {
+			await genRow(vote)
+		}
+		
+		for vote in yn {
+			await genRow(vote)
+		}
+		
+		for vote in simMaj {
+			await genRow(vote)
+		}
+		
+		
+		func genRow<V: SupportedVoteType>(_ vote: V) async{
+			var status = await group.statusFor(vote)
+			if status == nil{
 				assertionFailure("Vote without status was found.")
-				continue
+                await group.setStatusFor(vote.id, to: .closed)
+				status = .closed
 			}
 			
-			await rows.append(SimplifiedVoteData(name: vote.name, isOpen: status == .open, totalVotesCast: await vote.votes.count, voteID: await vote.id.uuidString))
+            await rows.append(SimplifiedVoteData(name: vote.name, voteType: V.typeName, isOpen: status == .open, totalVotesCast: await vote.votes.count, voteID: await vote.id.uuidString))
 			
 		}
+		
+		
 		rows.sort{ $0.name < $1.name}
 	}
 	
 	static var template: String = "admin"
 }
 
-
+//TODO: Merge with similar type for plaza
 struct SimplifiedVoteData: Codable{
 	
 	let name: String
+    let voteType: String
 	let isOpen: Bool
 	let totalVotesCast: Int
 	let voteID: String

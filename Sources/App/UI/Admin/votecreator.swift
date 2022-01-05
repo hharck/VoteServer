@@ -1,64 +1,39 @@
-import AltVoteKit
-
-struct VoteUICreator: UIManager{
-	var title: String = "Create vote"
+struct VoteCreatorUI<V: SupportedVoteType>: UIManager{
+	var title: String
 	var errorString: String?
-	static var template: String = "createvote"
+	static var template: String {"createvote"}
 	
-	let validators: [ValidatorData]
+    let validatorsGeneric: [ValidatorData<V>]
+    let validatorsParticular: [ValidatorData<V>]
 	let nameOfVote: String
 	let options: String
 	
-	struct ValidatorData: Codable{
-		var name: String
-		var id: String
-		var isEnabled: Bool
+	init(errorString: String? = nil, validatorsGeneric: [ValidatorData<V>], validatorsParticular: [ValidatorData<V>], _ persistentData: VoteCreationReceivedData<V>? = nil) {
+        self.title = "Create \(V.typeName)"
+        self.errorString = errorString
+        self.nameOfVote = persistentData?.nameOfVote ?? ""
+        self.options = persistentData?.options.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 		
-		init(_ validator: VoteValidator, isEnabled: Bool = false){
-			self.name = validator.name
-			self.id = validator.id
-			self.isEnabled = isEnabled
-		}
-		
-		static let allValidators: [String: VoteValidator] = {
-			let allValidators: [VoteValidator] = [.everyoneHasVoted, .preferenceForAllCandidates, .noBlankVotes]
-			return allValidators.reduce(into: [String: VoteValidator]()) { partialResult, validator in
-				partialResult[validator.id] = validator
-			}
-			
-		}()
-		
-		static let allData: [ValidatorData] = {
-			allValidators.map { _, val in
-				Self.init(val)
-			}
-			.sorted(by: {$0.name < $1.name})
-		}()
-		
-		func toValidator() -> VoteValidator?{
-			Self.allValidators[id]
-		}
-	}
-	
-	init(validators: [ValidatorData] = ValidatorData.allData, errorString: String? = nil, _ persistentData: VoteCreationReceivedData? = nil) {
-		nameOfVote = persistentData?.nameOfVote ?? ""
-		options = persistentData?.options.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-		
-		self.errorString = errorString
+        
 		
 		// Sets the validator as enabled if they appear in persistentData
-		if let enabledValidatorIDs = persistentData?.getValidators().map(\.id), !enabledValidatorIDs.isEmpty{
-			self.validators = validators.map{val in
+		if let enabledValidatorIDs = persistentData?.getAllEnabledIDs(), !enabledValidatorIDs.isEmpty{
+			self.validatorsGeneric = validatorsGeneric.map{val in
 				var val = val
 				val.isEnabled = enabledValidatorIDs.contains(val.id)
 				return val
 			}
+            
+            self.validatorsParticular = validatorsParticular.map{val in
+                var val = val
+                val.isEnabled = enabledValidatorIDs.contains(val.id)
+                return val
+            }
 		} else {
-			self.validators = validators
+			self.validatorsGeneric = validatorsGeneric
+            self.validatorsParticular = validatorsParticular
 		}
 	}
 	
-	init(validators: [VoteValidator], errorString: String? = nil, _ persistentData: VoteCreationReceivedData? = nil) {
-		self.init(validators: validators.map{.init($0)}, errorString: errorString, persistentData)
-	}
 }
+

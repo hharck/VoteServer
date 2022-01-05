@@ -1,29 +1,17 @@
 import Vapor
 import AltVoteKit
+import VoteKit
 
 func ResultRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 	app.get("results"){ req in
 		req.redirect(to: .voteadmin)
 	}
 
-	app.get("results", ":voteID"){ req async -> Response in
-		guard let voteIDStr = req.parameters.get("voteID") else {
-			return req.redirect(to: .voteadmin)
-		}
+    app.get("results", ":voteID"){ req in
+        req.redirect(to: .voteadmin)
+    }
 
-
-		guard
-			let sessionID = req.session.authenticated(AdminSession.self),
-			let group = await groupsManager.groupForSession(sessionID),
-			let vote = await group.voteForID(voteIDStr)
-		else {
-			return req.redirect(to: .create)
-		}
-		return await getResults(req: req, group: group, vote: vote, excluding: [])
-	}
-
-
-	app.post("results", ":voteID"){ req async -> Response in
+	app.post("results", ":voteID"){ req async throws -> Response in
 		guard let voteIDStr = req.parameters.get("voteID") else {
 			return req.redirect(to: .voteadmin)
 		}
@@ -31,19 +19,15 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(sessionID),
-			let vote = await  group.voteForID(voteIDStr),
-			let options = try? req.content.decode(SelectedOptions.self)
+			let vote = await  group.voteForID(voteIDStr)
 		else {
-			return req.redirect(to: .results(voteIDStr))
+			return req.redirect(to: .voteadmin)
 		}
-		let enabled = options.enabledUUIDs()
-
-		//Finds all options that were not selected by the user
-		let toExclude = await vote.options.filter { option in
-			!enabled.contains(option.id)
-		}
-
-		return await getResults(req: req, group: group, vote: vote, excluding: Set(toExclude))
+    
+        guard let response = try? await getResults(req: req, group: group, vote: vote).encodeResponse(for: req) else {
+            throw Abort(.internalServerError)
+        }
+        return response
 	}
 
 	struct SelectedOptions: Codable{
@@ -61,36 +45,69 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 	}
 
 
-	func getResults(req: Request, group: Group, vote: AltVote, excluding: Set<VoteOption>) async -> Response{
+	func getResults(req: Request, group: Group, vote: VoteTypes) async -> UIManager{
 
-		// Makes sure the vote is closed
-		await group.setStatusFor(vote, to: .closed)
+         //Makes sure the vote is closed
+        await group.setStatusFor(await vote.id(), to: .closed)
 
-		let force = req.url.query?.split(separator: "&").contains("force=1") ?? false
+        
+        // Checks the exclude parameter
+        var excluding: Set<VoteOption> = []
+        if let options = try? req.content.decode(SelectedOptions.self){
+            let enabled = options.enabledUUIDs()
 
-		do{
-			let winner = try await vote.findWinner(force: force, excluding: excluding)
-			if winner == []{
-				throw "An issue occured during counting"
-			}
-			
-			let enabledOptions = Set(await vote.options).subtracting(excluding)
-			let controller = ShowWinnerUI(title: "Your '\(await vote.name)' vote results", winners: winner, numberOfVotes: await vote.votes.count, enabledOptions: enabledOptions, disabledOptions: excluding)
-			return try await controller.encodeResponse(for: req)
-		} catch {
-			guard
-				let er = error as? [VoteValidationResult],
-				let encodedRender: Response = try? await ValidationErrorUI(title: await vote.name, validationResults: er, voteID: vote.id).encodeResponse(for: req)
-			else {
-				let er = error.asString()
-				return try! await er.encodeResponse(for: req)
-			}
-			return encodedRender
-		}
-	}
+            //Finds all options that were not selected by the user
+            excluding = Set(await vote.options().filter { option in
+                !enabled.contains(option.id)
+            })
+        }
+        
+        // Checks the force parameter
+        let force = req.url.query?.split(separator: "&").contains("force=1") ?? false
+        
+        let vid: UUID?
+        let vname: String?
+        do{
+            switch vote {
+            case .alternative(let v):
+                vid  = await v.id
+                vname = await v.name
+
+                let winner = try await v.findWinner(force: force, excluding: excluding)
 
 
+                if winner.winners().isEmpty{
+                    throw "An issue occured during counting"
+                }
 
+                let enabledOptions = Set(await v.options).subtracting(excluding)
+
+                return AVResultsUI(title: "Your '\(await v.name)' vote results", winners: winner, numberOfVotes: await v.votes.count, enabledOptions: enabledOptions, disabledOptions: excluding)
+
+            case .yesno(let v):
+                vid  = await v.id
+                vname = await v.name
+
+                let count = try await v.count(force: force)
+                return await YesNoResultsUI(vote: v, count: count)
+            case .simplemajority(let v):
+                vid  = await v.id
+                vname = await v.name
+
+                let count = try await v.count(force: force)
+
+                return SimMajResultsUI(title: await v.name, numberOfVotes: await v.votes.count, count: count)
+
+            }
+
+        } catch {
+            guard let er = error as? [VoteValidationResult] else {
+                return genericErrorPage(error: error)
+            }
+            return ValidationErrorUI(title: vname ?? "", validationResults: er, voteID: vid ?? UUID())
+        }
+    }
+    
 
 	//MARK: Export CSV
 	app.get("results", ":voteID", "downloadcsv"){ req async throws -> Response in
@@ -107,7 +124,15 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 			return req.redirect(to: .results(voteIDStr))
 		}
 		
-		let csv = await vote.toCSV()
+        let csv: String
+        switch vote {
+        case .alternative(let v):
+            csv = await v.toCSV()
+        case .yesno(let v):
+            csv = await v.toCSV()
+        case .simplemajority(let v):
+            csv = await v.toCSV()
+        }
 		
 		return try await downloadResponse(for: req, content: csv, filename: "votes.csv")
 	}
@@ -125,7 +150,7 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 			return req.redirect(to: .results(voteIDStr))
 		}
 
-		let csv = Vote.constituentsToCSV(await vote.constituents)
+        let csv = await vote.constituents().toCSV()
 
 		return try await downloadResponse(for: req, content: csv, filename: "constituents.csv")
 		

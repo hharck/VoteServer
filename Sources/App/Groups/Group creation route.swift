@@ -1,4 +1,5 @@
 import Vapor
+/// Defines the /create path and its logic
 func groupCreationRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 	app.get("create"){ _ in
 		GroupCreatorUI()

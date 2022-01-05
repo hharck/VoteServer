@@ -8,6 +8,7 @@
 			#extend("table"):
 				#export("tablerow"):
 					<td><a href="/voteadmin/#(row.voteID)/">#(row.name)</a></td>
+                    <td>#(row.voteType)</td>
 					<td>#(row.totalVotesCast)</td>
 					
 					<td align="center">

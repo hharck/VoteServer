@@ -1,11 +1,11 @@
-import AltVoteKit
+import VoteKit
 import Vapor
 //Represents data received on a request to create a group
 struct GroupCreatorData: Codable{
 	var groupName: String
 	var usernames: String
 	private var adminpw: String
-	var allowsNonVerifiedUsers: String?
+	var allowsNonVerifiedConstituents: String?
 }
 
 extension GroupCreatorData{
@@ -76,8 +76,9 @@ extension GroupCreatorData{
 		
 	}
 	
+    /// Checks if the received data indicates that non verified constituents are allowed
 	func allowsNonVerified() -> Bool{
-		self.allowsNonVerifiedUsers == "on"
+		self.allowsNonVerifiedConstituents == "on"
 	}
 }
 

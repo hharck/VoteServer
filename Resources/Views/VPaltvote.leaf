@@ -1,7 +1,6 @@
-#extend("outerHTML"):
-		#export("body"):
-			#if(!hideUI):
-			<form id="voteform" method="post" onsubmit="lockButton()">
+#extend("votePage"):
+		#export("VPbody"):
+			<form id="voteform" method="POST" onsubmit="lockButton()">
 				#for(priority in numbers):
 					<label for="#(priority.number)">#(priority.number).</label>
 					<select id="#(priority.number)" form="voteform" name="priorities[#(priority.number)]" value="#(priority.value)">
@@ -13,15 +12,5 @@
 				#endfor
 				<input type="submit" name="lockableButton" class="button green">
 			</form>
-			
-			
-			#if(canVoteBlank):
-			<form id="voteblankform" method="post" onsubmit="lockButton()">
-				<input type="hidden" id="blank" name="blank" value="true">
-				<input type="submit" name="lockableButton" class="gray button" value="Vote blank">
-			</form>
-			#endif
-			
-			#endif
 		#endexport
 #endextend

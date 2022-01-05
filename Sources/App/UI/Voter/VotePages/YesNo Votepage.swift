@@ -1,0 +1,43 @@
+import Foundation
+import VoteKit
+struct YesNoVotePage: VotePage, UITableManager{
+    var title: String
+    var errorString: String? = nil
+    static var template: String = "VPyesno"
+    
+    var rows: [Row] = []
+    var tableHeaders: [String] = ["Name", "Yes", "No"]
+    
+    var canVoteBlank: Bool = false
+    var hideUI: Bool = false
+    
+    init(title: String, vote: yesNoVote?, errorString: String? = nil, persistentData: [UUID:Bool]? = nil) async {
+        
+        
+        if let vote = vote {
+            self.canVoteBlank = await !vote.genericValidators.contains(.noBlankVotes)
+            rows = await vote.options.map{ option in
+                let status: String
+                switch persistentData?[option.id]{
+                case true:
+                    status = "yes"
+                case false:
+                    status = "no"
+                default:
+                    status = ""
+                }
+                return Row(id: option.id, name: option.name, status: status)
+            }
+        }
+        
+        self.title = title
+        self.errorString = errorString
+    }
+    
+    struct Row: Codable{
+        var id: UUID
+        var name: String
+        var status: String
+    }
+}
+

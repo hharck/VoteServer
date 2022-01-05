@@ -3,7 +3,7 @@ import Vapor
 /// Defines paths often used for redirection
 enum redirectionPaths{
 	case create
-	case createvote
+    case createvote(VoteTypes.StringStub)
 	case results(String)
 	case voteadmin(String?)
 	static var voteadmin: Self {.voteadmin(nil)}
@@ -16,8 +16,8 @@ enum redirectionPaths{
 		switch self {
 		case .create:
 			return "create"
-		case .createvote:
-			return "createvote"
+		case .createvote(let string):
+            return "createvote/" + string.rawValue
 		case .voteadmin(let id):
 			if id == nil {
 				return "voteadmin"

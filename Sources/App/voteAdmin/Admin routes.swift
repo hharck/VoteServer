@@ -1,5 +1,5 @@
 import Vapor
-import AltVoteKit
+import VoteKit
 
 func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 	app.get("voteadmin") { req async throws -> Response in
@@ -29,7 +29,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		   let group = await groupsManager.groupForSession(sessionID),
 		   let vote = await group.voteForID(voteIDStr)
 		{
-			await group.setStatusFor(vote, to: status)
+            await group.setStatusFor(await vote.id(), to: status)
 		}
 		return req.redirect(to: .voteadmin)
 	}
@@ -48,7 +48,8 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 			return req.redirect(to: .voteadmin)
 		}
 		
-		return try await VoteAdminUIController(vote: vote, group: group).encodeResponse(for: req)
+        return try await VoteAdminUIController(vote: vote, group: group).encodeResponse(for: req)
+            
 	}
 	
 	app.post("voteadmin", ":voteID") { req async throws -> Response in
@@ -68,8 +69,9 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 			let pageController = await VoteAdminUIController(vote: vote, group: group)
 			return try await pageController.encodeResponse(for: req)
 		}
-		
-		await group.setStatusFor(vote, to: status)
+    
+        
+        await group.setStatusFor(await vote.id(), to: status)
 		
 		let pageController = await VoteAdminUIController(vote: vote, group: group)
 		return try await pageController.encodeResponse(for: req)
@@ -122,7 +124,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 			return req.redirect(to: .constituents)
 		}
 		
-		let csv = Vote.constituentsToCSV(await group.allPossibleConstituents())
+        let csv = await group.allPossibleConstituents().toCSV()
 		return try await downloadResponse(for: req, content: csv, filename: "constituents.csv")
 
 	}
@@ -153,16 +155,30 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		   let group = await groupsManager.groupForSession(adminID),
 		   let vote = await group.voteForID(voteIDStr)
 		{
-			await vote.resetVoteForUser(singleVoteIDStr)
-			
-			// If the user is no longer in the group, it'll be removed from the constituents list
-			if await group.previouslyJoinedUnverifiedConstituents.contains(singleVoteIDStr){
-				let constituent = Constituent(identifier: singleVoteIDStr)
-				//FIXME: Compiler workaround for "await vote.constituents.remove(constituent)"
-				await vote.constituents = await vote.constituents.filter{ const in
-					const != constituent
-				}
-			}
+            
+            /// Removes a vote by the constituent in the group given in the URL; if the user has been kicked out, it will be removed from the vote's list of verified constituents
+            func miniReset<V: SupportedVoteType>(vote: V) async{
+                await vote.resetVoteForUser(singleVoteIDStr)
+                
+                // If the user is no longer in the group, it'll be removed from the constituents list
+                if await group.previouslyJoinedUnverifiedConstituents.contains(singleVoteIDStr){
+                    let constituent = Constituent(identifier: singleVoteIDStr)
+                    
+                    let newConstitutents = await vote.constituents.filter{ const in
+                        const != constituent
+                    }
+                    await vote.setConstituents(newConstitutents)
+                }
+            }
+            
+            switch vote {
+            case .alternative(let v):
+                await miniReset(vote: v)
+            case .yesno(let v):
+                await miniReset(vote: v)
+            case .simplemajority(let v):
+                await miniReset(vote: v)
+            }
 		}
 		
 		return req.redirect(to: .voteadmin(voteIDStr))

@@ -4,7 +4,7 @@ struct LoginUI: UIManager{
 		self.prefilledJF = prefilledJF
 	}
 	
-	var buttons: [UIButton] = [.createGroup]
+	var buttons: [UIButton] = [.createGroup, .init(uri: "/join/", text: "Join", color: .green)]
 	
 	var title: String = "Login"
 	

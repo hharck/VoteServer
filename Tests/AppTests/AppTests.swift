@@ -54,7 +54,7 @@ final class AppTests: XCTestCase {
 				"groupName": "Test group",
 				"adminpw": "123456789",
 				"usernames": "Person a, Person b",
-				"allowsNonVerifiedUsers": "off"
+				"allowsNonVerifiedConstituents": "off"
 			]
 			
 			try req.content.encode(dict)

@@ -1,8 +1,10 @@
-import AltVoteKit
+import VoteKit
 import Vapor
 import Logging
 
 typealias JoinPhrase = String
+
+/// Represents a collection of groups
 actor GroupsManager{
 	/// Groups represented by the session ID of the admin(s)
 	private var groupsBySession = [SessionID: Group]()
@@ -21,7 +23,7 @@ actor GroupsManager{
 }
 
 
-//MARK: Last access
+//MARK: Store last access
 extension GroupsManager{
 	private func updateAccessTimeFor(_ id: UUID){
 		lastAccessForGroup[id] = Date()

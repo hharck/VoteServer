@@ -10,8 +10,9 @@ let package = Package(
         // 💧 A server-side Swift web framework.
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
         .package(url: "https://github.com/vapor/leaf.git", from: "4.0.0"),
-		.package(url: "https://git.smkid.dk/Harcker/AltVoteKit", branch: "main"),
-//		.package(url: "git@git.smkid.dk:Harcker/AltVoteKit.git", branch: "main"),
+        .package(url: "https://git.smkid.dk/Harcker/VoteKit", branch: "main"), //HTTPS
+		.package(url: "https://git.smkid.dk/Harcker/AltVoteKit", branch: "main"), //HTTPS
+//		.package(url: "git@git.smkid.dk:Harcker/AltVoteKit.git", branch: "main"), //SSH
     ],
     targets: [
         .target(
@@ -19,7 +20,9 @@ let package = Package(
             dependencies: [
                 .product(name: "Leaf", package: "leaf"),
 				.product(name: "Vapor", package: "vapor"),
-				.product(name: "AltVoteKit", package: "AltVoteKit")
+				.product(name: "AltVoteKit", package: "AltVoteKit"),
+				.product(name: "VoteKit", package: "VoteKit")
+
 			],
             swiftSettings: [
                 // Enable better optimizations when building in Release configuration. Despite the use of

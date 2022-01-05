@@ -50,7 +50,7 @@
 				
 				<td align="center">
 				#if(row.hasVoted):
-					<form method="post" action="/reset/#(voteID)/#(row.constituent.identifier)/" onsubmit="lockButton()">
+					<form method="POST" action="/reset/#(voteID)/#(row.constituent.identifier)/" onsubmit="lockButton()">
 					<input type="submit" class="inlinebutton red" value="Reset vote">
 					</form>
 				#endif
@@ -58,20 +58,20 @@
 		#endextend
 		
 		#if(showGetResults):
-			<form method="get" action="/results/#(voteID)/">
+			<form method="POST" action="/results/#(voteID)/">
 				<input type="submit" class="button green" value="Get results">
 			</form>
 		#endif
 
 		#if(showClose):
-			<form method="post">
+			<form method="POST">
 				<input type="hidden" name="statusChange" value="closed">
 				<input type="submit" class="button red" value="Close vote">
 			</form>
 		#endif
 
 		#if(showOpen):
-			<form method="post">
+			<form method="POST">
 				<input type="hidden" name="statusChange" value="open">
 				<input type="submit" class="button green" value="Open vote">
 			</form>

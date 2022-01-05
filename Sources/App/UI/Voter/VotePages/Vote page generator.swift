@@ -1,22 +1,20 @@
 import AltVoteKit
+import VoteKit
 import Foundation
-struct AltVotePageGenerator: UIManager{
+struct AltVotePageGenerator: VotePage{
 	var title: String
 	var numbers: [PriorityData]
 	var options: [VoteOption]
 	var errorString: String?
 	var hideUI: Bool = false
 	var canVoteBlank: Bool
-	var buttons: [UIButton] = []
 	
-	init(title: String, vote: AltVote?, errorString: String? = nil, _ persistentData: AltVotingData? = nil) async {
+	init(title: String, vote: AlternativeVote?, errorString: String? = nil, persistentData: AltVotingData? = nil) async {
 		
 		if let options = await vote?.options {
 			assert(options.count != 0 || errorString != nil)
 
-			
-			let noBlanks = VoteValidator.noBlankVotes.id
-			canVoteBlank = await !vote!.validators.contains(where: {$0.id == noBlanks})
+			canVoteBlank = await !vote!.genericValidators.contains(.noBlankVotes)
 			
 			
 			if let priorities = persistentData?.priorities{
@@ -40,20 +38,7 @@ struct AltVotePageGenerator: UIManager{
 		
 	}
 	
-	static func closed(title: String) async -> Self{
-		var closedVPG = await self.init(title: title, vote: nil, errorString: "Vote is currently closed")
-		closedVPG.hideUI = true
-		closedVPG.buttons = [.backToPlaza]
-		return closedVPG
-	}
-	
-	static func hasVoted(title: String) async -> Self{
-		var hasVotedVPG = await self.init(title: title, vote: nil, errorString: "You have already voted once, ask the admin to reset your vote")
-		hasVotedVPG.hideUI = true
-		return hasVotedVPG
-	}
-	
-	static var template: String = "vote"
+	static var template: String = "VPaltvote"
 	
 	struct PriorityData: Codable{
 		internal init(number: Int, selected: String = "default") {

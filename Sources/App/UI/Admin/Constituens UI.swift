@@ -1,4 +1,4 @@
-import AltVoteKit
+import VoteKit
 struct ConstituentsListUI: UITableManager{
 	var title: String = "Constituents"
 	var errorString: String? = nil
@@ -17,7 +17,7 @@ struct ConstituentsListUI: UITableManager{
 	
 	init(group: Group) async{
 		let verified = await group.verifiedConstituents
-		let unVerified = await group.unVerifiedConstituents
+		let unVerified = await group.unverifiedConstituents
 		
 		self.allowsNonVerified = await group.allowsUnVerifiedVoters
 		

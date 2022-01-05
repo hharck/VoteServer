@@ -1,0 +1,13 @@
+#extend("outerHTML"):
+        #export("body"):
+            #if(!hideUI):
+            #import("VPbody")
+            #if(canVoteBlank):
+            <form id="voteblankform" method="POST" onsubmit="lockButton()">
+                <input type="hidden" id="blank" name="blank" value="true">
+                <input type="submit" name="lockableButton" class="gray button" value="Vote blank">
+            </form>
+            #endif
+            #endif
+        #endexport
+#endextend

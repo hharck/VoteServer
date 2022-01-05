@@ -1,0 +1,12 @@
+#extend("votePage"):
+        #export("VPbody"):
+            <form id="voteform" method="POST" onsubmit="lockButton()">
+                    #for(option in options):
+                        <input type="radio" id="#(option.id)" name="selectedOption" value="#(option.id)" #if(selectedID == option.id): checked#endif>
+                        <label for="#(option.id)">#(option.name)</label><br>
+                    #endfor
+                <input type="submit" name="lockableButton" class="button green">
+            </form>
+        #endexport
+#endextend
+

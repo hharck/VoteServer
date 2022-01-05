@@ -36,10 +36,3 @@ extension UIManager{
 		try await self.render(for: req)
 	}
 }
-
-
-protocol UITableManager: UIManager{
-	associatedtype rowType: Codable
-	var rows: [rowType] {get}
-	var tableHeaders: [String] {get}
-}
