@@ -76,7 +76,17 @@ func votingRoutes(_ app: Application, groupsManager: GroupsManager) throws {
     func decodeAndStore<V: SupportedVoteType>(group: Group, vote: V, constituent: Constituent, req: Request) async -> UIManager{
         var votingData: V.ReceivedData? = nil
         do {
-            votingData = try req.content.decode(V.ReceivedData.self)
+            
+            do {
+                votingData = try req.content.decode(V.ReceivedData.self)
+            } catch {
+                // Workaround for an empty set of radio buttons giving error 422
+                if (V.enumCase == .yesNo || V.enumCase == .simpleMajority), let e = error as? AbortError, e.status == .unprocessableEntity {
+                    votingData = V.ReceivedData.blank()
+                } else {
+                    throw error
+                }
+            }
             let votingData = votingData!
 
             /// The vote as a SingleVote

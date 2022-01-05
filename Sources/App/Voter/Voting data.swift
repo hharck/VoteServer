@@ -10,6 +10,7 @@ protocol VotingData: Codable{
     var blank: Bool? {get}
     func asSingleVote(for vote: Vote, constituent: Constituent) async throws -> Vote.voteType
     func asCorrespondingPersistenseData()-> Vote.VotePageUI.PersistanceData?
+    static func blank() -> Self
 }
 
 struct YnVotingData: VotingData{
@@ -81,6 +82,10 @@ struct YnVotingData: VotingData{
         }
         return try? getValues(votes: votes!)
     }
+    
+    static func blank() -> YnVotingData {
+        self.init(votes: nil, blank: true)
+    }
 
 }
 
@@ -119,7 +124,10 @@ struct SimpleMajorityVotingData: VotingData{
             return nil
         }
     }
-
+    
+    static func blank() -> SimpleMajorityVotingData {
+        self.init(selectedOption: nil, blank: true)
+    }
 }
 
 
@@ -194,6 +202,11 @@ struct AltVotingData: VotingData{
     func asCorrespondingPersistenseData()->Self?{
         return self
     }
+    
+    static func blank() -> AltVotingData {
+        self.init(priorities: nil, blank: true)
+    }
+
 }
 
 enum VotingDataError: ErrorString{
