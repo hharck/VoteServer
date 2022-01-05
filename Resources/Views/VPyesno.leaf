@@ -6,6 +6,9 @@
                        <td><b>#(row.name)</b></td>
                        <td><input type="radio" id="#(row.id)" name="votes[#(row.id)]" value="yes" #if(row.status == "yes"): checked#endif></td>
                        <td><input type="radio" id="#(row.id)" name="votes[#(row.id)]" value="no" #if(row.status == "no"): checked#endif><br></td>
+                       #if(allowsResetting):
+                            <td><button type="button" onClick="uncheckRadioButtons('votes[#(row.id)]')">X</button></td>
+                       #endif
                     #endexport
                 #endextend
                 <input type="submit" name="lockableButton" class="button green">

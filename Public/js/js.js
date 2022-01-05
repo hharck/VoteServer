@@ -7,3 +7,10 @@ function lockButton() {
 	});
 	
 }
+
+function uncheckRadioButtons(name) {
+    var buttons = document.getElementsByName(name);
+    buttons.forEach((button) => {
+        button.checked = false;
+    });
+}
