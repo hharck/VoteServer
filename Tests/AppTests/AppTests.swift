@@ -41,10 +41,10 @@ final class AppTests: XCTestCase {
 		})
 
 		// Goes to /createvote and gets redirected
-		try app.test(.GET, "createvote", headers: header, afterResponse: { res in
+		try app.test(.GET, "createvote/yesno", headers: header, afterResponse: { res in
 			XCTAssertEqual(res.status, .seeOther)
 		})
-		try app.test(.POST, "createvote", headers: header, afterResponse: { res in
+		try app.test(.POST, "createvote/yesno", headers: header, afterResponse: { res in
 			XCTAssertEqual(res.status, .seeOther)
 		})
 		
@@ -71,7 +71,7 @@ final class AppTests: XCTestCase {
 		})
 		
 		// Tries to access /createvote again, now with success
-		try app.test(.GET, "createvote", headers: header, afterResponse: { res in
+		try app.test(.GET, "createvote/yesno", headers: header, afterResponse: { res in
 			XCTAssertEqual(res.status, .ok)
 			XCTAssertGreaterThan(res.body.string.count, 100)
 		})
