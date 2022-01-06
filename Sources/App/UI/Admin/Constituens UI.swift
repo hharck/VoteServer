@@ -39,16 +39,15 @@ struct ConstituentsListUI: UITableManager{
 		internal init(constituent: Constituent, group: Group, isVerified: Bool) async{
 			self.userID = constituent.identifier
 			self.name = constituent.name ?? ""
-			
+            self.userID64 = constituent.identifier.asURLSafeB64() ?? ""
 			self.isVerified = isVerified
 			self.hasJoined = await group.constituentHasJoined(constituent.identifier)
 		}
 		
 		var userID: String
+        var userID64: String
 		var name: String
 		var isVerified: Bool
 		var hasJoined: Bool
 	}
 }
-
-

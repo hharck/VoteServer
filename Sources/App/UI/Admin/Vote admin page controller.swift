@@ -88,22 +88,24 @@ struct VoteAdminUIController: UITableManager{
         }
         
         rows = tempRows.map(\.value).sorted{ lhs, rhs in
-            return lhs.constituent.identifier < rhs.constituent.identifier
+            return lhs.constIdentifier < rhs.constIdentifier
         }
     }
 }
 
 struct ConstituentAndStatus: Codable{
 	internal init(constituent: Constituent, hasVoted: Bool, isVerified: Bool) {
-		self.constituent = constituent
-		if self.constituent.name == nil{
-			self.constituent.name = self.constituent.identifier
-		}
+        self.constName = constituent.name ?? constituent.identifier
+        self.constIdentifier = constituent.identifier
+        self.constB64ID = constituent.identifier.asURLSafeB64() ?? ""
+        
 		self.hasVoted = hasVoted
 		self.isVerified = isVerified
 	}
 	
-	var constituent: Constituent
+    var constName: String
+    var constIdentifier: String
+    var constB64ID: String
 	var hasVoted: Bool
 	var isVerified: Bool
 }

@@ -4,7 +4,7 @@ func groupCreationRoutes(_ app: Application, groupsManager: GroupsManager) throw
 	app.get("create"){ _ in
 		GroupCreatorUI()
 	}
-	
+    
 	app.post("create"){ req async throws -> Response in
 		var groupData: GroupCreatorData?
 		do{

@@ -81,6 +81,11 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager) async throws -> R
 		guard !userID.isEmpty else {
 			throw joinGroupErrors.userIDIsInvalid
 		}
+        
+        // Checks that the user id does not contain a comma or a semicolon
+        guard !userID.contains(","), !userID.contains(";") else {
+            throw joinGroupErrors.userIDIsInvalid
+        }
 		
 		guard let group = await groupsManager.groupForJoinPhrase(joinPhrase) else {
 			throw joinGroupErrors.noGroupForJF(joinPhrase)

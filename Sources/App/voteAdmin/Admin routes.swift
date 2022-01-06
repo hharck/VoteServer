@@ -131,10 +131,11 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 
 	
 	app.post("voteadmin", "resetaccess", ":userID"){req async throws -> Response in
-		if let userIDstr = req.parameters.get("userID"),
+		if let userIdentifierbase64 = req.parameters.get("userID")?.trimmingCharacters(in: .whitespacesAndNewlines),
+           let userIdentifier = String(urlsafeBase64: userIdentifierbase64),
 		   let sessionID = req.session.authenticated(AdminSession.self),
 		   let group = await groupsManager.groupForSession(sessionID),
-		   let constituent = await group.constituent(for: userIDstr)
+		   let constituent = await group.constituent(for: userIdentifier)
 		{
 			await group.resetConstituent(constituent)
 		}
@@ -148,9 +149,10 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		guard let voteIDStr = req.parameters.get("voteID") else {
 			return req.redirect(to: .voteadmin)
 		}
-		
+        
 		// The single cast vote that should be deleted
-		if let singleVoteIDStr = req.parameters.get("userID")?.trimmingCharacters(in: .whitespacesAndNewlines),
+		if let userIdentifierbase64 = req.parameters.get("userID")?.trimmingCharacters(in: .whitespacesAndNewlines),
+           let userIdentifier = String(urlsafeBase64: userIdentifierbase64),
 		   let adminID = req.session.authenticated(AdminSession.self),
 		   let group = await groupsManager.groupForSession(adminID),
 		   let vote = await group.voteForID(voteIDStr)
@@ -158,11 +160,11 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
             
             /// Removes a vote by the constituent in the group given in the URL; if the user has been kicked out, it will be removed from the vote's list of verified constituents
             func miniReset<V: SupportedVoteType>(vote: V) async{
-                await vote.resetVoteForUser(singleVoteIDStr)
+                await vote.resetVoteForUser(userIdentifier)
                 
-                // If the user is no longer in the group, it'll be removed from the constituents list
-                if await group.previouslyJoinedUnverifiedConstituents.contains(singleVoteIDStr){
-                    let constituent = Constituent(identifier: singleVoteIDStr)
+                // If the user is no longer in the group, it'll be removed from the constituents list in the vote
+                if await group.previouslyJoinedUnverifiedConstituents.contains(userIdentifier){
+                    let constituent = Constituent(identifier: userIdentifier)
                     
                     let newConstitutents = await vote.constituents.filter{ const in
                         const != constituent

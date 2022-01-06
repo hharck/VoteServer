@@ -30,8 +30,8 @@
 		<h4><b>#(voteCount) of #(constituentsCount) constituents has voted</b></h4>
 		#extend("table"):
 			#export("tablerow"):
-				<td>#(row.constituent.identifier)</td>
-				<td>#(row.constituent.name)</td>
+				<td>#(row.constIdentifier)</td>
+				<td>#(row.constName)</td>
 	
 				<td align="center">
 				#if(row.hasVoted):
@@ -50,7 +50,7 @@
 				
 				<td align="center">
 				#if(row.hasVoted):
-					<form method="POST" action="/reset/#(voteID)/#(row.constituent.identifier)/" onsubmit="lockButton()">
+					<form method="POST" action="/reset/#(voteID)/#(row.constB64ID)/" onsubmit="lockButton()">
 					<input type="submit" class="inlinebutton red" value="Reset vote">
 					</form>
 				#endif
