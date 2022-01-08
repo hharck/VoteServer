@@ -11,7 +11,7 @@ struct GroupCreatorUI: UIManager{
 	private var usernames: String
 	private var allowsUnverifiedConstituents: Bool
 	
-    var buttons: [UIButton] = [.init(uri: .join, text: "Join", color: .green), .init(uri: .login, text: "Admin login", color: .green)]
+    var buttons: [UIButton] = [.join, .login]
 	
 	var title: String = "Create grouped vote"
 	var errorString: String? = nil

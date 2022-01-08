@@ -10,6 +10,6 @@ struct GroupJoinUI: UIManager{
 	var prefilledJF: String
 	var prefilledUserid: String
 	var errorString: String?
-    var buttons: [UIButton] = [.createGroup]
+    var buttons: [UIButton] = [.createGroup, .login]
 	static var template: String = "joingroup"
 }

@@ -40,13 +40,14 @@ actor Group{
 	var allowsUnverifiedConstituents: Bool
 	
     
+    /// All the constituents who are currently joined; primarily used for ensuring no constituent joins multiple times
 	var joinedConstituentsByID = [ConstituentIdentifier: Constituent]()
 	
 	/// A dictionary of unverified constituents who has been removed one way or another
 	var previouslyJoinedUnverifiedConstituents = Set<ConstituentIdentifier>()
 	
     /// The session id associated with each constituent
-	var constituentsSessionID: [UUID: Constituent] = [:]
+	var constituentsSessionID: [SessionID: Constituent] = [:]
 	
 	private let logger: Logger
 }
