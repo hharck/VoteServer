@@ -39,6 +39,8 @@ actor Group{
     /// If this group allows unverified constituents to join
 	var allowsUnverifiedConstituents: Bool
 	
+    /// Whether constituens should be able to reset their own votes
+    var constituentsCanSelfResetVotes: Bool = false
     
     /// All the constituents who are currently joined; primarily used for ensuring no constituent joins multiple times
 	var joinedConstituentsByID = [ConstituentIdentifier: Constituent]()

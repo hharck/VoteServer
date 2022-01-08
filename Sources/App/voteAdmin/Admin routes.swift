@@ -217,4 +217,48 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 			return (try? await LoginUI(prefilledJF: joinPhrase ?? "", errorString: error.asString()).encodeResponse(for: req)) ?? req.redirect(to: .login)
 		}
 	}
+    
+    
+    app.get("admin", "settings"){ req async throws -> Response in
+        guard
+            let sessionID = req.session.authenticated(AdminSession.self),
+            let group = await groupsManager.groupForSession(sessionID)
+        else {
+            return req.redirect(to: .create)
+        }
+        
+        return try await SettingsUI(for: group).encodeResponse(for: req)
+        
+    }
+}
+
+struct SettingsUI: UITableManager{
+    var title: String = "Settings"
+    var errorString: String? = nil
+    static var template: String = "settings"
+    var buttons: [UIButton] = [.backToVoteadmin]
+    
+    var rows: [Setting]
+    var tableHeaders: [String] = []
+    
+    init(for group: Group) async {
+        self.rows = [
+            Setting(1, "Allows unverified voters", state: await group.allowsUnverifiedConstituents),
+            Setting(2, "Constituents can self reset", state: await group.constituentsCanSelfResetVotes),
+//            Setting(3, "CSV Export mode", state: await group.CSVExportMode, mode: .list(["Default", "SMKid"])),
+            ]
+            .sorted(by: {$0.id < $1.id})
+    }
+    
+    struct Setting: Codable{
+        init(_ id: Int, _ name: String, state: Bool){
+            self.id = id
+            self.name = name
+            self.state = state
+        }
+        
+        var id: Int
+        var name: String
+        var state: Bool
+    }
 }
