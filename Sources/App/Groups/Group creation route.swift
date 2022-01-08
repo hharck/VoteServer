@@ -15,7 +15,7 @@ func groupCreationRoutes(_ app: Application, groupsManager: GroupsManager) throw
 			let session = AdminSession()
 			
 			// Saves the group
-			await groupsManager.createGroup(session: session.sessionID, name: try groupData.getGroupName(), constituents: try groupData.getConstituents(), pwdigest: try groupData.getHashedPassword(for: req), allowsUnVerified: groupData.allowsNonVerified())
+			await groupsManager.createGroup(session: session.sessionID, name: try groupData.getGroupName(), constituents: try groupData.getConstituents(), pwdigest: try groupData.getHashedPassword(for: req), allowsUnverified: groupData.allowsUnverified())
 			
 			//Registers the session with the client
 			req.session.authenticate(session)

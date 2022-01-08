@@ -98,7 +98,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		}
 		
 		if let status = try? req.content.decode(ChangeVerificationRequirementsData.self).getStatus(){
-			await group.setAllowsUnVerifiedVoters(status)
+			await group.setAllowsUnverifiedConstituents(status)
 		}
 		return try await ConstituentsListUI(group: group).encodeResponse(for: req)
 	

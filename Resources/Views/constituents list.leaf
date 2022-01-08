@@ -26,7 +26,7 @@
 			#endextend
 			<br>
 			<form method='post' onsubmit="lockButton()">
-			#if(allowsNonVerified):
+			#if(allowsUnverified):
 				<input type="hidden" name="setVerifiedRequirement" value="false">
 				<input type="submit" name="lockableButton" class="button red" value="Deactivate and kick non verified constituents">
 			#else:

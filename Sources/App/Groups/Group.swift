@@ -6,12 +6,12 @@ import Logging
 actor Group{
 	typealias VoteID = UUID
 	
-	internal init(adminSessionID: SessionID, name: String, constituents: Set<Constituent>, joinPhrase: JoinPhrase, allowsUnVerifiedVoters: Bool) {
+	internal init(adminSessionID: SessionID, name: String, constituents: Set<Constituent>, joinPhrase: JoinPhrase, allowsUnverifiedConstituents: Bool) {
 		self.adminSessionID = adminSessionID
 		self.name = name
 		self.verifiedConstituents = constituents
 		self.joinPhrase = joinPhrase
-		self.allowsUnVerifiedVoters = allowsUnVerifiedVoters
+		self.allowsUnverifiedConstituents = allowsUnverifiedConstituents
 		
 		self.logger = Logger(label: "Group \"\(name)\":\"\(joinPhrase)\"")
 	}
@@ -37,7 +37,7 @@ actor Group{
 	private(set) var unverifiedConstituents: Set<Constituent> = []
 	
     /// If this group allows unverified constituents to join
-	var allowsUnVerifiedVoters: Bool
+	var allowsUnverifiedConstituents: Bool
 	
     
 	var joinedConstituentsByID = [ConstituentIdentifier: Constituent]()
@@ -122,9 +122,9 @@ extension Group{
 	
     /// Changes whether unverified constituents are allowed in this group.
     ///  Handles rule changes and removes unverified constituents from all votes they haven't cast a vote in
-    /// - Parameter state: if false every constituent that isn't on the verified list will be removed else allowsUnVerifiedVoters will be set to true
-	func setAllowsUnVerifiedVoters(_ state: Bool) async{
-		guard state != self.allowsUnVerifiedVoters else {return}
+    /// - Parameter state: if false every constituent that isn't on the verified list will be removed else allowsUnverifiedConstituents will be set to true
+	func setAllowsUnverifiedConstituents(_ state: Bool) async{
+		guard state != self.allowsUnverifiedConstituents else {return}
 		if !state{
 			/// Adds all unverified constituens to previouslyJoinedUnverifiedConstituents
 			previouslyJoinedUnverifiedConstituents.formUnion(unverifiedConstituents.map(\.identifier))
@@ -161,7 +161,7 @@ extension Group{
 				verifiedConstituents.contains(value)
 			}
 		}
-		self.allowsUnVerifiedVoters = state
+		self.allowsUnverifiedConstituents = state
 		
 		logger.info("Access for unverified was set to: \(state)")
 	}
@@ -183,11 +183,11 @@ extension Group{
 		if !verifiedConstituents.contains(const){
 			if unverifiedConstituents.contains(const){
 				assertionFailure()
-				logger.warning("\"\(const.name ?? const.identifier)\" is stored in unVerifiedConstituents eventhough it's not joined")
+				logger.warning("\"\(const.name ?? const.identifier)\" is stored in unverifiedConstituents eventhough it's not joined")
                 return false
 			}
 			
-			guard allowsUnVerifiedVoters else {
+			guard allowsUnverifiedConstituents else {
 				assertionFailure("joinConstituent was called with an unverified constituent")
 				logger.warning("joinConstituent was called with an unverified constituent")
 				return false

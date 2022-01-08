@@ -1,11 +1,12 @@
-
 <table>
+    #if(count(tableHeaders) != 0):
 	<tr>
 	#for(head in tableHeaders):
 		<th>#(head)</th>
 	#endfor
 	</tr>
-			
+	#endif
+    
 	#for(row in rows):
 		<tr>
 		#import("tablerow")

@@ -100,7 +100,7 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager) async throws -> R
 			const = c
 		} else {
 			//Checks if verification is required
-			guard await group.allowsUnVerifiedVoters else {
+			guard await group.allowsUnverifiedConstituents else {
 				throw joinGroupErrors.userIsNotAllowedIn
 			}
 			

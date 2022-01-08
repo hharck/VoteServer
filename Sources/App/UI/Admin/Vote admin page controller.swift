@@ -66,7 +66,7 @@ struct VoteAdminUIController: UITableManager{
         
         let votes = await vote.votes
         let verified = await group.verifiedConstituents
-        let unVerified = await group.unverifiedConstituents
+        let unverified = await group.unverifiedConstituents
 
         //NB: Three seperate loops gives a worst case complexity of O(k + ln(k)*m+ln(k+m)*n), instead of nested loops which has a worst case scenario of O(k*(m*ln(k)+n*ln(k+m))
         votes.forEach { vote in
@@ -81,7 +81,7 @@ struct VoteAdminUIController: UITableManager{
             }
         }
         
-        unVerified.forEach { const in
+        unverified.forEach { const in
             if tempRows[const] == nil {
                 tempRows[const] = ConstituentAndStatus(constituent: const, hasVoted: false, isVerified: false)
             }

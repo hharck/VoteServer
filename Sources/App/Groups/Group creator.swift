@@ -5,7 +5,7 @@ struct GroupCreatorData: Codable{
 	var groupName: String
 	var usernames: String
 	private var adminpw: String
-	var allowsNonVerifiedConstituents: String?
+	var allowsUnverifiedConstituents: String?
 }
 
 extension GroupCreatorData{
@@ -77,8 +77,8 @@ extension GroupCreatorData{
 	}
 	
     /// Checks if the received data indicates that non verified constituents are allowed
-	func allowsNonVerified() -> Bool{
-		self.allowsNonVerifiedConstituents == "on"
+	func allowsUnverified() -> Bool{
+		self.allowsUnverifiedConstituents == "on"
 	}
 }
 

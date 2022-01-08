@@ -11,24 +11,24 @@ struct ConstituentsListUI: UITableManager{
 	var tableHeaders = ["User id", "Name", "Is verified", ""]
 	var rows: [ConstituentData] = []
 
-	var allowsNonVerified: Bool
+	var allowsUnverified: Bool
 	
 	static var template: String = "constituents list"
 	
 	init(group: Group) async{
 		let verified = await group.verifiedConstituents
-		let unVerified = await group.unverifiedConstituents
+		let unverified = await group.unverifiedConstituents
 		
-		self.allowsNonVerified = await group.allowsUnVerifiedVoters
+		self.allowsUnverified = await group.allowsUnverifiedConstituents
 		
-		assert(verified.isDisjoint(with: unVerified))
+		assert(verified.isDisjoint(with: unverified))
 		
 		for const in verified{
 			rows.append(await ConstituentData(constituent: const, group: group, isVerified: true))
 			
 		}
 		
-		for const in unVerified {
+		for const in unverified {
 			rows.append(await ConstituentData(constituent: const, group: group, isVerified: false))
 		}
 		

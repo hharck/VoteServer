@@ -63,9 +63,9 @@ extension GroupsManager{
 		}
 	}
 	
-	func createGroup(session: SessionID, name: String, constituents: Set<Constituent>, pwdigest: String, allowsUnVerified: Bool) async{
+	func createGroup(session: SessionID, name: String, constituents: Set<Constituent>, pwdigest: String, allowsUnverified: Bool) async{
 		let jf = createJoinPhrase()
-		let group = Group(adminSessionID: session, name: name, constituents: constituents, joinPhrase: jf, allowsUnVerifiedVoters: allowsUnVerified)
+		let group = Group(adminSessionID: session, name: name, constituents: constituents, joinPhrase: jf, allowsUnverifiedConstituents: allowsUnverified)
 		groupsBySession[group.adminSessionID] = group
 		groupsByPhrase[jf] = group
 		groupsByUUID[group.id] = group
