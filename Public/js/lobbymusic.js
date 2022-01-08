@@ -10,7 +10,7 @@ function playLobbyMusic(){
 			isPlaying = true;
 		}
 	} else {
-		audio = new Audio('/lobbymusic.wav');
+		audio = new Audio('/lobbymusic.mp3');
 		audio.loop=true;
 		audio.play();
 		isPlaying = true;

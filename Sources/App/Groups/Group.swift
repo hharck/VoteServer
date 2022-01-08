@@ -283,8 +283,9 @@ extension Group {
 		}
 		
 		statusForVote[voteID] = .closed
-		
-		logger.info("Vote of kind \"\(V.typeName)\" named \"\(Task{await vote.name})\" was added to the group")
+        
+        let vName = await vote.name
+        logger.info("Vote of kind \"\(V.typeName)\" named \"\(vName)\" was added to the group")
 	}
 	
 	/// The session used for "proving" membership of a group
