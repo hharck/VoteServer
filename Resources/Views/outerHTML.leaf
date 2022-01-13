@@ -27,7 +27,9 @@
 #if(errorString):
 <br><b><p style="color:red">#(errorString)</p></b>
 #endif
-<br>
+<br><br><hr>
+<b>"<i>Fundraising</i>"</b><br>
+Brug dette referral link og støt <i><u>SM-HACK</u><i>
 <br><a href="https://www.digitalocean.com/?refcode=2c4d16fe910d&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge"><img src="https://web-platforms.sfo2.digitaloceanspaces.com/WWW/Badge%202.svg" alt="DigitalOcean Referral Badge" /></a>
 </body>
 </html>

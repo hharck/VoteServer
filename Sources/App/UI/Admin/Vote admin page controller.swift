@@ -1,5 +1,5 @@
 import VoteKit
-
+/// A page showing the validators, options and constituents in a vote
 struct VoteAdminUIController: UITableManager{
 	let title: String
 	var errorString: String? = nil
@@ -9,12 +9,14 @@ struct VoteAdminUIController: UITableManager{
 	
 	var buttons: [UIButton] = [.backToVoteadmin, .reload]
 
+    /// The name of the vote
+    var voteName: String
+    
 	/// Show the "Get results" button
 	let showGetResults: Bool
-	/// Show the "Close vote" button
-	let showClose: Bool
-	/// Show the "Open vote" button
-	let showOpen: Bool
+
+	/// Show the  "Close vote" button or the "Open vote" and "Delete vote" buttons
+	let isOpen: Bool
 	
 	/// Number of votes cast
 	let voteCount: Int
@@ -52,10 +54,10 @@ struct VoteAdminUIController: UITableManager{
         
         // Sets the page title to the name of the vote, and conditionally adds " (closed)"
         self.title = await vote.name + (status == .open ? "" : " (closed)")
+        self.voteName = await vote.name
         
         self.showGetResults = voteCount >= 2 && status == .closed
-        self.showOpen = status != .open
-        self.showClose = status != .closed
+        self.isOpen = status == .open
         
         self.voteID = await vote.id.uuidString
         self.settings = await vote.particularValidators.map(\.name) + vote.genericValidators.map(\.name)

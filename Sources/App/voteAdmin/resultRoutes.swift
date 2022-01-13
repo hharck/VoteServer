@@ -125,13 +125,14 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		}
 		
         let csv: String
+        let csvConfiguration = await group.settings.csvConfiguration
         switch vote {
         case .alternative(let v):
-            csv = await v.toCSV()
+            csv = await v.toCSV(config: csvConfiguration)
         case .yesno(let v):
-            csv = await v.toCSV()
+            csv = await v.toCSV(config: csvConfiguration)
         case .simplemajority(let v):
-            csv = await v.toCSV()
+            csv = await v.toCSV(config: csvConfiguration)
         }
 		
 		return try await downloadResponse(for: req, content: csv, filename: "votes.csv")
@@ -150,7 +151,7 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 			return req.redirect(to: .results(voteIDStr))
 		}
 
-        let csv = await vote.constituents().toCSV()
+        let csv = await vote.constituents().toCSV(config: group.settings.csvConfiguration)
 
 		return try await downloadResponse(for: req, content: csv, filename: "constituents.csv")
 		

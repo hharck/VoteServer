@@ -21,7 +21,7 @@
 			
 			
 			<h2>Recount only with selected</h2>
-			<form method='post' onsubmit="lockButton()">
+			<form method='POST' onsubmit="lockButton()">
 					#for(option in enabledOptions):
 					<input type="checkbox" id="options[#(option.id)]" name="options[#(option.id)]" checked>
 					<label for="options[#(option.id)]">#(option.name)</label><br>

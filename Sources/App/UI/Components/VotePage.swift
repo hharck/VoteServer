@@ -14,9 +14,6 @@ protocol VotePage: UIManager{
 }
 
 extension VotePage{
-    /// Adds a button for going back to the plaza
-    var buttons: [UIButton] {[.backToPlaza]}
-    
     static func closed(title: String) async -> Self{
         var closedVPG = await self.init(title: title, vote: nil, errorString: "Vote is currently closed", persistentData: nil)
         closedVPG.hideUI = true

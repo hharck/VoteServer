@@ -6,7 +6,15 @@
 		
 		#export("body"):
 		<button class="button" id="playButton" onClick="playLobbyMusic()">Play lobbymusic</button>
-		
+        
+        #if(!isOpen):
+        <form method='POST' onsubmit="lockButton()">
+                <input type="hidden" name="voteToDelete" value="#(voteID)">
+                <input type="submit" name="lockableButton" class="button red" value="Delete vote" onclick="return confirm('Delete &quot;#(voteName)&quot; with #(voteCount) votes?')">
+        </form>
+        <br>
+        #endif
+        
 		#if(count(settings) != 0):
 		<h3>Special settings</h3>
 		<ul>
@@ -63,14 +71,14 @@
 			</form>
 		#endif
 
-		#if(showClose):
+		#if(isOpen):
 			<form method="POST">
 				<input type="hidden" name="statusChange" value="closed">
 				<input type="submit" class="button red" value="Close vote">
 			</form>
 		#endif
 
-		#if(showOpen):
+		#if(!isOpen):
 			<form method="POST">
 				<input type="hidden" name="statusChange" value="open">
 				<input type="submit" class="button green" value="Open vote">

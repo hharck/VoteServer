@@ -19,7 +19,7 @@ struct ConstituentsListUI: UITableManager{
 		let verified = await group.verifiedConstituents
 		let unverified = await group.unverifiedConstituents
 		
-		self.allowsUnverified = await group.allowsUnverifiedConstituents
+        self.allowsUnverified = await group.settings.allowsUnverifiedConstituents
 		
 		assert(verified.isDisjoint(with: unverified))
 		

@@ -5,9 +5,10 @@ struct AdminUIController: UITableManager{
 	var buttons: [UIButton] = [
 		.reload,
         .init(uri: .createvote(.alternative), text: "Create \"Alternative vote\"", color: .green),
-        .init(uri: .createvote(.simpleMajority), text: "Create \"Simple majority\"vote", color: .green),
-        .init(uri: .createvote(.yesNo), text: "Create \"Yes no\" vote", color: .green),
-		.init(uri: "/voteadmin/constituents/", text: "Manage constituents", color: .blue)
+        .init(uri: .createvote(.simpleMajority), text: "Create \"Simple majority vote\"", color: .green),
+        .init(uri: .createvote(.yesNo), text: "Create \"Yes/no vote\"", color: .green),
+        .init(uri: "/admin/settings/", text: "Settings", color: .blue),
+		.init(uri: "/voteadmin/constituents/", text: "Manage constituents", color: .blue),
 	]
 	
 	var rows = [SimplifiedVoteData]()

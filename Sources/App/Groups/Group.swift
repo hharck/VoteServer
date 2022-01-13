@@ -11,8 +11,7 @@ actor Group{
 		self.name = name
 		self.verifiedConstituents = constituents
 		self.joinPhrase = joinPhrase
-		self.allowsUnverifiedConstituents = allowsUnverifiedConstituents
-		
+        self.settings = GroupSettings(allowsUnverifiedConstituents: allowsUnverifiedConstituents)
 		self.logger = Logger(label: "Group \"\(name)\":\"\(joinPhrase)\"")
 	}
 	
@@ -35,13 +34,7 @@ actor Group{
 	
 	private(set) var verifiedConstituents: Set<Constituent>
 	private(set) var unverifiedConstituents: Set<Constituent> = []
-	
-    /// If this group allows unverified constituents to join
-	var allowsUnverifiedConstituents: Bool
-	
-    /// Whether constituens should be able to reset their own votes
-    var constituentsCanSelfResetVotes: Bool = false
-    
+
     /// All the constituents who are currently joined; primarily used for ensuring no constituent joins multiple times
 	var joinedConstituentsByID = [ConstituentIdentifier: Constituent]()
 	
@@ -52,6 +45,32 @@ actor Group{
 	var constituentsSessionID: [SessionID: Constituent] = [:]
 	
 	private let logger: Logger
+    
+    var settings: GroupSettings
+}
+
+//MARK: Change settings
+extension Group{
+    
+    /// Replaces the current settings with the ones passed to this function
+    ///
+    /// A single GroupSettings object isn't passed around, due to the risk of GroupSettings objects retrieved from multiple threads may come in in the wrong order, so multiple change requests at once, may only keep a single version without any merging.
+    func setSettings(allowsUnverifiedConstituents: Bool? = nil, constituentsCanSelfResetVotes: Bool? = nil, csvConfiguration: CSVConfiguration? = nil) async {
+        if let allowsUnverifiedConstituents = allowsUnverifiedConstituents {
+            if self.settings.allowsUnverifiedConstituents != allowsUnverifiedConstituents {
+                await self.setAllowsUnverifiedConstituents(allowsUnverifiedConstituents)
+            }
+            self.settings.allowsUnverifiedConstituents = allowsUnverifiedConstituents
+        }
+        
+        if let constituentsCanSelfResetVotes = constituentsCanSelfResetVotes{
+            self.settings.constituentsCanSelfResetVotes = constituentsCanSelfResetVotes
+        }
+        
+        if let csvConfiguration = csvConfiguration {
+            self.settings.csvConfiguration = csvConfiguration
+        }
+    }
 }
 
 
@@ -126,8 +145,8 @@ extension Group{
     /// Changes whether unverified constituents are allowed in this group.
     ///  Handles rule changes and removes unverified constituents from all votes they haven't cast a vote in
     /// - Parameter state: if false every constituent that isn't on the verified list will be removed else allowsUnverifiedConstituents will be set to true
-	func setAllowsUnverifiedConstituents(_ state: Bool) async{
-		guard state != self.allowsUnverifiedConstituents else {return}
+	private func setAllowsUnverifiedConstituents(_ state: Bool) async{
+        guard state != self.settings.allowsUnverifiedConstituents else {return}
 		if !state{
 			/// Adds all unverified constituens to previouslyJoinedUnverifiedConstituents
 			previouslyJoinedUnverifiedConstituents.formUnion(unverifiedConstituents.map(\.identifier))
@@ -164,7 +183,7 @@ extension Group{
 				verifiedConstituents.contains(value)
 			}
 		}
-		self.allowsUnverifiedConstituents = state
+        self.settings.allowsUnverifiedConstituents = state
 		
 		logger.info("Access for unverified was set to: \(state)")
 	}
@@ -190,7 +209,7 @@ extension Group{
                 return false
 			}
 			
-			guard allowsUnverifiedConstituents else {
+            guard settings.allowsUnverifiedConstituents else {
 				assertionFailure("joinConstituent was called with an unverified constituent")
 				logger.warning("joinConstituent was called with an unverified constituent")
 				return false
@@ -290,7 +309,50 @@ extension Group {
         let vName = await vote.name
         logger.info("Vote of kind \"\(V.typeName)\" named \"\(vName)\" was added to the group")
 	}
+    
+    /// Removes a vote (election) from this Group
+    func removeVoteFromGroup(vote: VoteTypes) async {
+        let id = await vote.id()
+
+        self.statusForVote[id] = nil
+
+        switch vote.asStub(){
+        case .alternative:
+            AltVotesByID[id] = nil
+        case .simpleMajority:
+            SimMajVotesByID[id] = nil
+        case .yesNo:
+            YNVotesByID[id] = nil
+        }
+    }
 	
+    func singleVoteReset(vote: VoteTypes, constituentID: ConstituentIdentifier) async{
+        
+        switch vote {
+        case .alternative(let v):
+            await singleVoteReset(vote: v, constituentID: constituentID)
+        case .yesno(let v):
+            await singleVoteReset(vote: v, constituentID: constituentID)
+        case .simplemajority(let v):
+            await singleVoteReset(vote: v, constituentID: constituentID)
+        }
+    }
+        
+    
+    /// Removes a vote by the constituent in the group given in the URL; if the user has been kicked out, it will be removed from the vote's list of verified constituents
+    func singleVoteReset<V: SupportedVoteType>(vote: V, constituentID: ConstituentIdentifier) async{
+        await vote.resetVoteForUser(constituentID)
+        
+        // If the user is no longer in the group, it'll be removed from the constituents list in the vote
+        if self.previouslyJoinedUnverifiedConstituents.contains(constituentID){
+            let newConstitutents = await vote.constituents.filter{ const in
+                const.identifier != constituentID
+            }
+            await vote.setConstituents(newConstitutents)
+        }
+    }
+    
+  
 	/// The session used for "proving" membership of a group
 	var groupSession: GroupSession{
 		return .init(sessionID: self.id)

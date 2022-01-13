@@ -1,6 +1,7 @@
 struct UIButton: Codable{
 	internal init(uri: String, text: String, color: ButtonColors, lockable: Bool = false, downloadable: Bool = false) {
-		self.uri = uri
+        assert(uri.last == "/" || uri == "", "Button URI without trailing slash")
+        self.uri = uri
 		self.text = text
 		self.color = color
 		self.lockable = lockable
