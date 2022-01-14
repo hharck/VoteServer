@@ -58,7 +58,7 @@
 				
 				<td align="center">
 				#if(row.hasVoted):
-					<form method="POST" action="/reset/#(voteID)/#(row.constB64ID)/" onsubmit="lockButton()">
+					<form method="POST" action="/voteadmin/reset/#(voteID)/#(row.constB64ID)/" onsubmit="lockButton()">
 					<input type="submit" class="inlinebutton red" value="Reset vote">
 					</form>
 				#endif

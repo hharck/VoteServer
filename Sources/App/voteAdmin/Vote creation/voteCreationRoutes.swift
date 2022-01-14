@@ -12,7 +12,7 @@ func voteCreationRoutes(_ app: Application, groupsManager: GroupsManager) throws
         }
         
         guard let parameter = req.parameters.get("type"), let type = VoteTypes.StringStub(rawValue: parameter) else {
-            return req.redirect(to: .voteadmin)
+            return req.redirect(to: .admin)
         }
         
         switch type {
@@ -33,7 +33,7 @@ func voteCreationRoutes(_ app: Application, groupsManager: GroupsManager) throws
             return req.redirect(to: .create)
         }
         guard let parameter = req.parameters.get("type"), let type = VoteTypes.StringStub(rawValue: parameter) else {
-            return req.redirect(to: .voteadmin)
+            return req.redirect(to: .admin)
         }
         
         switch type {
@@ -83,7 +83,7 @@ fileprivate func treat<V: SupportedVoteType>(req: Request, _ type: V.Type, group
             await group.addVoteToGroup(vote: vote)
         }
 
-        return req.redirect(to: .voteadmin)
+        return req.redirect(to: .admin)
 
     } catch {
         return try await showUI(for: req, errorString: error.asString(), persistentData: voteHTTPData)

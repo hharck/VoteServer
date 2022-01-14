@@ -3,7 +3,7 @@ import VoteKit
 import Foundation
 
 func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
-	app.get("voteadmin") { req async throws -> Response in
+	app.get("admin") { req async throws -> Response in
 		//List of votes
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
@@ -14,7 +14,11 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		
 		return try await AdminUIController(for: group).encodeResponse(for: req)
 	}
-	
+    
+    app.get("voteadmin") { req async throws -> Response in
+        return req.redirect(to: .admin)
+    }
+    
 	// Changes the open/closed status of the vote passed as ":voteID"
 	app.get("voteadmin", "open", ":voteID") { req async throws -> Response in
 		await setStatus(req: req, status: .open)
@@ -32,13 +36,13 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		{
             await group.setStatusFor(await vote.id(), to: status)
 		}
-		return req.redirect(to: .voteadmin)
+		return req.redirect(to: .admin)
 	}
 	
 	// Shows an overview for a specific vote, with information such as who has voted and who has not
 	app.get("voteadmin", ":voteID") { req async throws -> Response in
 		guard let voteIDStr = req.parameters.get("voteID") else {
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 		}
 		
 		guard
@@ -46,7 +50,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 			let group = await groupsManager.groupForSession(sessionID),
 			let vote = await group.voteForID(voteIDStr)
 		else {
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 		}
 		
         return try await VoteAdminUIController(vote: vote, group: group).encodeResponse(for: req)
@@ -58,7 +62,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
             let voteIDStr = req.parameters.get("voteID"),
             let voteID = UUID(voteIDStr)
         else {
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 		}
 		
 		guard
@@ -66,13 +70,13 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 			let group = await groupsManager.groupForSession(adminID),
 			let vote = await group.voteForID(voteID)
 		else {
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 		}
 		
         // Checks requests if they ask for deletion
         if let deleteID = (try? req.content.decode([String:String].self))?["voteToDelete"], voteIDStr == deleteID, await group.statusFor(voteID) == .closed {
             await group.removeVoteFromGroup(vote: vote)
-            return req.redirect(to: .voteadmin)
+            return req.redirect(to: .admin)
         }
         
         // Checks if any status change is requested
@@ -91,18 +95,18 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 	}
 	
 	// Shows a list of constituents and related settings
-	app.get("voteadmin", "constituents") {req async throws -> Response in
+	app.get("admin", "constituents") {req async throws -> Response in
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(sessionID)
 		else {
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 		}
 		
 		return try await ConstituentsListUI(group: group).encodeResponse(for: req)
 	}
 	
-	app.post("voteadmin", "constituents") {req async throws -> Response in
+	app.post("admin", "constituents") {req async throws -> Response in
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(sessionID)
@@ -130,7 +134,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		}
 	}
 	
-	app.get("voteadmin", "constituents", "downloadcsv") {req async throws -> Response in
+	app.get("admin", "constituents", "downloadcsv") {req async throws -> Response in
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(sessionID)
@@ -144,7 +148,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 	}
 
 	
-	app.post("voteadmin", "resetaccess", ":userID"){req async throws -> Response in
+	app.post("admin", "resetaccess", ":userID"){req async throws -> Response in
 		if let userIdentifierbase64 = req.parameters.get("userID")?.trimmingCharacters(in: .whitespacesAndNewlines),
            let userIdentifier = String(urlsafeBase64: userIdentifierbase64),
 		   let sessionID = req.session.authenticated(AdminSession.self),
@@ -158,10 +162,10 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 
 	}
 	
-	app.post("reset", ":voteID", ":userID") { req async -> Response in
+	app.post("voteadmin", "reset", ":voteID", ":userID") { req async -> Response in
 		// Retrieves the vote id from the uri
 		guard let voteIDStr = req.parameters.get("voteID") else {
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 		}
         
 		// The single cast vote that should be deleted
@@ -204,7 +208,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 			
 			//Registers the session with the client
 			req.session.authenticate(session)
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 			
 		} catch {
             let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
@@ -250,7 +254,7 @@ struct SettingsUI: UITableManager{
     var title: String = "Settings"
     var errorString: String? = nil
     static var template: String = "settings"
-    var buttons: [UIButton] = [.backToVoteadmin]
+    var buttons: [UIButton] = [.backToAdmin]
     
     var rows: [Setting]
     var tableHeaders: [String] = []

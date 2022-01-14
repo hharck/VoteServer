@@ -4,16 +4,16 @@ import VoteKit
 
 func ResultRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 	app.get("results"){ req in
-		req.redirect(to: .voteadmin)
+		req.redirect(to: .admin)
 	}
 
     app.get("results", ":voteID"){ req in
-        req.redirect(to: .voteadmin)
+        req.redirect(to: .admin)
     }
 
 	app.post("results", ":voteID"){ req async throws -> Response in
 		guard let voteIDStr = req.parameters.get("voteID") else {
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 		}
 
 		guard
@@ -21,7 +21,7 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 			let group = await groupsManager.groupForSession(sessionID),
 			let vote = await  group.voteForID(voteIDStr)
 		else {
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 		}
     
         guard let response = try? await getResults(req: req, group: group, vote: vote).encodeResponse(for: req) else {
@@ -112,7 +112,7 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 	//MARK: Export CSV
 	app.get("results", ":voteID", "downloadcsv"){ req async throws -> Response in
 		guard let voteIDStr = req.parameters.get("voteID") else {
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 		}
 
 
@@ -140,7 +140,7 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 	
 	app.get("results", ":voteID", "downloadconst"){ req async throws -> Response in
 		guard let voteIDStr = req.parameters.get("voteID") else {
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 		}
 		
 		guard

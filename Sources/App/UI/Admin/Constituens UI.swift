@@ -3,9 +3,9 @@ struct ConstituentsListUI: UITableManager{
 	var title: String = "Constituents"
 	var errorString: String? = nil
 	
-	var buttons: [UIButton] = [.backToVoteadmin,
+	var buttons: [UIButton] = [.backToAdmin,
 							   .reload,
-							   .init(uri: "/voteadmin/constituents/downloadcsv/", text: "Download constituents as CSV", color: .blue, downloadable: true)
+							   .init(uri: "/admin/constituents/downloadcsv/", text: "Download constituents as CSV", color: .blue, downloadable: true)
 	]
 	
 	var tableHeaders = ["User id", "Name", "Is verified", ""]

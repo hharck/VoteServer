@@ -4,9 +4,9 @@ import Vapor
 enum redirectionPaths{
 	case create
     case createvote(VoteTypes.StringStub)
-	case results(String)
 	case voteadmin(String?)
-	static var voteadmin: Self {.voteadmin(nil)}
+    case results(String)
+    case admin
 	case join
 	case plaza
 	case constituents
@@ -26,12 +26,14 @@ enum redirectionPaths{
 			}
 		case .results(let id):
 			return "results/\(id)"
-		case .join:
+        case .admin:
+            return "admin"
+        case .join:
 			return "join"
 		case .plaza:
 			return "plaza"
 		case .constituents:
-			return "voteadmin/constituents"
+			return "admin/constituents"
 		case .login:
 			return "login"
 		}

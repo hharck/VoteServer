@@ -23,6 +23,6 @@ func groupCreationRoutes(_ app: Application, groupsManager: GroupsManager) throw
 			return (try? await GroupCreatorUI(errorString: error.asString(), groupData).encodeResponse(for: req)) ?? req.redirect(to: .create)
 		}
 		
-		return req.redirect(to: .voteadmin)
+		return req.redirect(to: .admin)
 	}
 }

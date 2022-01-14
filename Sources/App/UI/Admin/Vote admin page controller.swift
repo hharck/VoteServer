@@ -7,7 +7,7 @@ struct VoteAdminUIController: UITableManager{
 	var tableHeaders = ["User id", "Name", "Has voted", "Verified", ""]
 	let rows: [ConstituentAndStatus]
 	
-	var buttons: [UIButton] = [.backToVoteadmin, .reload]
+	var buttons: [UIButton] = [.backToAdmin, .reload]
 
     /// The name of the vote
     var voteName: String

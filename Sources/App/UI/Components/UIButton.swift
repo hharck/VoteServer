@@ -25,7 +25,7 @@ struct UIButton: Codable{
 	
 	//MARK: Default buttons
 	static var reload: UIButton = UIButton(uri: "", text: "Reload page", color: .blue)
-	static var backToVoteadmin: UIButton = UIButton(uri: .voteadmin, text: "⬅︎Back to overview", color: .blue)
+	static var backToAdmin: UIButton = UIButton(uri: .admin, text: "⬅︎Back to overview", color: .blue)
 	
 	static var backToPlaza: UIButton = 	UIButton(uri: .plaza, text: "Back to plaza", color: .blue)
 	
