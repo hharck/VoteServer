@@ -66,26 +66,19 @@ fileprivate func treat<V: SupportedVoteType>(req: Request, _ type: V.Type, group
         let title = try voteHTTPData.getTitle()
         let partValidators = voteHTTPData.getPartValidators()
         let genValidators = voteHTTPData.getGenValidators()
-
+        let options = try voteHTTPData.getOptions()
 
         // Initialises the vote for the given type
         switch V.enumCase{
         case .alternative:
-            let options = try voteHTTPData.getOptions(minimumRequired: 2)
             let tieBreakers: [TieBreaker] = [.dropAll, .removeRandom, .keepRandom]
             
             let vote = AlternativeVote(name: title, options: options, constituents: await constituents, tieBreakingRules: tieBreakers, genericValidators: genValidators as! [GenericValidator<AlternativeVote.voteType>], particularValidators: partValidators as! [AlternativeVote.particularValidator])
             await group.addVoteToGroup(vote: vote)
-            
-            
         case .yesNo:
-            let options = try voteHTTPData.getOptions(minimumRequired: 1)
-            
             let vote = yesNoVote(name: title, options: options, constituents: await constituents, genericValidators: genValidators as! [GenericValidator<yesNoVote.yesNoVoteType>], particularValidators: partValidators as! [yesNoVote.particularValidator])
             await group.addVoteToGroup(vote: vote)
         case .simpleMajority:
-            let options = try voteHTTPData.getOptions(minimumRequired: 2)
-            
             let vote = SimpleMajority(name: title, options: options, constituents: await constituents, genericValidators: genValidators as! [GenericValidator<SimpleMajority.SimpleMajorityVote>], particularValidators: partValidators as! [SimpleMajority.particularValidator])
             await group.addVoteToGroup(vote: vote)
         }

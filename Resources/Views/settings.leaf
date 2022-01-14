@@ -1,6 +1,6 @@
 #extend("outerHTML"):
         #export("extraHead"):
-                <script src="/js/settings.js"></script>
+<script src="/js/settings.js"></script>
         #endexport
 
         #export("body"):

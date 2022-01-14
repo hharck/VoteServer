@@ -107,7 +107,7 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager) async throws -> R
 		}
         
         // Checks that the user id does not contain a comma or a semicolon
-        guard !userID.contains(","), !userID.contains(";") else {
+        guard !userID.contains(","), !userID.contains(";"), userID.count <= maxNameLength else {
             throw joinGroupErrors.userIDIsInvalid
         }
 		
