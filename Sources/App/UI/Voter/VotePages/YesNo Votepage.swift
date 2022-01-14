@@ -2,8 +2,8 @@ import Foundation
 import VoteKit
 struct YesNoVotePage: VotePage, UITableManager{
     var title: String
-    var buttons: [UIButton] = [.backToPlaza]
     var errorString: String? = nil
+    var buttons: [UIButton] = [.backToPlaza]
     static var template: String = "VPyesno"
     
     var rows: [Row] = []
