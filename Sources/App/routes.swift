@@ -2,9 +2,7 @@ import Vapor
 import AltVoteKit
 
 /// Calls all route creaters, which inturn registers and handles the available paths in the app
-func routes(_ app: Application) throws {
-	let groupsManager = GroupsManager()
-
+func routes(_ app: Application, groupsManager: GroupsManager) throws {
 	app.get { req in
 		req.redirect(to: .create)
 	}

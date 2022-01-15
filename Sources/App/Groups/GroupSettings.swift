@@ -1,6 +1,6 @@
 import VoteKit
 
-struct GroupSettings: Codable{
+struct GroupSettings: Codable, Sendable{
     internal init(allowsUnverifiedConstituents: Bool, constituentsCanSelfResetVotes: Bool = false, csvConfiguration: CSVConfiguration = .defaultConfiguration()) {
         self.allowsUnverifiedConstituents = allowsUnverifiedConstituents
         self.constituentsCanSelfResetVotes = constituentsCanSelfResetVotes
