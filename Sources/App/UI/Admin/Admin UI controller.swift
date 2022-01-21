@@ -10,9 +10,11 @@ struct AdminUIController: UITableManager{
         .init(uri: "/admin/settings/", text: "Settings", color: .blue),
 		.init(uri: "/admin/constituents/", text: "Manage constituents", color: .blue),
 	]
-	
+
+	/// A list of votes
 	var rows = [SimplifiedVoteData]()
 	var tableHeaders = [String]()
+	var tableClass: String = "table"
 	
 	var groupJoinLink: String
 	
@@ -43,7 +45,7 @@ struct AdminUIController: UITableManager{
 				status = .closed
 			}
 			
-            await rows.append(SimplifiedVoteData(name: vote.name, voteType: V.typeName, isOpen: status == .open, totalVotesCast: await vote.votes.count, voteID: await vote.id.uuidString))
+			await rows.append(SimplifiedVoteData(name: vote.name, voteType: V.typeName, isOpen: status == .open, totalVotesCast: await vote.votes.count, voteID: await vote.id.uuidString, rowClass:  status == .open ? "success" : "danger"))
 			
 		}
 		
@@ -62,4 +64,6 @@ struct SimplifiedVoteData: Codable{
 	let isOpen: Bool
 	let totalVotesCast: Int
 	let voteID: String
+
+	let rowClass: String?
 }

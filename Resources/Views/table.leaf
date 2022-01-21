@@ -1,4 +1,4 @@
-<table>
+<table class="#(tableClass)">
     #if(count(tableHeaders) != 0):
 	<tr>
 	#for(head in tableHeaders):
@@ -8,7 +8,7 @@
 	#endif
     
 	#for(row in rows):
-		<tr>
+		<tr class="#(rowClass)">
 		#import("tablerow")
 		</tr>
 	#endfor

@@ -10,6 +10,7 @@ struct ConstituentsListUI: UITableManager{
 	
 	var tableHeaders = ["User id", "Name", "Is verified", ""]
 	var rows: [ConstituentData] = []
+	var tableClass: String = "table"
 
 	var allowsUnverified: Bool
 	
@@ -42,6 +43,9 @@ struct ConstituentsListUI: UITableManager{
             self.userID64 = constituent.identifier.asURLSafeB64() ?? ""
 			self.isVerified = isVerified
 			self.hasJoined = await group.constituentHasJoined(constituent.identifier)
+			
+			self.rowClass = isVerified ? nil : "warning"
+
 		}
 		
 		var userID: String
@@ -49,5 +53,6 @@ struct ConstituentsListUI: UITableManager{
 		var name: String
 		var isVerified: Bool
 		var hasJoined: Bool
+		var rowClass: String?
 	}
 }
