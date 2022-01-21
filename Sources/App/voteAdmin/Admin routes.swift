@@ -2,7 +2,7 @@ import Vapor
 import VoteKit
 import Foundation
 
-func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
+func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 	app.get("admin") { req async throws -> Response in
 		//List of votes
 		guard

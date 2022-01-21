@@ -7,10 +7,11 @@ func routes(_ app: Application, groupsManager: GroupsManager) throws {
 		req.redirect(to: .create)
 	}
 
-	try groupCreationRoutes(app, groupsManager: groupsManager)
-	try voteCreationRoutes(app, groupsManager: groupsManager)
-	try votingRoutes(app, groupsManager: groupsManager)
-	try ResultRoutes(app, groupsManager: groupsManager)
-	try adminRoutes(app, groupsManager: groupsManager)
-	try groupJoinRoutes(app, groupsManager: groupsManager)
+	groupCreationRoutes(app, groupsManager: groupsManager)
+	voteCreationRoutes(app, groupsManager: groupsManager)
+	votingRoutes(app, groupsManager: groupsManager)
+    ResultRoutes(app, groupsManager: groupsManager)
+    adminRoutes(app, groupsManager: groupsManager)
+    groupJoinRoutes(app, groupsManager: groupsManager)
+    APIRoutes(app, routesGroup: app.grouped("api"), groupsManager: groupsManager)
 }

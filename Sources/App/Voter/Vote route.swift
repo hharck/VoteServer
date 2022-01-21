@@ -3,7 +3,7 @@ import Vapor
 import VoteKit
 import AltVoteKit
 
-func votingRoutes(_ app: Application, groupsManager: GroupsManager) throws {
+func votingRoutes(_ app: Application, groupsManager: GroupsManager) {
     
     /// Shows the voting ui for the supplied voteID
     app.get("vote", ":voteID") { req async throws -> Response in

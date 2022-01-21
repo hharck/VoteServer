@@ -11,7 +11,8 @@ enum redirectionPaths{
 	case plaza
 	case constituents
 	case login
-	
+    case API(APIPath: APIPaths)
+    
 	func stringValue() -> String{
 		switch self {
 		case .create:
@@ -36,6 +37,8 @@ enum redirectionPaths{
 			return "admin/constituents"
 		case .login:
 			return "login"
+        case .API(let APIPath):
+            return "api/" + APIPath.relativeStringValue()
 		}
 	}
 }
@@ -54,4 +57,22 @@ extension redirectionPaths: AsyncResponseEncodable, ResponseEncodable{
 	func encodeResponse(for req: Request) -> EventLoopFuture<Response> {
 		req.eventLoop.makeSucceededFuture(req.redirect(to: self))
 	}
+}
+
+
+enum APIPaths{
+    case join, getdata, getvote, postvote
+    
+    func relativeStringValue() -> String{
+        switch self {
+        case .join:
+            return "join"
+        case .getdata:
+            return "getdata"
+        case .getvote:
+            return "getvote"
+        case .postvote:
+            return "postvote"
+        }
+    }
 }

@@ -148,6 +148,17 @@ extension GroupsManager{
 		
 		return (group, constituent)
 	}
+    
+    func groupAndVoterForAPI(req: Request) async -> (Group, Constituent)?{
+        guard
+            let groupID = req.session.authenticated(GroupSession.self),
+            let constID = req.session.authenticated(APISession.self),
+            let group = self.groupForGroupID(groupID),
+            let constituent = await group.constituentsSessionID[constID]
+        else {return nil}
+        
+        return (group, constituent)
+    }
 }
 
 
