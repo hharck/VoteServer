@@ -23,8 +23,7 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
         return data
     }
     
-    /// Returns full information (metadata, options, validators) regarding a vote only if the client can vote at the moment
-	///
+    /// Returns full information (metadata, options, validators) regarding a vote only if the client are allowed to vote at the moment
     API.get("getvote", ":voteid") { req async throws -> ExtendedVoteData in
       
         
