@@ -47,7 +47,7 @@ extension VoteCreationReceivedData{
 		}
 	}
 	
-    func getOptions(minimumRequired: Int) throws -> [VoteOption]{
+    func getOptions() throws -> [VoteOption]{
 		let options = self.options
 			.split(separator: ",")
 			.compactMap{ opt -> String? in
@@ -59,10 +59,15 @@ extension VoteCreationReceivedData{
 		guard options.nonUniques.isEmpty else{
 			throw voteCreationError.optionAddedMultipleTimes
 		}
+        
+        guard options.count >= V.minimumRequiredOptions else {
+            throw voteCreationError.lessThanNOptions(V.minimumRequiredOptions)
+        }
 		
-		guard options.count >= minimumRequired else {
-			throw voteCreationError.lessThanNOptions(minimumRequired)
-		}
+        // Checks that no option violates the maxNameLength constant
+        guard options.contains(where: {$0.count <= maxNameLength}) else {
+            throw voteCreationError.invalidOptionName
+        }
 		
 		return options.map{
 			VoteOption($0)}
@@ -70,7 +75,7 @@ extension VoteCreationReceivedData{
 	
 	func getTitle() throws -> String{
 		let title = nameOfVote.trimmingCharacters(in: .whitespacesAndNewlines)
-		guard !title.isEmpty else {
+        guard !title.isEmpty, title.count <= maxNameLength else {
 			throw voteCreationError.invalidTitle
 		}
 		return title
@@ -81,7 +86,8 @@ extension VoteCreationReceivedData{
 		case invalidTitle
 		case optionAddedMultipleTimes
 		case lessThanNOptions(Int)
-		
+		case invalidOptionName
+        
 		func errorString() -> String{
 			
 			switch self {
@@ -91,6 +97,8 @@ extension VoteCreationReceivedData{
 				return "An option has been added multiple times"
 			case .lessThanNOptions(let n):
 				return "A vote needs atleast \(n) options"
+            case .invalidOptionName:
+                return "At least one of the options has an invalid name"
 			}
 		}
 		

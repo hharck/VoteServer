@@ -12,7 +12,7 @@ func voteCreationRoutes(_ app: Application, groupsManager: GroupsManager) throws
         }
         
         guard let parameter = req.parameters.get("type"), let type = VoteTypes.StringStub(rawValue: parameter) else {
-            return req.redirect(to: .voteadmin)
+            return req.redirect(to: .admin)
         }
         
         switch type {
@@ -33,7 +33,7 @@ func voteCreationRoutes(_ app: Application, groupsManager: GroupsManager) throws
             return req.redirect(to: .create)
         }
         guard let parameter = req.parameters.get("type"), let type = VoteTypes.StringStub(rawValue: parameter) else {
-            return req.redirect(to: .voteadmin)
+            return req.redirect(to: .admin)
         }
         
         switch type {
@@ -66,31 +66,24 @@ fileprivate func treat<V: SupportedVoteType>(req: Request, _ type: V.Type, group
         let title = try voteHTTPData.getTitle()
         let partValidators = voteHTTPData.getPartValidators()
         let genValidators = voteHTTPData.getGenValidators()
-
+        let options = try voteHTTPData.getOptions()
 
         // Initialises the vote for the given type
         switch V.enumCase{
         case .alternative:
-            let options = try voteHTTPData.getOptions(minimumRequired: 2)
             let tieBreakers: [TieBreaker] = [.dropAll, .removeRandom, .keepRandom]
             
             let vote = AlternativeVote(name: title, options: options, constituents: await constituents, tieBreakingRules: tieBreakers, genericValidators: genValidators as! [GenericValidator<AlternativeVote.voteType>], particularValidators: partValidators as! [AlternativeVote.particularValidator])
             await group.addVoteToGroup(vote: vote)
-            
-            
         case .yesNo:
-            let options = try voteHTTPData.getOptions(minimumRequired: 1)
-            
             let vote = yesNoVote(name: title, options: options, constituents: await constituents, genericValidators: genValidators as! [GenericValidator<yesNoVote.yesNoVoteType>], particularValidators: partValidators as! [yesNoVote.particularValidator])
             await group.addVoteToGroup(vote: vote)
         case .simpleMajority:
-            let options = try voteHTTPData.getOptions(minimumRequired: 2)
-            
             let vote = SimpleMajority(name: title, options: options, constituents: await constituents, genericValidators: genValidators as! [GenericValidator<SimpleMajority.SimpleMajorityVote>], particularValidators: partValidators as! [SimpleMajority.particularValidator])
             await group.addVoteToGroup(vote: vote)
         }
 
-        return req.redirect(to: .voteadmin)
+        return req.redirect(to: .admin)
 
     } catch {
         return try await showUI(for: req, errorString: error.asString(), persistentData: voteHTTPData)

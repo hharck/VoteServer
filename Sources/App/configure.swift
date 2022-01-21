@@ -17,6 +17,14 @@ public func configure(_ app: Application) throws {
 	//Defines password hashing function
 	app.passwords.use(.bcrypt)
 	
+    
+    let groupsManager = GroupsManager()
+    // Register commands
+    app.commands.use(GroupsCommand(groupsManager: groupsManager), as: "groups")
+
     // register routes
-    try routes(app)
+    try routes(app, groupsManager: groupsManager)
 }
+
+let maxNameLength: Int = 100
+let joinPhraseLength: Int = 6

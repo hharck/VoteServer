@@ -11,7 +11,7 @@ struct GroupCreatorData: Codable{
 extension GroupCreatorData{
 	func getGroupName() throws -> String{
 		let trim = groupName.trimmingCharacters(in: .whitespacesAndNewlines)
-		guard !trim.isEmpty else {
+        guard !trim.isEmpty && trim.count <= maxNameLength else {
 			throw GroupCreationError.invalidGroupname
 		}
 		
@@ -47,7 +47,7 @@ extension GroupCreatorData{
 				return nil
 			} else if s.count == 1 {
 				let id = s.first!.trimmingCharacters(in: .whitespacesAndNewlines)
-				guard !id.isEmpty else {
+                guard !id.isEmpty, id.count <= maxNameLength else {
 					throw GroupCreationError.invalidUsername
 				}
 				return Constituent(identifier: id.lowercased())
@@ -55,7 +55,7 @@ extension GroupCreatorData{
 				let id = s.first!.trimmingCharacters(in: .whitespacesAndNewlines)
 				
 				let name = s.last!.trimmingCharacters(in: .whitespacesAndNewlines)
-				guard !id.isEmpty, !name.isEmpty else {
+                guard !id.isEmpty, !name.isEmpty, id.count <= maxNameLength, name.count <= maxNameLength else {
 					throw GroupCreationError.invalidUsername
 				}
 				

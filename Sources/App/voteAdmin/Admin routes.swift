@@ -1,8 +1,9 @@
 import Vapor
 import VoteKit
+import Foundation
 
 func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
-	app.get("voteadmin") { req async throws -> Response in
+	app.get("admin") { req async throws -> Response in
 		//List of votes
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
@@ -13,7 +14,11 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		
 		return try await AdminUIController(for: group).encodeResponse(for: req)
 	}
-	
+    
+    app.get("voteadmin") { req async throws -> Response in
+        return req.redirect(to: .admin)
+    }
+    
 	// Changes the open/closed status of the vote passed as ":voteID"
 	app.get("voteadmin", "open", ":voteID") { req async throws -> Response in
 		await setStatus(req: req, status: .open)
@@ -31,13 +36,13 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		{
             await group.setStatusFor(await vote.id(), to: status)
 		}
-		return req.redirect(to: .voteadmin)
+		return req.redirect(to: .admin)
 	}
 	
 	// Shows an overview for a specific vote, with information such as who has voted and who has not
 	app.get("voteadmin", ":voteID") { req async throws -> Response in
 		guard let voteIDStr = req.parameters.get("voteID") else {
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 		}
 		
 		guard
@@ -45,7 +50,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 			let group = await groupsManager.groupForSession(sessionID),
 			let vote = await group.voteForID(voteIDStr)
 		else {
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 		}
 		
         return try await VoteAdminUIController(vote: vote, group: group).encodeResponse(for: req)
@@ -53,43 +58,55 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 	}
 	
 	app.post("voteadmin", ":voteID") { req async throws -> Response in
-		guard let voteIDStr = req.parameters.get("voteID") else {
-			return req.redirect(to: .voteadmin)
+		guard
+            let voteIDStr = req.parameters.get("voteID"),
+            let voteID = UUID(voteIDStr)
+        else {
+			return req.redirect(to: .admin)
 		}
 		
 		guard
 			let adminID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(adminID),
-			let vote = await group.voteForID(voteIDStr)
+			let vote = await group.voteForID(voteID)
 		else {
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 		}
 		
-		guard let status = (try req.content.decode([String:VoteStatus].self))["statusChange"] else {
-			let pageController = await VoteAdminUIController(vote: vote, group: group)
-			return try await pageController.encodeResponse(for: req)
-		}
-    
+        // Checks requests if they ask for deletion
+        if let deleteID = (try? req.content.decode([String:String].self))?["voteToDelete"], voteIDStr == deleteID, await group.statusFor(voteID) == .closed {
+            await group.removeVoteFromGroup(vote: vote)
+            return req.redirect(to: .admin)
+        }
         
-        await group.setStatusFor(await vote.id(), to: status)
-		
-		let pageController = await VoteAdminUIController(vote: vote, group: group)
-		return try await pageController.encodeResponse(for: req)
+        // Checks if any status change is requested
+		if let status = (try? req.content.decode([String:VoteStatus].self))?["statusChange"] {
+            await group.setStatusFor(await vote.id(), to: status)
+            
+            let pageController = await VoteAdminUIController(vote: vote, group: group)
+            return try await pageController.encodeResponse(for: req)
+        } else {
+            let pageController = await VoteAdminUIController(vote: vote, group: group)
+            return try await pageController.encodeResponse(for: req)
+        }
+    
+       
+     
 	}
 	
 	// Shows a list of constituents and related settings
-	app.get("voteadmin", "constituents") {req async throws -> Response in
+	app.get("admin", "constituents") {req async throws -> Response in
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(sessionID)
 		else {
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 		}
 		
 		return try await ConstituentsListUI(group: group).encodeResponse(for: req)
 	}
 	
-	app.post("voteadmin", "constituents") {req async throws -> Response in
+	app.post("admin", "constituents") {req async throws -> Response in
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(sessionID)
@@ -98,8 +115,9 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		}
 		
 		if let status = try? req.content.decode(ChangeVerificationRequirementsData.self).getStatus(){
-			await group.setAllowsUnverifiedConstituents(status)
+            await group.setSettings(allowsUnverifiedConstituents: status)
 		}
+        
 		return try await ConstituentsListUI(group: group).encodeResponse(for: req)
 	
 		struct ChangeVerificationRequirementsData: Codable{
@@ -116,7 +134,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		}
 	}
 	
-	app.get("voteadmin", "constituents", "downloadcsv") {req async throws -> Response in
+	app.get("admin", "constituents", "downloadcsv") {req async throws -> Response in
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(sessionID)
@@ -124,13 +142,13 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 			return req.redirect(to: .constituents)
 		}
 		
-        let csv = await group.allPossibleConstituents().toCSV()
+        let csv = await group.allPossibleConstituents().toCSV(config: group.settings.csvConfiguration)
 		return try await downloadResponse(for: req, content: csv, filename: "constituents.csv")
 
 	}
 
 	
-	app.post("voteadmin", "resetaccess", ":userID"){req async throws -> Response in
+	app.post("admin", "resetaccess", ":userID"){req async throws -> Response in
 		if let userIdentifierbase64 = req.parameters.get("userID")?.trimmingCharacters(in: .whitespacesAndNewlines),
            let userIdentifier = String(urlsafeBase64: userIdentifierbase64),
 		   let sessionID = req.session.authenticated(AdminSession.self),
@@ -144,51 +162,30 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 
 	}
 	
-	app.post("reset", ":voteID", ":userID") { req async -> Response in
+	app.post("voteadmin", "reset", ":voteID", ":userID") { req async -> Response in
 		// Retrieves the vote id from the uri
 		guard let voteIDStr = req.parameters.get("voteID") else {
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 		}
         
 		// The single cast vote that should be deleted
 		if let userIdentifierbase64 = req.parameters.get("userID")?.trimmingCharacters(in: .whitespacesAndNewlines),
-           let userIdentifier = String(urlsafeBase64: userIdentifierbase64),
+           let constituentID = String(urlsafeBase64: userIdentifierbase64),
 		   let adminID = req.session.authenticated(AdminSession.self),
 		   let group = await groupsManager.groupForSession(adminID),
 		   let vote = await group.voteForID(voteIDStr)
 		{
-            
-            /// Removes a vote by the constituent in the group given in the URL; if the user has been kicked out, it will be removed from the vote's list of verified constituents
-            func miniReset<V: SupportedVoteType>(vote: V) async{
-                await vote.resetVoteForUser(userIdentifier)
-                
-                // If the user is no longer in the group, it'll be removed from the constituents list in the vote
-                if await group.previouslyJoinedUnverifiedConstituents.contains(userIdentifier){
-                    let constituent = Constituent(identifier: userIdentifier)
-                    
-                    let newConstitutents = await vote.constituents.filter{ const in
-                        const != constituent
-                    }
-                    await vote.setConstituents(newConstitutents)
-                }
-            }
-            
-            switch vote {
-            case .alternative(let v):
-                await miniReset(vote: v)
-            case .yesno(let v):
-                await miniReset(vote: v)
-            case .simplemajority(let v):
-                await miniReset(vote: v)
-            }
+            await group.singleVoteReset(vote: vote, constituentID: constituentID)
 		}
 		
 		return req.redirect(to: .voteadmin(voteIDStr))
 	}
 	
 	
-	app.get("login"){ _ in
-		LoginUI()
+    app.get("login"){ req async -> LoginUI in
+        let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
+
+        return LoginUI(showRedirectToPlaza: showRedirectToPlaza)
 	}
 	
 	app.post("login"){req async -> Response in
@@ -211,10 +208,110 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 			
 			//Registers the session with the client
 			req.session.authenticate(session)
-			return req.redirect(to: .voteadmin)
+			return req.redirect(to: .admin)
 			
 		} catch {
-			return (try? await LoginUI(prefilledJF: joinPhrase ?? "", errorString: error.asString()).encodeResponse(for: req)) ?? req.redirect(to: .login)
+            let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
+
+			return (try? await LoginUI(prefilledJF: joinPhrase ?? "", errorString: error.asString(), showRedirectToPlaza: showRedirectToPlaza).encodeResponse(for: req)) ?? req.redirect(to: .login)
 		}
 	}
+    
+    // The admin settings page
+    app.get("admin", "settings"){ req async throws -> Response in
+        guard
+            let sessionID = req.session.authenticated(AdminSession.self),
+            let group = await groupsManager.groupForSession(sessionID)
+        else {
+            return req.redirect(to: .create)
+        }
+        
+        return try await SettingsUI(for: group).encodeResponse(for: req)
+        
+    }
+    
+    // Requests for changing the settings of a group
+    app.post("admin", "settings"){ req async throws -> Response in
+        guard
+            let sessionID = req.session.authenticated(AdminSession.self),
+            let group = await groupsManager.groupForSession(sessionID)
+        else {
+            return req.redirect(to: .create)
+        }
+        
+        if let newSettings = try? req.content.decode(SetSettings.self){
+            await newSettings.saveSettings(to: group)
+        }
+        
+        
+        return try await SettingsUI(for: group).encodeResponse(for: req)
+
+        
+    }
+}
+
+struct SettingsUI: UITableManager{
+    var title: String = "Settings"
+    var errorString: String? = nil
+    static var template: String = "settings"
+    var buttons: [UIButton] = [.backToAdmin]
+    
+    var rows: [Setting]
+    var tableHeaders: [String] = []
+    
+    
+    init(for group: Group) async {
+        self.rows = [
+            Setting("auv", "Allows unverified voters", type: .bool(current: await group.settings.allowsUnverifiedConstituents)),
+            Setting("selfReset", "Constituents can self reset", type: .bool(current: await group.settings.constituentsCanSelfResetVotes)),
+            Setting("CSVConfiguration", "CSV Export mode", type: .list(options: await Array(group.settings.csvKeys.keys), current: await group.settings.csvConfiguration.name)),
+            ]
+    }
+    
+    struct Setting: Codable{
+        init(_ key: String, _ name: String, type: SettingsType){
+            self.key = key
+            self.name = name
+            self.type = type
+        }
+        
+        var key: String
+        var name: String
+        var type: SettingsType
+        
+        enum SettingsType: Codable{
+            case bool(current: Bool)
+            case list(options: [String], current: String)
+        }
+    }
+}
+
+
+struct SetSettings: Codable{
+    var auv: String?
+    var selfReset: String?
+    var CSVConfiguration: String?
+    
+    func saveSettings(to group: Group) async{
+        let rAUV = convertBool(auv)
+        let rSelfReset = convertBool(selfReset)
+        
+        let rConfig: CSVConfiguration?
+        if let key = CSVConfiguration{
+            rConfig = await group.settings.csvKeys[key]
+        } else {
+            rConfig = nil
+        }
+        
+        await group.setSettings(allowsUnverifiedConstituents: rAUV, constituentsCanSelfResetVotes: rSelfReset, csvConfiguration: rConfig)
+    }
+    
+    private func convertBool(_ value: String?) -> Bool{
+        switch value{
+        case "on":
+            return true
+        default:
+            return false
+        }
+    }
 }

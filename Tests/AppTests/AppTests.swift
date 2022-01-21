@@ -34,8 +34,8 @@ final class AppTests: XCTestCase {
 
 		var header = HTTPHeaders()
 		
-		// Goes to /voteadmin without access and gets redirected
-		try app.test(.GET, "voteadmin", headers: header, afterResponse: { res in
+		// Goes to /admin without access and gets redirected
+		try app.test(.GET, "admin", headers: header, afterResponse: { res in
 			XCTAssertEqual(res.status, .seeOther)
 			XCTAssert(res.body.string.isEmpty)
 		})
@@ -64,8 +64,8 @@ final class AppTests: XCTestCase {
 			XCTAssertEqual(res.status, .seeOther)
 		}
 		
-		// Tries to access /voteadmin again, now with success
-		try app.test(.GET, "voteadmin", headers: header, afterResponse: { res in
+		// Tries to access /admin again, now with success
+		try app.test(.GET, "admin", headers: header, afterResponse: { res in
 			XCTAssertEqual(res.status, .ok)
 			XCTAssertGreaterThan(res.body.string.count, 100)
 		})

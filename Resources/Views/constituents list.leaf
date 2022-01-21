@@ -16,7 +16,7 @@
 					<td align="center">
 					
 					#if(row.hasJoined):
-					<form method="POST" onsubmit="lockButton()" action="/voteadmin/resetaccess/#(row.userID64)/">
+					<form method="POST" onsubmit="lockButton()" action="/admin/resetaccess/#(row.userID64)/">
 					
 						<input type="submit" name="lockableButton" class="button red" value="Reset access">
 					</form>
@@ -25,13 +25,13 @@
 				#endexport
 			#endextend
 			<br>
-			<form method='post' onsubmit="lockButton()">
+			<form method='POST' onsubmit="lockButton()">
 			#if(allowsUnverified):
 				<input type="hidden" name="setVerifiedRequirement" value="false">
 				<input type="submit" name="lockableButton" class="button red" value="Deactivate and kick non verified constituents">
 			#else:
 				<input type="hidden" name="setVerifiedRequirement" value="true">
-				<input type="submit" name="lockableButton" class="button green" value="Enable non verified constituents">
+				<input type="submit" name="lockableButton" class="button green" value="Allow non verified constituents">
 			#endif
 			</form>
 		#endexport

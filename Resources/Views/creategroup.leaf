@@ -1,6 +1,6 @@
 #extend("outerHTML"):
 		#export("body"):
-			<form method='post' onsubmit="lockButton()">
+			<form method='POST' onsubmit="lockButton()">
 				<b><label for="groupName">Group name</label></b><br>
 				<input type="text" id="groupName" name="groupName" value="#(groupName)">
 				<br>

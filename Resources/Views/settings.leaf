@@ -1,0 +1,33 @@
+#extend("outerHTML"):
+        #export("extraHead"):
+<script src="/js/settings.js"></script>
+        #endexport
+
+        #export("body"):
+            <form id="SettingsForm" method="POST" onsubmit="lockButton()">
+                #extend("table"):
+                    #export("tablerow"):
+                        <td><b>#(row.name)</b></td>
+                        
+                        <td>
+                        #if(row.type.bool):
+                            <input type="checkbox" id="#(row.key)" name="#(row.key)" onchange="update('#(row.key)',this, #(row.type.bool.current))" #if(row.type.bool.current):checked#endif>
+                        #elseif(row.type.list):
+                            <select id="#(row.key)" form="SettingsForm" name="#(row.key)" onchange="update('#(row.key)',this, '#(row.type.list.current)')" value="#(row.type.list.current)">
+                            #for(option in row.type.list.options):
+                            <option value="#(option)"#if(option == row.type.list.current):selected#endif>#(option)</option>
+                            #endfor
+                        </select>
+                        #endif
+                        </td>
+                        
+                        <td>
+                            <button type="button" hidden="true" id="reset-#(row.key)" onClick="buttonWasReset('#(row.key)',#if(row.type.bool): #(row.type.bool.current)#elseif(row.type.list):'#(row.type.list.current)'#endif)">Reset changes</button>
+                        </td>
+                    #endexport
+                #endextend
+                <input type="hidden" name="hidden" value="">
+                <input type="submit" name="lockableButton" value="Save" class="button green">
+            </form>
+        #endexport
+#endextend

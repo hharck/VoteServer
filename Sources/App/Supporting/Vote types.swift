@@ -92,6 +92,7 @@ protocol SupportedVoteType: VoteProtocol{
     associatedtype ReceivedData: VotingData where ReceivedData.Vote == Self
     associatedtype VotePageUI: VotePage where VotePageUI.VoteType == Self
     static var enumCase: VoteTypes.StringStub {get}
+    static var minimumRequiredOptions: Int {get}
 }
 
 
@@ -99,20 +100,22 @@ extension AlternativeVote: SupportedVoteType{
     typealias ReceivedData = AltVotingData
     typealias PersistanceData = AltVotingData
     typealias VotePageUI = AltVotePageGenerator
-    static var enumCase: VoteTypes.StringStub {.alternative}
-
+    static let enumCase: VoteTypes.StringStub = .alternative
+    static let minimumRequiredOptions: Int = 2
 }
 
 extension yesNoVote: SupportedVoteType{
     typealias ReceivedData = YnVotingData
     typealias PersistanceData = [UUID:Bool]
     typealias VotePageUI = YesNoVotePage
-    static var enumCase: VoteTypes.StringStub {.yesNo}
+    static let enumCase: VoteTypes.StringStub = .yesNo
+    static let minimumRequiredOptions: Int = 1
 }
 
 extension SimpleMajority: SupportedVoteType{
     typealias ReceivedData = SimpleMajorityVotingData
     typealias PersistanceData = UUID
     typealias VotePageUI = SimMajVotePage
-    static var enumCase: VoteTypes.StringStub {.simpleMajority}
+    static let enumCase: VoteTypes.StringStub = .simpleMajority
+    static let minimumRequiredOptions: Int = 2
 }
