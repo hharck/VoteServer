@@ -32,6 +32,10 @@ extension GroupsManager{
 	private func updateAccessTimeFor(_ group: Group){
 		updateAccessTimeFor(group.id)
 	}
+    
+    func getLastAccess(for group: Group) -> String?{
+        lastAccessForGroup[group.id]?.description
+    }
 }
 
 //MARK: Get and create groups
@@ -75,6 +79,25 @@ extension GroupsManager{
 		logger.info("Group \"\(name)\" was created, with the joinphrase \"\(jf)\"")
 	}
 	
+    func deleteGroup(jf: JoinPhrase) -> Bool{
+        guard let group = groupsByPhrase[jf] else {
+            return false
+        }
+        groupsBySession = groupsBySession.filter{ d in
+            d.value.id != group.id
+        }
+    
+        groupsByPhrase[jf] = nil
+        groupsByUUID[group.id] = nil
+        lastAccessForGroup[group.id] = nil
+        pwdigestForJF[jf] = nil
+        reservedPhrases.remove(jf)
+        logger.info("Group names \"\(group.name)\" was deleted")
+        
+        return true
+    }
+    
+    
 	/// Attempts to login using a joinphrase and the corresponding password
 	func login(request: Request, joinphrase: JoinPhrase, password: String) async -> AdminSession?{
 		if let digest = pwdigestForJF[joinphrase],
@@ -87,6 +110,15 @@ extension GroupsManager{
 			return nil
 		}
 	}
+    
+    
+    func listAllGroups() -> String{
+        let groups = self.groupsByPhrase.values
+        let values = groups.map{
+            "\"\($0.name)\" was accessed at: " + (lastAccessForGroup[$0.id]?.description ?? "Unknown")
+        }
+        return values.joined(separator: "\n")
+    }
 }
 
 //MARK: Support for creating joinphrases

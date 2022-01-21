@@ -2,8 +2,9 @@ import Vapor
 import VoteKit
 import Foundation
 func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) throws {
-	app.get("join"){_ in
-		GroupJoinUI(title: "Join")
+	app.get("join"){ req async -> GroupJoinUI in
+        let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
+        return GroupJoinUI(title: "Join", showRedirectToPlaza: showRedirectToPlaza)
 	}
 	
 	app.get("join", ":joinphrase"){req async throws -> Response in
@@ -13,7 +14,8 @@ func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		else {
 			return req.redirect(to: .join)
 		}
-		return try await GroupJoinUI(title: group.name, joinPhrase: jf).encodeResponse(for: req)
+        let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
+		return try await GroupJoinUI(title: group.name, joinPhrase: jf, showRedirectToPlaza: showRedirectToPlaza).encodeResponse(for: req)
 	}
 	
 	app.post("join") { req async throws in
@@ -33,8 +35,30 @@ func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 		let controller = await PlazaUI(constituent: constituent, group: group)
 		
 		return (try? await controller.encodeResponse(for: req)) ?? req.redirect(to: .join)
-		
 	}
+    
+    app.post("plaza"){ req async -> Response in
+        guard let (group, constituent) = await groupsManager.groupAndVoterForReq(req: req) else {
+            return req.redirect(to: .join)
+        }
+        
+        if
+            await group.settings.constituentsCanSelfResetVotes,
+            let deleteID = (try? req.content.decode([String:String].self))?["deleteId"],
+            let voteID = UUID(deleteID),
+            let vote = await group.voteForID(voteID),
+            await group.statusFor(voteID) == .open
+        {
+            await group.singleVoteReset(vote: vote, constituentID: constituent.identifier)
+            return req.redirect(to: .plaza)
+        }
+        
+        
+        let controller = await PlazaUI(constituent: constituent, group: group)
+        
+        return (try? await controller.encodeResponse(for: req)) ?? req.redirect(to: .join)
+    }
+    
 }
 
 
@@ -83,7 +107,7 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager) async throws -> R
 		}
         
         // Checks that the user id does not contain a comma or a semicolon
-        guard !userID.contains(","), !userID.contains(";") else {
+        guard !userID.contains(","), !userID.contains(";"), userID.count <= maxNameLength else {
             throw joinGroupErrors.userIDIsInvalid
         }
 		
@@ -100,7 +124,7 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager) async throws -> R
 			const = c
 		} else {
 			//Checks if verification is required
-			guard await group.allowsUnverifiedConstituents else {
+            guard await group.settings.allowsUnverifiedConstituents else {
 				throw joinGroupErrors.userIsNotAllowedIn
 			}
 			
@@ -119,7 +143,9 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager) async throws -> R
 		req.session.authenticate(await group.groupSession)
 		
 	} catch {
-		return try await GroupJoinUI(title: groupName ?? "Join", joinPhrase: joinPhrase, userID: userID, errorString: error.asString()).encodeResponse(for: req)
+        let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
+        
+		return try await GroupJoinUI(title: groupName ?? "Join", joinPhrase: joinPhrase, userID: userID, errorString: error.asString(), showRedirectToPlaza: showRedirectToPlaza).encodeResponse(for: req)
 	}
 	return req.redirect(to: .plaza)
 	

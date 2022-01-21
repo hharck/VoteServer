@@ -1,7 +1,7 @@
 struct genericErrorPage: UIManager{
     var errorString: String?
     var title: String = "Error"
-    var buttons: [UIButton] = [.createGroup, .backToPlaza, .backToVoteadmin]
+    var buttons: [UIButton] = [.createGroup, .backToPlaza, .backToAdmin]
     static var template: String = "errorpage"
     
     init(error: Error){

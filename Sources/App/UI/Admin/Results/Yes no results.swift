@@ -5,7 +5,7 @@ struct YesNoResultsUI: UITableManager{
     var title: String
     
     var errorString: String? = nil
-    var buttons: [UIButton] = [.backToVoteadmin]
+    var buttons: [UIButton] = [.backToAdmin]
     
     static var template: String = "RESyesno"
     

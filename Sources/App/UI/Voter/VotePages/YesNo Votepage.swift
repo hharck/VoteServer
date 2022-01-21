@@ -3,6 +3,7 @@ import VoteKit
 struct YesNoVotePage: VotePage, UITableManager{
     var title: String
     var errorString: String? = nil
+    var buttons: [UIButton] = [.backToPlaza]
     static var template: String = "VPyesno"
     
     var rows: [Row] = []

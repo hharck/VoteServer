@@ -3,6 +3,8 @@ import VoteKit
 struct SimMajVotePage: VotePage{
     var title: String
     var errorString: String? = nil
+    var buttons: [UIButton] = [.backToPlaza]
+    
     static var template: String = "VPsimplemajority"
     
     var canVoteBlank: Bool = false

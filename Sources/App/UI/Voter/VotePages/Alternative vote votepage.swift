@@ -3,9 +3,11 @@ import VoteKit
 import Foundation
 struct AltVotePageGenerator: VotePage{
 	var title: String
+    var errorString: String?
+    var buttons: [UIButton] = [.backToPlaza]
+    
 	var numbers: [PriorityData]
 	var options: [VoteOption]
-	var errorString: String?
 	var hideUI: Bool = false
 	var canVoteBlank: Bool
 	

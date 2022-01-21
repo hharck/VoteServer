@@ -6,6 +6,7 @@ struct PlazaUI: UITableManager{
 		self.name = constituent.name ?? constituent.identifier
 		self.groupName = group.name
 		
+        self.allowsVoteDeletion = await group.settings.constituentsCanSelfResetVotes
 	
 		func setup<V: SupportedVoteType>(_ vote: V) async{
 			let hasVoted: Bool = await vote.hasConstituentVoted(constituent)
@@ -48,6 +49,8 @@ struct PlazaUI: UITableManager{
 	var name: String
 	var groupName: String
 	
+    var allowsVoteDeletion: Bool
+    
 	static var template: String = "plaza"
 	
 	struct VoteListElement: Codable{

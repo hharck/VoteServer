@@ -1,6 +1,6 @@
 #extend("outerHTML"):
 		#export("body"):
-			<form method='post' onsubmit="lockButton()">
+			<form method='POST' onsubmit="lockButton()">
 				<b><label for="nameOfVote">Vote title</label></b><br>
 				<input type="text" name="nameOfVote" value="#(nameOfVote)">
 				<b><h3>Validators:</h3></b>

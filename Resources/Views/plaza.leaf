@@ -21,6 +21,15 @@
 				#else:
 					<span class="dot red"></span>
 				#endif
+                
+                #if(allowsVoteDeletion && row.isOpen && row.hasVoted):
+                <td>
+                <form method='POST' onsubmit="lockButton()">
+                    <input type="hidden" name="deleteId" value="#(row.voteID)">
+                    <input type="submit" name="lockableButton" class="button red" value="Reset vote">
+                </form>
+                </td>
+                #endif
 			#endexport
 		#endextend
 		#endexport
