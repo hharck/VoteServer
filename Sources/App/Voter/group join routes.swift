@@ -142,14 +142,14 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager, forAPI: Bool) asy
             guard let data = await group.getExchangeData(for: userID) else {
                 throw Abort(.internalServerError)
             }
-					  req.session.authenticate(APISession(sessionID: constituentID))
-					  req.session.authenticate(await group.groupSession)
+			req.session.authenticate(APISession(sessionID: constituentID))
+			req.session.authenticate(await group.groupSession)
 
             return Response(body: .init(data: try JSONEncoder().encode(data)))
         } else{
             // Adds the group and constituent key to the user's session
             req.session.authenticate(VoterSession(sessionID: constituentID))
-   					req.session.authenticate(await group.groupSession)
+			req.session.authenticate(await group.groupSession)
 
             return req.redirect(to: .plaza)
         }
