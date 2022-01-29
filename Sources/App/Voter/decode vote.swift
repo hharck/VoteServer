@@ -32,7 +32,7 @@ func decodeAndStore<V: SupportedVoteType>(group: Group, vote: V, constituent: Co
     let prio: [String]
     switch V.enumCase{
     case .alternative:
-        let tmp = (voteStub as! SingleVote).rankings.map{$0.name}
+        let tmp = (voteStub as! SingleVote).rankings.map(\.name)
         if tmp.isEmpty{
             prio = ["Voted blank"]
         } else{

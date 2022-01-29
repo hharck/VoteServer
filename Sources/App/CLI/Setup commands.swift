@@ -15,7 +15,7 @@ func setupCommands(groupsManager: GroupsManager, app: Application){
                 continue
             }
             
-            let str = Array(t.split(separator: " ").map{String($0)})
+            let str = Array(t.split(separator: " ").map(String.init(_:)))
 
             let input: CommandInput = .init(arguments: [""] + str)
             

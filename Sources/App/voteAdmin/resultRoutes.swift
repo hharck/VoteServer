@@ -34,13 +34,9 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) {
 		var options: [String: String]
 
 		func enabledUUIDs()->[UUID]{
-			options.compactMap { (key, value) in
-				if value == "on"{
-					return UUID(key)
-				} else {
-					return nil
-				}
-			}
+            options
+                .filter(\.value.isOn)
+                .compactMap{UUID($0.key)}
 		}
 	}
 

@@ -104,7 +104,7 @@ extension Group{
 		verifiedConstituents
 			.union(unverifiedConstituents)
 		//Converts the previously joined into "real" constituents
-			.union(previouslyJoinedUnverifiedConstituents.map{Constituent(identifier: $0)})
+            .union(previouslyJoinedUnverifiedConstituents.map(Constituent.init))
 	}
 	
 	func constituentIsVerified(_ const: Constituent) -> Bool{
