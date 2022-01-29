@@ -14,3 +14,8 @@ struct VoterSession: SessionAuthenticatable{
 struct GroupSession: SessionAuthenticatable{
 	var sessionID: SessionID
 }
+
+struct APISession: SessionAuthenticatable{
+    var sessionID: SessionID = SessionID()
+}
+

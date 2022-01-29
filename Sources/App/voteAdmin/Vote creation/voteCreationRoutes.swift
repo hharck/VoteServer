@@ -1,7 +1,7 @@
 import Vapor
 import VoteKit
 import AltVoteKit
-func voteCreationRoutes(_ app: Application, groupsManager: GroupsManager) throws {
+func voteCreationRoutes(_ app: Application, groupsManager: GroupsManager) {
     /// Shows admins a page which'' let them create the kind of vote supplied in the "type" parameter
     app.get("createvote", ":type") { req async throws -> Response in
         guard

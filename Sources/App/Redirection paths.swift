@@ -1,4 +1,5 @@
 import Vapor
+import VoteExchangeFormat
 
 /// Defines paths often used for redirection
 enum redirectionPaths{
@@ -11,7 +12,8 @@ enum redirectionPaths{
 	case plaza
 	case constituents
 	case login
-	
+    case API(APIPath: APIPaths)
+    
 	func stringValue() -> String{
 		switch self {
 		case .create:
@@ -36,6 +38,8 @@ enum redirectionPaths{
 			return "admin/constituents"
 		case .login:
 			return "login"
+        case .API(let APIPath):
+            return "api/v1/" + APIPath.relativeStringValue()
 		}
 	}
 }
