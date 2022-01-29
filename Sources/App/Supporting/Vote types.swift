@@ -1,90 +1,91 @@
 import VoteKit
 import AltVoteKit
 import Foundation
+import VoteExchangeFormat
 
 enum VoteTypes{
-	case alternative(AlternativeVote)
-	case yesno(yesNoVote)
-	case simplemajority(SimpleMajority)
-	
-	enum StringStub: String{
-		case alternative = "alternativevote"
-		case yesNo = "yesno"
-		case simpleMajority = "simplemajority"
-		
-		init(_ voteTypes: VoteTypes){
-			switch voteTypes {
-			case .alternative(_):
-				self = .alternative
-			case .yesno(_):
-				self = .yesNo
-			case .simplemajority(_):
-				self = .simpleMajority
-			}
-		}
-	}
-	
-	init<V: SupportedVoteType>(vote: V){
-		switch V.enumCase{
+    case alternative(AlternativeVote)
+    case yesno(yesNoVote)
+    case simplemajority(SimpleMajority)
+    
+    enum StringStub: String{
+        case alternative = "alternativevote"
+        case yesNo = "yesno"
+        case simpleMajority = "simplemajority"
+        
+        init(_ voteTypes: VoteTypes){
+            switch voteTypes {
+            case .alternative(_):
+                self = .alternative
+            case .yesno(_):
+                self = .yesNo
+            case .simplemajority(_):
+                self = .simpleMajority
+            }
+        }
+    }
+    
+    init<V: SupportedVoteType>(vote: V){
+        switch V.enumCase{
         case .alternative:
-			self = .alternative(vote as! AlternativeVote)
+            self = .alternative(vote as! AlternativeVote)
         case .yesNo:
-			self = .yesno(vote as! yesNoVote)
+            self = .yesno(vote as! yesNoVote)
         case .simpleMajority:
-			self = .simplemajority(vote as! SimpleMajority)
-		}
-	}
-	
-	func asStub() -> StringStub{
-		StringStub(self)
-	}
+            self = .simplemajority(vote as! SimpleMajority)
+        }
+    }
+    
+    func asStub() -> StringStub{
+        StringStub(self)
+    }
 }
 
 
 extension VoteTypes{
-	func id() async -> UUID {
+    func id() async -> UUID {
         switch self {
-		case .alternative(let v):
+        case .alternative(let v):
             return await v.id
-		case .yesno(let v):
-			return await v.id
-		case .simplemajority(let v):
-			return await v.id
-		}
-	}
-	
-	func name() async -> String {
-		switch self {
-		case .alternative(let v):
-			return await v.name
-		case .yesno(let v):
-			return await v.name
-		case .simplemajority(let v):
-			return await v.name
-		}
-	}
-	
-	func constituents() async -> Set<Constituent> {
-		switch self {
-		case .alternative(let v):
-			return await v.constituents
-		case .yesno(let v):
-			return await v.constituents
-		case .simplemajority(let v):
-			return await v.constituents
-		}
-	}
-	
-	func options() async -> [VoteOption] {
-		switch self {
-		case .alternative(let v):
-			return await v.options
-		case .yesno(let v):
-			return await v.options
-		case .simplemajority(let v):
-			return await v.options
-		}
-	}
+        case .yesno(let v):
+            return await v.id
+        case .simplemajority(let v):
+            return await v.id
+        }
+    }
+    
+    func name() async -> String {
+        switch self {
+        case .alternative(let v):
+            return await v.name
+        case .yesno(let v):
+            return await v.name
+        case .simplemajority(let v):
+            return await v.name
+        }
+    }
+    
+    func constituents() async -> Set<Constituent> {
+        switch self {
+        case .alternative(let v):
+            return await v.constituents
+        case .yesno(let v):
+            return await v.constituents
+        case .simplemajority(let v):
+            return await v.constituents
+        }
+    }
+    
+    func options() async -> [VoteOption] {
+        switch self {
+        case .alternative(let v):
+            return await v.options
+        case .yesno(let v):
+            return await v.options
+        case .simplemajority(let v):
+            return await v.options
+        }
+    }
 }
 
 /// Adds the types associated with each kind of vote

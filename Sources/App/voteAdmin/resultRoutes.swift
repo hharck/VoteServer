@@ -2,7 +2,7 @@ import Vapor
 import AltVoteKit
 import VoteKit
 
-func ResultRoutes(_ app: Application, groupsManager: GroupsManager) throws {
+func ResultRoutes(_ app: Application, groupsManager: GroupsManager) {
 	app.get("results"){ req in
 		req.redirect(to: .admin)
 	}

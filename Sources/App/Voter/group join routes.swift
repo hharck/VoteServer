@@ -1,7 +1,7 @@
 import Vapor
 import VoteKit
 import Foundation
-func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) throws {
+func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) {
 	app.get("join"){ req async -> GroupJoinUI in
         let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
         return GroupJoinUI(title: "Join", showRedirectToPlaza: showRedirectToPlaza)
@@ -19,11 +19,11 @@ func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 	}
 	
 	app.post("join") { req async throws in
-		try await joinGroup(req, groupsManager)
+        try await joinGroup(req, groupsManager, forAPI: false)
 	}
 	
 	app.post("join", ":joinphrase") { req async throws in
-		try await joinGroup(req, groupsManager)
+		try await joinGroup(req, groupsManager, forAPI: false)
 	}
 	
 	
@@ -62,7 +62,7 @@ func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) throws {
 }
 
 
-enum joinGroupErrors: ErrorString{
+enum joinGroupErrors: ErrorString, Equatable{
 	case userIDIsInvalid
 	case userIsNotAllowedIn
 	case noGroupForJF(JoinPhrase)
@@ -85,13 +85,12 @@ enum joinGroupErrors: ErrorString{
 
 
 
-func joinGroup(_ req: Request, _ groupsManager: GroupsManager) async throws -> Response{
+func joinGroup(_ req: Request, _ groupsManager: GroupsManager, forAPI: Bool) async throws -> Response{
 	struct JoinGroupData: Codable{
 		var userID: String
 		var joinPhrase: String
 	}
 
-	
 	guard let content = try? req.content.decode(JoinGroupData.self) else{
 		throw "Invalid request"
 	}
@@ -114,9 +113,9 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager) async throws -> R
 		guard let group = await groupsManager.groupForJoinPhrase(joinPhrase) else {
 			throw joinGroupErrors.noGroupForJF(joinPhrase)
 		}
-		
+
 		groupName = group.name
-		
+
 		
 		// Creates a constituent object for the requesting client
 		let const: Constituent
@@ -138,15 +137,36 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager) async throws -> R
 			throw joinGroupErrors.constituentIsAlreadyIn
 		}
 		
-		// Adds the group and constituent key to the user's session
-		req.session.authenticate(VoterSession(sessionID: constituentID))
-		req.session.authenticate(await group.groupSession)
-		
+
+        if forAPI{
+            guard let data = await group.getExchangeData(for: userID) else {
+                throw Abort(.internalServerError)
+            }
+			req.session.authenticate(APISession(sessionID: constituentID))
+			req.session.authenticate(await group.groupSession)
+
+            return Response(body: .init(data: try JSONEncoder().encode(data)))
+        } else{
+            // Adds the group and constituent key to the user's session
+            req.session.authenticate(VoterSession(sessionID: constituentID))
+			req.session.authenticate(await group.groupSession)
+
+            return req.redirect(to: .plaza)
+        }
+
 	} catch {
-        let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
-        
-		return try await GroupJoinUI(title: groupName ?? "Join", joinPhrase: joinPhrase, userID: userID, errorString: error.asString(), showRedirectToPlaza: showRedirectToPlaza).encodeResponse(for: req)
+        if forAPI{
+            if let er = error as? joinGroupErrors {
+                if er == .constituentIsAlreadyIn{
+                    throw Abort(.alreadyReported)
+                }
+            }
+           throw Abort(.unauthorized)
+            
+        } else {
+            let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
+            
+            return try await GroupJoinUI(title: groupName ?? "Join", joinPhrase: joinPhrase, userID: userID, errorString: error.asString(), showRedirectToPlaza: showRedirectToPlaza).encodeResponse(for: req)
+        }
 	}
-	return req.redirect(to: .plaza)
-	
 }
