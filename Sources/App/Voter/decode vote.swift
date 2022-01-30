@@ -44,12 +44,14 @@ func decodeAndStore<V: SupportedVoteType>(group: Group, vote: V, constituent: Co
             prio = ["Voted blank"]
         } else {
             // Fetches the full list of options to recall them in order
-            prio = await vote.options.map { opt -> String in
+            prio = await vote.options.map{ opt -> String in
+                let suffix: String
                 if let option = val[opt]{
-                    return opt.name + ": " + (option ? "Yes" : "No")
+                    suffix = option ? "Yes" : "No"
                 } else {
-                    return opt.name + ": Blank"
+                    suffix = "Blank"
                 }
+                return opt.name + ": " + suffix
             }
         }
     case .simpleMajority:

@@ -18,13 +18,13 @@ extension VoteCreationReceivedData{
 	func getPartValidators() -> [V.particularValidator] {
 		particularValidators
             .filter(\.value.isOn)
-            .compactMap { validator in V.particularValidator.allValidators.first{$0.id == validator.key}}
+            .compactMap{ validator in V.particularValidator.allValidators.first{$0.id == validator.key}}
 	}
 	
 	func getGenValidators() -> [GenericValidator<V.voteType>] {
         genericValidators
             .filter(\.value.isOn)
-            .compactMap { validator in GenericValidator.allValidators.first{$0.id == validator.key}}
+            .compactMap{ validator in GenericValidator.allValidators.first{$0.id == validator.key}}
 	}
 	
     func getOptions() throws -> [VoteOption]{
@@ -34,12 +34,9 @@ extension VoteCreationReceivedData{
         
         let options = self.options
 			.split(separator: ",")
-			.compactMap{ opt -> String? in
-				let str = String(opt.trimmingCharacters(in: .whitespacesAndNewlines))
-				return str == "" ? nil : str
-			}
-		
-		
+            .map{String($0.trimmingCharacters(in: .whitespacesAndNewlines))}
+            .filter{$0 != ""}
+        		
 		guard options.nonUniques.isEmpty else{
 			throw voteCreationError.optionAddedMultipleTimes
 		}
