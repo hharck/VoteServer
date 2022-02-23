@@ -4,9 +4,9 @@ struct LoginUI: UIManager{
 		self.prefilledJF = prefilledJF
         
         if showRedirectToPlaza{
-            self.buttons = [.backToPlaza, .createGroup, .join]
+            self.buttons = [.backToPlaza, .join, .createGroup]
         } else {
-            self.buttons = [.createGroup, .join]
+            self.buttons = [ .join, .createGroup]
         }
 	}
 	

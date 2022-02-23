@@ -1,6 +1,6 @@
 import Foundation
 extension String{
-    func asURLSafeB64()-> String?{
+    func asURLSafeBase64()-> String?{
         self.data(using: .utf8)?
             .base64EncodedString()
             .replacingOccurrences(of: "+", with: "-")

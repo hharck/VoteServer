@@ -363,13 +363,6 @@ extension Group {
 	}
 }
 
-//MARK: Password reset
-extension Group{
-    func setPasswordTo(digest: String){
-        self.passwordDigest = digest
-    }
-}
-
 enum VoteStatus: String, Codable{
 	case open
 	case closed

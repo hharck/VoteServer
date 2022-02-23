@@ -19,3 +19,12 @@ extension Group{
         return GroupData(name: self.name, availableVotes: voteData, canDeleteVotes: self.settings.constituentsCanSelfResetVotes)
     }
 }
+
+
+
+//MARK: Password reset
+extension Group{
+	func setPasswordTo(digest: String){
+		self.passwordDigest = digest
+	}
+}
