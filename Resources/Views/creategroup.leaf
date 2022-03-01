@@ -1,16 +1,15 @@
 #extend("outerHTML"):
 		#export("body"):
-			<form method='POST' onsubmit="lockButton()">
+			<form method='POST' onsubmit="lockButton()" enctype="multipart/form-data">
 				<b><label for="groupName">Group name</label></b><br>
-				<input type="text" id="groupName" name="groupName" value="#(groupName)">
+				<input type="text" id="groupName" name="groupName" value="#(groupName)" required>
 				<br>
 				<b><label for="adminpw">Admin password</label></b><br>
-				<input type="password" id="adminpw" name="adminpw" value="">
+				<input type="password" id="adminpw" name="adminpw" value="" required>
 				<br><br>
-				<label for="usernames">User ids allowed to vote
-				Each user id needs to be on its own line, if needed a user can have both an id and a name, if so enter the line as "[id], [name]⏎"</label><br>
-				<textarea rows="10" cols="100" name="usernames">#(usernames)</textarea><br>
-				
+				<label for="file">(Optional) Upload a CSV file contaning all verified users</label><br>
+				<input type="file" id="file" accept=".csv" name="file"><br><br>
+
 				<input type="checkbox" id="allowsUnverifiedConstituents" name="allowsUnverifiedConstituents" #if(allowsUnverifiedConstituents):checked#endif>
 				<label for="allowsUnverifiedConstituents">Allow access for unverified users</label><br>
 				<input type="submit" name="lockableButton" class="button green">

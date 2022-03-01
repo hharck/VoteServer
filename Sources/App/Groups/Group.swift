@@ -60,7 +60,7 @@ extension Group{
     /// Replaces the current settings with the ones passed to this function
     ///
     /// A single GroupSettings object isn't passed around, due to the risk of GroupSettings objects retrieved from multiple threads may come in in the wrong order, so multiple change requests at once, may only keep a single version without any merging.
-    func setSettings(allowsUnverifiedConstituents: Bool? = nil, constituentsCanSelfResetVotes: Bool? = nil, csvConfiguration: CSVConfiguration? = nil) async {
+    func setSettings(allowsUnverifiedConstituents: Bool? = nil, constituentsCanSelfResetVotes: Bool? = nil, csvConfiguration: CSVConfiguration? = nil, showTags: Bool? = nil) async {
         if let allowsUnverifiedConstituents = allowsUnverifiedConstituents {
             if self.settings.allowsUnverifiedConstituents != allowsUnverifiedConstituents {
                 await self.setAllowsUnverifiedConstituents(allowsUnverifiedConstituents)
@@ -75,6 +75,10 @@ extension Group{
         if let csvConfiguration = csvConfiguration {
             self.settings.csvConfiguration = csvConfiguration
         }
+		
+		if let showTags = showTags {
+			self.settings.showTags = showTags
+		}
     }
 }
 
@@ -104,7 +108,7 @@ extension Group{
 		verifiedConstituents
 			.union(unverifiedConstituents)
 		//Converts the previously joined into "real" constituents
-			.union(previouslyJoinedUnverifiedConstituents.map{Constituent(identifier: $0)})
+            .union(previouslyJoinedUnverifiedConstituents.map(Constituent.init))
 	}
 	
 	func constituentIsVerified(_ const: Constituent) -> Bool{
@@ -179,7 +183,7 @@ extension Group{
 			// Removes all sessionIDs referencing the one being deleted
 			let unverifiedIdentifiers = unverifiedConstituents.map(\.identifier)
 			constituentsSessionID = constituentsSessionID.filter{ _, const in
-				return unverifiedIdentifiers.contains(const.identifier)
+				return !unverifiedIdentifiers.contains(const.identifier)
 			}
 			
 			unverifiedConstituents = []
@@ -361,13 +365,6 @@ extension Group {
 	var groupSession: GroupSession{
 		return .init(sessionID: self.id)
 	}
-}
-
-//MARK: Password reset
-extension Group{
-    func setPasswordTo(digest: String){
-        self.passwordDigest = digest
-    }
 }
 
 enum VoteStatus: String, Codable{

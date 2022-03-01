@@ -7,8 +7,11 @@
             <form id="SettingsForm" method="POST" onsubmit="lockButton()">
                 #extend("table"):
                     #export("tablerow"):
-                        <td><b>#(row.name)</b></td>
-                        
+                        <td><b><label for="#(row.key)">#(row.name)</label></b>
+						#if(row.disclaimer):
+                            <br><small>#(row.disclaimer)</small>
+                        #endif
+						</td>
                         <td>
                         #if(row.type.bool):
                             <input type="checkbox" id="#(row.key)" name="#(row.key)" onchange="update('#(row.key)',this, #(row.type.bool.current))" #if(row.type.bool.current):checked#endif>
@@ -24,11 +27,6 @@
                         <td>
                             <button type="button" hidden="true" id="reset-#(row.key)" onClick="buttonWasReset('#(row.key)',#if(row.type.bool): #(row.type.bool.current)#elseif(row.type.list):'#(row.type.list.current)'#endif)">Reset changes</button>
                         </td>
-                        #if(row.disclaimer):
-                        <td>
-                            #(row.disclaimer)
-                        </td>
-                        #endif
                         
                     #endexport
                 #endextend

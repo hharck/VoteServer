@@ -30,9 +30,9 @@ func convertVotesToMetadata<V: SupportedVoteType>(_ data: [V], constituentID: Co
 }
 
 
-extension Data: AsyncResponseEncodable {
-    public func encodeResponse(for request: Request) async throws -> Response {
-        try await Response(body: .init(data: self)).encodeResponse(for: request)
+extension ExchangeOption{
+    init(option: VoteOption){
+        self.init(name: option.name, uuid: option.id)
     }
 }
 
@@ -40,7 +40,7 @@ extension ExtendedVoteData{
     init<V: SupportedVoteType>(_ v: V, constituentID: ConstituentIdentifier, group: Group) async{
         async let metadata = convertVoteToMetadata(v,constituentID: constituentID, group: group)
         async let validatorKeys = v.genericValidators.map(\.id) + v.particularValidators.map(\.id)
-		async let options = v.options.map{ExchangeOption(name: $0.name, uuid: $0.id)}
+		async let options = v.options.map(ExchangeOption.init)
         self = ExtendedVoteData(metadata: await metadata, options: await options, validatorKeys: await validatorKeys)
     }
     

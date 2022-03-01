@@ -10,41 +10,21 @@ struct VoteCreationReceivedData<V: SupportedVoteType>: Codable{
 
 extension VoteCreationReceivedData{
     func getAllEnabledIDs() -> [String]{
-        particularValidators.compactMap { validator in
-            if validator.value == "on" {
-                return validator.key
-            } else {
-                return nil
-            }
-        }
+        particularValidators.filter(\.value.isOn).map(\.key)
         +
-        genericValidators.compactMap { validator in
-            if validator.value == "on" {
-                return validator.key
-            } else {
-                return nil
-            }
-        }
+        genericValidators.filter(\.value.isOn).map(\.key)
     }
     
 	func getPartValidators() -> [V.particularValidator] {
-		return particularValidators.compactMap { validator in
-			if validator.value == "on" {
-                return V.particularValidator.allValidators.first{$0.id == validator.key}
-			} else {
-				return nil
-			}
-		}
+		particularValidators
+            .filter(\.value.isOn)
+            .compactMap{ validator in V.particularValidator.allValidators.first{$0.id == validator.key}}
 	}
 	
 	func getGenValidators() -> [GenericValidator<V.voteType>] {
-		return genericValidators.compactMap { validator in
-			if validator.value == "on" {
-                return GenericValidator.allValidators.first{$0.id == validator.key}
-			} else {
-				return nil
-			}
-		}
+        genericValidators
+            .filter(\.value.isOn)
+            .compactMap{ validator in GenericValidator.allValidators.first{$0.id == validator.key}}
 	}
 	
     func getOptions() throws -> [VoteOption]{
@@ -54,12 +34,9 @@ extension VoteCreationReceivedData{
         
         let options = self.options
 			.split(separator: ",")
-			.compactMap{ opt -> String? in
-				let str = String(opt.trimmingCharacters(in: .whitespacesAndNewlines))
-				return str == "" ? nil : str
-			}
-		
-		
+            .map{String($0.trimmingCharacters(in: .whitespacesAndNewlines))}
+            .filter{$0 != ""}
+        		
 		guard options.nonUniques.isEmpty else{
 			throw voteCreationError.optionAddedMultipleTimes
 		}
@@ -73,8 +50,7 @@ extension VoteCreationReceivedData{
             throw voteCreationError.invalidOptionName
         }
 		
-		return options.map{
-			VoteOption($0)}
+        return options.map(VoteOption.init)
 	}
 	
 	func getTitle() throws -> String{

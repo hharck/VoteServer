@@ -1,13 +1,15 @@
 import VoteKit
 
 struct GroupSettings: Codable, Sendable{
-    internal init(allowsUnverifiedConstituents: Bool, constituentsCanSelfResetVotes: Bool = false, csvConfiguration: CSVConfiguration = .defaultConfiguration()) {
+    internal init(allowsUnverifiedConstituents: Bool, constituentsCanSelfResetVotes: Bool = false, csvConfiguration: CSVConfiguration = .defaultConfiguration(), showTags: Bool = false) {
         self.allowsUnverifiedConstituents = allowsUnverifiedConstituents
         self.constituentsCanSelfResetVotes = constituentsCanSelfResetVotes
         self.csvConfiguration = csvConfiguration
         
-        let allCSVConfigurations: [CSVConfiguration] = [.defaultConfiguration(),.SMKid()]
+		let allCSVConfigurations: [CSVConfiguration] = [.defaultConfiguration(),.SMKid(), .defaultWithTags()]
         self.csvKeys = allCSVConfigurations.reduce(into: [String: CSVConfiguration](), { $0[$1.name] = $1})
+		
+		self.showTags = showTags
     }
     
     /// If this group allows unverified constituents to join
@@ -19,4 +21,7 @@ struct GroupSettings: Codable, Sendable{
     var csvConfiguration: CSVConfiguration = .defaultConfiguration()
     
     let csvKeys: [String: CSVConfiguration]
+	
+	/// Whether tags and tag statistic should be shown in the constituents list
+	var showTags: Bool
 }

@@ -28,4 +28,4 @@ public func configure(_ app: Application) throws {
 }
 
 let maxNameLength: Int = 100
-let joinPhraseLength: Int = 6
+let joinPhraseLength: UInt = 6
