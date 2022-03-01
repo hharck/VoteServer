@@ -263,7 +263,7 @@ struct SettingsUI: UITableManager{
     init(for group: Group) async {
 		let current = await group.settings
         self.rows = [
-            Setting("auv", "Allow unverified constituents", type: .bool(current: allowsUnVerified), disclaimer: current.allowsUnverifiedConstituents ? "Changing this setting will kick unverified constituents" : nil),
+            Setting("auv", "Allow unverified constituents", type: .bool(current: current.allowsUnverifiedConstituents), disclaimer: current.allowsUnverifiedConstituents ? "Changing this setting will kick unverified constituents" : nil),
             Setting("selfReset", "Constituents can self reset", type: .bool(current: current.constituentsCanSelfResetVotes)),
             Setting("CSVConfiguration", "CSV Export mode", type: .list(options: Array(current.csvKeys.keys), current: current.csvConfiguration.name)),
 			Setting("showTags", "Show tags", type: .bool(current: current.showTags)),
