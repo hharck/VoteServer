@@ -261,11 +261,12 @@ struct SettingsUI: UITableManager{
     
     
     init(for group: Group) async {
-        let allowsUnVerified = await group.settings.allowsUnverifiedConstituents
+		let current = await group.settings
         self.rows = [
-            Setting("auv", "Allows unverified voters", type: .bool(current: allowsUnVerified), disclaimer: allowsUnVerified ? "Changing this setting will kick unverified constituents" : nil),
-            Setting("selfReset", "Constituents can self reset", type: .bool(current: await group.settings.constituentsCanSelfResetVotes)),
-            Setting("CSVConfiguration", "CSV Export mode", type: .list(options: await Array(group.settings.csvKeys.keys), current: await group.settings.csvConfiguration.name)),
+            Setting("auv", "Allow unverified constituents", type: .bool(current: allowsUnVerified), disclaimer: current.allowsUnverifiedConstituents ? "Changing this setting will kick unverified constituents" : nil),
+            Setting("selfReset", "Constituents can self reset", type: .bool(current: current.constituentsCanSelfResetVotes)),
+            Setting("CSVConfiguration", "CSV Export mode", type: .list(options: Array(current.csvKeys.keys), current: current.csvConfiguration.name)),
+			Setting("showTags", "Show tags", type: .bool(current: current.showTags)),
             ]
     }
     
@@ -294,11 +295,14 @@ struct SetSettings: Codable{
     var auv: String?
     var selfReset: String?
     var CSVConfiguration: String?
-    
+	var showTags: String?
+	
     func saveSettings(to group: Group) async{
         let rAUV = convertBool(auv)
         let rSelfReset = convertBool(selfReset)
-        
+		let rShowTags = convertBool(showTags)
+
+		
         let rConfig: CSVConfiguration?
         if let key = CSVConfiguration{
             rConfig = await group.settings.csvKeys[key]
@@ -306,9 +310,9 @@ struct SetSettings: Codable{
             rConfig = nil
         }
         
-        await group.setSettings(allowsUnverifiedConstituents: rAUV, constituentsCanSelfResetVotes: rSelfReset, csvConfiguration: rConfig)
+        await group.setSettings(allowsUnverifiedConstituents: rAUV, constituentsCanSelfResetVotes: rSelfReset, csvConfiguration: rConfig, showTags: rShowTags)
     }
-    
+    // Due to limitations of HTTP/HTML the state of checkboxes is only sent when they're on
     private func convertBool(_ value: String?) -> Bool{
         switch value{
         case "on":

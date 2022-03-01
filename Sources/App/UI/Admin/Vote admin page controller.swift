@@ -99,7 +99,7 @@ struct ConstituentAndStatus: Codable{
 	internal init(constituent: Constituent, hasVoted: Bool, isVerified: Bool) {
         self.constName = constituent.name ?? constituent.identifier
         self.constIdentifier = constituent.identifier
-        self.constB64ID = constituent.identifier.asURLSafeB64() ?? ""
+        self.constB64ID = constituent.identifier.asURLSafeBase64() ?? ""
         
 		self.hasVoted = hasVoted
 		self.isVerified = isVerified

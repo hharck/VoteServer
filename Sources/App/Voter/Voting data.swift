@@ -138,13 +138,9 @@ extension AltVotingData: VotingData{
 		let orderedPriorities = orderForOptions(await vote.options, addDefault: false)
 		
 		//Converts from String to UUID
-		let treatedPriorities = orderedPriorities.compactMap{ value -> UUID? in
-			if value == defaultValue{
-				return nil
-			} else {
-				return UUID(uuidString: value)
-			}
-		}
+        let treatedPriorities = orderedPriorities
+            .filter{$0 != defaultValue}
+            .map(UUID.init(uuidString:))
 		
 		guard treatedPriorities.nonUniques.isEmpty else {
 			throw VotingDataError.allShouldBeDifferent

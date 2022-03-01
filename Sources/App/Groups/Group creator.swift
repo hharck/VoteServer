@@ -3,7 +3,7 @@ import Vapor
 //Represents data received on a request to create a group
 struct GroupCreatorData: Codable{
 	var groupName: String
-	var usernames: String
+	var file: String?
 	private var adminpw: String
 	var allowsUnverifiedConstituents: String?
 }
@@ -24,47 +24,35 @@ extension GroupCreatorData{
 	}
 	
 	func getConstituents() throws -> Set<Constituent>{
-		let individualVoters = self.usernames.split(whereSeparator: \.isNewline)
-		
-		let constituents = try individualVoters.compactMap{ voterString -> Constituent? in
-			var s = voterString.split(separator:",")
+		guard self.file != nil, !self.file!.isEmpty else {
+			return []
+		}
+		if self.file!.count > 1_000_000 {
+			throw GroupCreationError.nameTooLong
+		}
+		do{
+			let constituents = try constituentsListFromCSV(file: self.file!, maxNameLength: maxNameLength)
 			
-			//Enables having a dangling comma in the end (or middle) of the constituents list
-			if s.last?.trimmingCharacters(in: .whitespacesAndNewlines) == ""{
-				s = s.dropLast()
+			let set = Set(constituents)
+			
+			if set.count != constituents.count {
+				throw GroupCreationError.userAddedMultipleTimes
 			}
 			
-			if s.count == 0 {
-				return nil
-			} else if s.count == 1 {
-				let id = s.first!.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !id.isEmpty, id.count <= maxNameLength else {
-					throw GroupCreationError.invalidUsername
-				}
-				return Constituent(identifier: id.lowercased())
-			} else if s.count == 2{
-				let id = s.first!.trimmingCharacters(in: .whitespacesAndNewlines)
-				
-				let name = s.last!.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !id.isEmpty, !name.isEmpty, id.count <= maxNameLength, name.count <= maxNameLength else {
-					throw GroupCreationError.invalidUsername
-				}
-				
-				return Constituent(name: name, identifier: id.lowercased())
-				
-			} else {
-				throw GroupCreationError.invalidUsername
-			}
+			return set
 			
+		} catch let er as DecodeConstituentError{
+			switch er {
+			case .invalidIdentifier:
+				throw GroupCreationError.invalidIdentifier
+			case .nameTooLong:
+				throw GroupCreationError.nameTooLong
+			case .invalidCSV:
+				throw GroupCreationError.invalidCSV
+			case .invalidTag:
+				throw GroupCreationError.invalidTag
+			}
 		}
-		
-		guard constituents.map(\.identifier).nonUniques.isEmpty else{
-			throw GroupCreationError.userAddedMultipleTimes
-		}
-		
-		
-		return Set(constituents)
-		
 	}
 	
     /// Checks if the received data indicates that non verified constituents are allowed
@@ -77,15 +65,21 @@ enum GroupCreationError: ErrorString{
 	func errorString() -> String {
 		switch self {
 		case .userAddedMultipleTimes:
-			return "User appears multiple times"
-		case .invalidUsername:
-			return "One or more invalid usernames were found"
+			return "User appears multiple times."
+		case .invalidIdentifier:
+			return "One or more invalid user identifiers were found."
 		case .invalidGroupname:
-			return "The group name is invalid"
+			return "The group name is invalid."
 		case .invalidPassword:
-			return "The password is either too short or too simple"
+			return "The password is either too short or too simple."
+		case .invalidCSV:
+			return "The supplied CSV file was invalid, the separators needs to be \",\" and newlines. Check that the header row is \"Name,Identifier,Tag\"."
+		case .nameTooLong:
+			return "One of the supplied constituents has a name/identifier/tag which surpasses the maximum name length."
+		case .invalidTag:
+			return "One of the supplied tags are invalid, either by having the prefix \"-\" or exceeding the length limit."
 		}
 	}
 	
-	case userAddedMultipleTimes, invalidUsername, invalidGroupname, invalidPassword
+	case userAddedMultipleTimes, invalidIdentifier, invalidGroupname, invalidPassword, invalidCSV, nameTooLong, invalidTag
 }
