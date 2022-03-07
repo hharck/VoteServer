@@ -1,4 +1,3 @@
-
 # Vapor
 ## License
 The MIT License (MIT)
@@ -24,18 +23,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ## Notices
 
-//===----------------------------------------------------------------------===//
-//
-// This source file is part of the Vapor open source project
-//
-// Copyright (c) 2017-2021 Vapor project authors
-// Licensed under MIT
-//
-// See LICENSE for license information
-//
-// SPDX-License-Identifier: MIT
-//
-//===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//  
+//  
+// This source file is part of the Vapor open source project  
+//     
+// Copyright (c) 2017-2021 Vapor project authors  
+// Licensed under MIT  
+//     
+// See LICENSE for license information  
+//    
+// SPDX-License-Identifier: MIT  
+//     
+//===----------------------------------------------------------------------===//  
 
 This product contains a derivation of the TestMetrics test implementation
 from Swift Metrics.
