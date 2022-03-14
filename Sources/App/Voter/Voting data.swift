@@ -48,7 +48,7 @@ extension YnVotingData: VotingData{
             throw VotingDataError.allShouldBeFilledIn
         }
         
-        return .init(constituent: constituent, values: val)
+        return yesNoVote.yesNoVoteType(constituent: constituent, values: val)
     }
     
     // Converts the input into the correct data types

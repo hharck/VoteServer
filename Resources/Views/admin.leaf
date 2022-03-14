@@ -25,9 +25,9 @@
 					<td align="center">
 					
 					#if(row.isOpen):
-						<a class="red button" href="/voteadmin/close/#(row.voteID)/">Close vote</a>
+						<a class="red button" href="/voteadmin/#(row.voteID)/close">Close vote</a>
 					#else:
-						<a class="green button" href="/voteadmin/open/#(row.voteID)/">Open vote</a>
+						<a class="green button" href="/voteadmin/#(row.voteID)/open">Open vote</a>
 					#endif
 					</td>
 				#endexport

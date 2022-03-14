@@ -20,21 +20,17 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
     }
     
 	// Changes the open/closed status of the vote passed as ":voteID"
-	app.get("voteadmin", "open", ":voteID") { req async throws -> Response in
-		await setStatus(req: req, status: .open)
-	}
-	app.get("voteadmin", "close", ":voteID") { req async throws -> Response in
-		await setStatus(req: req, status: .closed)
-	}
+	app.get("voteadmin", ":voteID", ":command", use: setStatus)
 	
-	
-	func setStatus(req: Request, status: VoteStatus) async -> Response{
+	func setStatus(req: Request) async -> Response{
 		if let voteIDStr = req.parameters.get("voteID"),
+		   let commandStr = req.parameters.get("command"),
+		   let command = VoteStatus(rawValue: commandStr),
 		   let sessionID = req.session.authenticated(AdminSession.self),
 		   let group = await groupsManager.groupForSession(sessionID),
 		   let vote = await group.voteForID(voteIDStr)
 		{
-            await group.setStatusFor(await vote.id(), to: status)
+            await group.setStatusFor(await vote.id(), to: command)
 		}
 		return req.redirect(to: .admin)
 	}

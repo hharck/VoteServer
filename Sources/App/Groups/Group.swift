@@ -368,6 +368,6 @@ extension Group {
 }
 
 enum VoteStatus: String, Codable{
-	case open
-	case closed
+	case open = "open"
+	case closed = "close"
 }
