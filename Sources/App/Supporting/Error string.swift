@@ -7,6 +7,12 @@ protocol ErrorString: Error {
 	func errorString() -> String
 }
 
+extension ErrorString where Self: RawRepresentable, Self.RawValue == String {
+	func errorString() -> String {
+		self.rawValue
+	}
+}
+
 extension Error {
 	func asString() -> String{
 		if let er = (self as? ErrorString) {
