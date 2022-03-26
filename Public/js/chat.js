@@ -18,8 +18,11 @@ if (socketName) {
 
 			localStorage.removeItem("lastmessage");
 		}
-		let chatarea = document.getElementById("chatarea");
-		chatarea.disabled = false
+		
+		let newMessageField = document.getElementById("newMessageField");
+		let sendMessageButton = document.getElementById("sendMessageButton");
+		newMessageField.disabled = false;
+		sendMessageButton.disabled = false;
 		
 		console.log("Socket is open")
 		query(socket)
@@ -27,9 +30,12 @@ if (socketName) {
 	
 	socket.onclose = function (event) {
 		saveCurrentMessage()
-		chatarea.disabled = true;
-		let field = document.getElementById("newMessageField");
-		field.disabled = true;
+		
+		//Disable the new message field
+		let newMessageField = document.getElementById("newMessageField");
+		let sendMessageButton = document.getElementById("sendMessageButton");
+		newMessageField.disabled = true;
+		sendMessageButton.disabled = true;
 		
 		let h1 = document.createElement('h1');
 		let text = document.createTextNode("The connection was closed");
@@ -61,9 +67,7 @@ socket.addEventListener("message", event => {
 			if (msg.newMessages) {
 				const messages = msg.newMessages._0;
 				
-				console.log("New messages")
-				console.log(messages)
-				
+				console.log("New messages")				
 				messages.sort((a, b) => a.timestamp > b.timestamp ? 1 : -1);
 				
 				messages.forEach((element) => {

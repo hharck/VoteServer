@@ -89,9 +89,9 @@ extension Group{
 		if let chatState = chatState {
 			switch chatState{
 			case .onlyVerified:
-				await self.socketController.kickAll(onlyUnverified: true)
+				await self.socketController.kickAll(onlyUnverified: true, includeAdmins: false)
 			case .disabled:
-				await self.socketController.kickAll(onlyUnverified: false)
+				await self.socketController.kickAll(onlyUnverified: false, includeAdmins: true)
 			default:
 				break
 			}

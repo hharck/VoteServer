@@ -295,7 +295,7 @@ fileprivate struct SettingsUI: UITableManager{
     var title: String = "Settings"
     var errorString: String? = nil
     static var template: String = "settings"
-    var buttons: [UIButton] = [.backToAdmin]
+	var buttons: [UIButton] = [.backToAdmin, .reload]
     
     var rows: [Setting]
     var tableHeaders: [String] = []
