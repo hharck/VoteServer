@@ -1,6 +1,7 @@
 import VoteKit
 import Vapor
 import Logging
+import FluentKit
 
 typealias JoinPhrase = String
 
@@ -65,12 +66,16 @@ extension GroupsManager{
 		}
 	}
 	
-	func createGroup(session: SessionID, name: String, constituents: Set<Constituent>, pwdigest: String, allowsUnverified: Bool) async -> Bool{
+	func createGroup(session: SessionID, db: Database, name: String, constituents: Set<Constituent>, pwdigest: String, allowsUnverified: Bool) async -> Bool{
         guard let jf = createJoinPhrase() else {
             logger.warning("Joinphrase could not be generated within reasonable time")
             return false
         }
-		let group = Group(adminSessionID: session, name: name, constituents: constituents, joinPhrase: jf, allowsUnverifiedConstituents: allowsUnverified, passwordDigest: pwdigest)
+		
+		let socketController = ChatSocketController(db: db)
+		let group = Group(adminSessionID: session, socketController: socketController, name: name, constituents: constituents, joinPhrase: jf, allowsUnverifiedConstituents: allowsUnverified, passwordDigest: pwdigest)
+		await socketController.setup(group: group)
+		
 		groupsBySession[group.adminSessionID] = group
 		groupsByPhrase[jf] = group
 		groupsByUUID[group.id] = group
@@ -80,10 +85,14 @@ extension GroupsManager{
         return true
 	}
 	
-    func deleteGroup(jf: JoinPhrase) -> Bool{
+    func deleteGroup(jf: JoinPhrase) async -> Bool{
         guard let group = groupsByPhrase[jf] else {
             return false
         }
+		
+		// Closes all webSockets in this group
+		await group.socketController.kickAll(includeAdmins: true)
+		
         groupsBySession = groupsBySession.filter{ d in
             d.value.id != group.id
         }

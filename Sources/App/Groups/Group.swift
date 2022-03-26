@@ -2,11 +2,13 @@ import Foundation
 import AltVoteKit
 import VoteKit
 import Logging
+import WebSocketKit
 
 actor Group{
 	typealias VoteID = UUID
-	
-    internal init(adminSessionID: SessionID, name: String, constituents: Set<Constituent>, joinPhrase: JoinPhrase, allowsUnverifiedConstituents: Bool, passwordDigest: String) {
+	typealias GroupID = UUID
+
+	internal init(adminSessionID: SessionID, socketController: ChatSocketController, name: String, constituents: Set<Constituent>, joinPhrase: JoinPhrase, allowsUnverifiedConstituents: Bool, passwordDigest: String) {
 		self.adminSessionID = adminSessionID
 		self.name = name
 		self.verifiedConstituents = constituents
@@ -14,6 +16,7 @@ actor Group{
         self.settings = GroupSettings(allowsUnverifiedConstituents: allowsUnverifiedConstituents)
 		self.logger = Logger(label: "Group \"\(name)\":\"\(joinPhrase)\"")
         self.passwordDigest = passwordDigest
+		self.socketController = socketController
 	}
 	
 	/// The name of the group as shown in the UI
@@ -21,7 +24,7 @@ actor Group{
 	/// The joinPhrase used for constituents to join  the group
 	let joinPhrase: JoinPhrase
 	/// The ID of  the group
-	let id: UUID = UUID()
+	let id: GroupID = GroupID()
 	
 	/// Admin session ID
 	let adminSessionID: SessionID
@@ -52,6 +55,9 @@ actor Group{
     
     /// Hashed password for this group
     var passwordDigest: String
+	
+	
+	let socketController: ChatSocketController
 }
 
 //MARK: Change settings
@@ -60,12 +66,12 @@ extension Group{
     /// Replaces the current settings with the ones passed to this function
     ///
     /// A single GroupSettings object isn't passed around, due to the risk of GroupSettings objects retrieved from multiple threads may come in in the wrong order, so multiple change requests at once, may only keep a single version without any merging.
-    func setSettings(allowsUnverifiedConstituents: Bool? = nil, constituentsCanSelfResetVotes: Bool? = nil, csvConfiguration: CSVConfiguration? = nil, showTags: Bool? = nil) async {
+	func setSettings(allowsUnverifiedConstituents: Bool? = nil, constituentsCanSelfResetVotes: Bool? = nil, csvConfiguration: CSVConfiguration? = nil, showTags: Bool? = nil, chatState: GroupSettings.ChatState? = nil) async {
+		
         if let allowsUnverifiedConstituents = allowsUnverifiedConstituents {
             if self.settings.allowsUnverifiedConstituents != allowsUnverifiedConstituents {
                 await self.setAllowsUnverifiedConstituents(allowsUnverifiedConstituents)
             }
-            self.settings.allowsUnverifiedConstituents = allowsUnverifiedConstituents
         }
         
         if let constituentsCanSelfResetVotes = constituentsCanSelfResetVotes{
@@ -78,6 +84,18 @@ extension Group{
 		
 		if let showTags = showTags {
 			self.settings.showTags = showTags
+		}
+		
+		if let chatState = chatState {
+			switch chatState{
+			case .onlyVerified:
+				await self.socketController.kickAll(onlyUnverified: true)
+			case .disabled:
+				await self.socketController.kickAll(onlyUnverified: false)
+			default:
+				break
+			}
+			self.settings.chatState = chatState
 		}
     }
 }
@@ -147,6 +165,8 @@ extension Group{
 			return constituent.identifier != const.identifier
 		}
 		
+		await self.socketController.close(constituent: constituent.identifier)
+		
 		logger.info("Constituent \"\(constituent.identifier)\" was reset")
 	}
 	
@@ -155,8 +175,15 @@ extension Group{
     /// - Parameter state: if false every constituent that isn't on the verified list will be removed else allowsUnverifiedConstituents will be set to true
 	private func setAllowsUnverifiedConstituents(_ state: Bool) async{
         guard state != self.settings.allowsUnverifiedConstituents else {return}
+
+		self.settings.allowsUnverifiedConstituents = state
+
 		if !state{
-			/// Adds all unverified constituens to previouslyJoinedUnverifiedConstituents
+			// Kicks all unverified constituents from their WebSocket
+			await self.socketController.kickAll(onlyUnverified: true)
+
+			
+			// Adds all unverified constituens to previouslyJoinedUnverifiedConstituents
 			previouslyJoinedUnverifiedConstituents.formUnion(unverifiedConstituents.map(\.identifier))
 			
 			//Removes all unverified constituents who hasn't cast a vote
@@ -191,7 +218,6 @@ extension Group{
 				verifiedConstituents.contains(value)
 			}
 		}
-        self.settings.allowsUnverifiedConstituents = state
 		
 		logger.info("Access for unverified was set to: \(state)")
 	}
@@ -293,10 +319,16 @@ extension Group {
 
 
 	func setStatusFor<V: SupportedVoteType>(_ vote: V, to value: VoteStatus) async{
-        setStatusFor(await vote.id, to: value)
+        await setStatusFor(await vote.id, to: value)
 	}
-    func setStatusFor(_ vote: VoteID, to value: VoteStatus){
-        statusForVote[vote] = value
+    func setStatusFor(_ vote: VoteID, to value: VoteStatus) async{
+		let oldValue = statusForVote[vote]
+		statusForVote[vote] = value
+		
+		// If changed to open, ask clients to reload
+		if oldValue == .closed && value == .open{
+			await socketController.sendToAll(msg: .requestReload, async: true, includeAdmin: false)
+		}
     }
 	
 	/// Adds new votes to the group
