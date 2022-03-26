@@ -32,12 +32,6 @@ actor ChatSocketController{
 	
 	func connect(_ ws: WebSocket, constituent: Constituent) async {
 		guard let group = group else {return}
-		let isVerified = await group.constituentIsVerified(constituent)
-		let wrapper = SocketWrapper(socket: ws, constituent: constituent.identifier, isVerified: isVerified)
-				
-		if let oldSocket = sockets.updateValue(wrapper, forKey: constituent.identifier){
-			try? await oldSocket.socket.close()
-		}
 		
 		ws.onBinary { [weak self] ws, buffer in
 			guard let self = self, let data = buffer.getData(at: buffer.readerIndex, length: buffer.readableBytes) else { return }
@@ -53,6 +47,16 @@ actor ChatSocketController{
 				await self?.remove(constituent: constituent.identifier)
 			}
 		}
+
+		ws.pingInterval = .minutes(2)
+		
+		let isVerified = await group.constituentIsVerified(constituent)
+		let wrapper = SocketWrapper(socket: ws, constituent: constituent.identifier, isVerified: isVerified)
+				
+		if let oldSocket = sockets.updateValue(wrapper, forKey: constituent.identifier){
+			try? await oldSocket.socket.close()
+		}
+		
 	}
 	
 	func connectAdmin(_ ws: WebSocket) async {
@@ -69,7 +73,7 @@ actor ChatSocketController{
 			guard let self = self, let data = text.data(using: .utf8) else { return }
 			await self.onData(ws, isAdmin: true, data)
 		}
-	
+		ws.pingInterval = .minutes(2)
 		adminSocket = ws
 	}
 	
