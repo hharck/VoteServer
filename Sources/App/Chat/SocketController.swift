@@ -48,7 +48,7 @@ actor ChatSocketController{
 			}
 		}
 
-		ws.pingInterval = .minutes(2)
+		ws.pingInterval = .seconds(30)
 		
 		let isVerified = await group.constituentIsVerified(constituent)
 		let wrapper = SocketWrapper(socket: ws, constituent: constituent.identifier, isVerified: isVerified)
@@ -73,7 +73,7 @@ actor ChatSocketController{
 			guard let self = self, let data = text.data(using: .utf8) else { return }
 			await self.onData(ws, isAdmin: true, data)
 		}
-		ws.pingInterval = .minutes(2)
+		ws.pingInterval = .seconds(30)
 		adminSocket = ws
 	}
 	

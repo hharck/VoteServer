@@ -1,4 +1,4 @@
-<div id="chatarea" disabled>
+<div id="chatarea">
 	<div style="max-height:400px; width:40%;overflow:hidden; overflow-y:scroll;" id="chatlist">
 	</div>
 	

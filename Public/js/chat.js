@@ -92,9 +92,9 @@ socket.addEventListener("message", event => {
 
 						localStorage.removeItem("lastsend");
 					}
-					errorField.innerHTML = "You are sending too many messages, please wait a while and try again";
+					errorField.innerText = "You are sending too many messages, please wait a while and try again";
 				} else {
-					errorField = error;
+					errorField.innerText = error;
 
 				}
 					
