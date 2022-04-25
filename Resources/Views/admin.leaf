@@ -6,10 +6,10 @@
 				let QR = document.getElementById('joinQR');
 			
 			
-				if (location.port == "80"){
-					var loc = location.hostname;
-				} else {
+				if (location.port){
 					var loc = location.hostname + ":" + location.port;
+				} else {
+					var loc = location.hostname;
 				}
 				
 				link.innerText = loc + "/join/#(groupJoinLink)/";
