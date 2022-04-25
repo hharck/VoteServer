@@ -5,9 +5,13 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 	let chat = API.grouped("chat")
 	chat.webSocket("socket", onUpgrade: joinChat)
 	chat.webSocket("adminsocket", onUpgrade: joinChat)
-
 	
 	func joinChat(req: Request, socket: WebSocket) async{
+		guard Config.enableChat else {
+			try? await socket.close()
+			return
+		}
+		
 		if req.url.path.hasSuffix("adminsocket") {
 			guard
 				let sessionID = req.session.authenticated(AdminSession.self),
@@ -56,9 +60,8 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 	}
 	
 	/// Returns full information (metadata, options, validators) regarding a vote only if the client are allowed to vote at the moment
-	API.get("getvote", ":voteID") { req async throws -> ExtendedVoteData in
-		
-		
+	API.get("getvote", ":voteID", use: getVote)
+	func getVote(req: Request) async throws -> ExtendedVoteData{
 		guard let (group, const) = await groupsManager.groupAndVoterForAPI(req: req) else {
 			throw Abort(.unauthorized)
 		}
@@ -87,7 +90,8 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 		return voteData
 	}
 	
-	API.post("postvote", ":voteID") { req async throws -> [String] in
+	API.post("postvote", ":voteID", use: postVote)
+	func postVote(req: Request) async throws -> [String]{
 		// Retrieve contextual information
 		guard let (group, const) = await groupsManager.groupAndVoterForAPI(req: req) else{
 			throw Abort(.unauthorized) //401
@@ -125,7 +129,6 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 			throw Abort(.internalServerError) //500
 		}
 	}
-	
 }
 
 

@@ -2,7 +2,7 @@ import Vapor
 import VoteExchangeFormat
 
 /// Defines paths often used for redirection
-enum redirectionPaths{
+enum RedirectionPaths{
 	case create
     case createvote(VoteTypes.StringStub)
 	case voteadmin(String?)
@@ -45,17 +45,27 @@ enum redirectionPaths{
 }
 
 extension Request{
-	func redirect(to location: redirectionPaths, type: RedirectType = .normal) -> Response {
+	func redirect(to location: RedirectionPaths, type: RedirectType = .normal) -> Response {
 		self.redirect(to: "/" + location.stringValue() + "/", type: type)
 	}
 }
 
-extension redirectionPaths: AsyncResponseEncodable, ResponseEncodable{
+extension RedirectionPaths: AsyncResponseEncodable, ResponseEncodable{
 	func encodeResponse(for req: Request) async throws -> Response {
 		req.redirect(to: self)
 	}
 	
 	func encodeResponse(for req: Request) -> EventLoopFuture<Response> {
 		req.eventLoop.makeSucceededFuture(req.redirect(to: self))
+	}
+}
+
+// Enables creating routes directly for redirection
+extension RoutesBuilder {
+	@discardableResult
+	func redirectGet(_ path: PathComponent..., to: RedirectionPaths) -> Route{
+		return self.on(.GET, path){ req in
+			req.redirect(to: to)
+		}
 	}
 }

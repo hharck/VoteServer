@@ -58,6 +58,8 @@ actor Group{
 	
 	
 	let socketController: ChatSocketController
+	
+	var emailHashCache: [String: String] = [:]
 }
 
 //MARK: Change settings
@@ -86,7 +88,7 @@ extension Group{
 			self.settings.showTags = showTags
 		}
 		
-		if let chatState = chatState {
+		if let chatState = chatState, Config.enableChat{
 			switch chatState{
 			case .onlyVerified:
 				await self.socketController.kickAll(onlyUnverified: true, includeAdmins: false)
@@ -239,7 +241,7 @@ extension Group{
 		if !verifiedConstituents.contains(const){
 			if unverifiedConstituents.contains(const){
 				assertionFailure()
-				logger.warning("\"\(const.name ?? const.identifier)\" is stored in unverifiedConstituents eventhough it's not joined")
+				logger.warning("\"\(const.getNameOrId())\" is stored in unverifiedConstituents eventhough it's not joined")
                 return false
 			}
 			

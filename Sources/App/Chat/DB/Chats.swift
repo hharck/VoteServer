@@ -41,12 +41,12 @@ final class Chats: Model, Content {
 
 
 extension Chats{
-	func chatFormat(senderName: String) async -> ChatFormat{
+	func chatFormat(senderName: String, imageURL: String?) async -> ChatFormat{
 		guard self.id != nil else {
 			fatalError("Attempted to access chat which hasn't been saved")
 		}
 				
-		return ChatFormat(id: self.id!, sender: senderName, message: self.message, timestamp: self.timestamp, isSystemsMessage: self.systemsMessage)
+		return ChatFormat(id: self.id!, sender: senderName, message: self.message, imageURL: imageURL, timestamp: self.timestamp, isSystemsMessage: self.systemsMessage)
 	}
 }
 
@@ -62,19 +62,22 @@ extension Array where Element == Chats{
 			fatalError("Chatformat called for messages from different groups")
 		}
 		
-		
-		var constituents = [String: String]()
+		// [ConstituentIdentifier: (ScreenName, gravatar.com + Email hash)]
+		var constituents = [String: (name: String, imageURL: String?)]()
 		var output = [ChatFormat]()
-		constituents["Admin"] = "Admin"
+		constituents["Admin"] = ("Admin", Config.adminProfilePicture)
 		
 		for chat in self{
 			if constituents[chat.sender] == nil {
 				let const = await group.constituent(for: chat.sender)
+				let imageURL = await group.getGravatarURLForConst(const)
 				
-				constituents[chat.sender] = (const?.name ?? const?.identifier) ?? "[Deleted]"
+				constituents[chat.sender] = (name: const?.getNameOrId() ?? "[Deleted]", imageURL: imageURL)
 			}
 			
-			output.append(ChatFormat(id: chat.id!, sender: constituents[chat.sender]!, message: chat.message, timestamp: chat.timestamp, isSystemsMessage: chat.systemsMessage))
+			let c = constituents[chat.sender]!
+			
+			output.append(ChatFormat(id: chat.id!, sender: c.name, message: chat.message, imageURL: c.imageURL, timestamp: chat.timestamp, isSystemsMessage: chat.systemsMessage))
 		}
 		return output
 	}

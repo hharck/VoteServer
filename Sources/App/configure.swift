@@ -5,9 +5,18 @@ import FluentSQLiteDriver
 
 // configures your application
 public func configure(_ app: Application) throws {
+	let logger = Logger(label: "Config")
+	// Set configuration variables from environment
+	if app.environment == .testing {
+		Config.setDefaultConfig()
+	} else {
+		Config.setGlobalConfig()
+	}
+	logger.info("Configured with: \(Config.config!)")
+	
     // Allow static files to be served from /Public
 	app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
-
+	
 	// Adds support for using leaf to render views
     app.views.use(.leaf)
 	
@@ -15,7 +24,6 @@ public func configure(_ app: Application) throws {
 	app.databases.use(.sqlite(.file("db.sqlite")), as: .sqlite)
 
 	app.migrations.add(CreateChats())
-	
 	app.migrations.add(SessionRecord.migration)
 
 	try app.autoMigrate().wait()
@@ -34,12 +42,9 @@ public func configure(_ app: Application) throws {
     // Enables CLI
     setupCommands(groupsManager: groupsManager, app: app)
     
+	// Handle errors resulting in a redirect
+	app.middleware.use(RedirectErrorHandler())
+
     // Register routes
     try routes(app, groupsManager: groupsManager)
 }
-
-let maxNameLength: Int = 100
-let joinPhraseLength: UInt = 6
-let maxChatLength: UInt = 1000
-let chatQueryLimit: Int = 100
-let messageRateLimiting: (seconds: Double, messages: Int) = (seconds: 10.0, messages: 10)

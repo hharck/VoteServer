@@ -3,40 +3,36 @@ import AltVoteKit
 import VoteKit
 
 func ResultRoutes(_ app: Application, groupsManager: GroupsManager) {
-	app.get("results"){ req in
-		req.redirect(to: .admin)
-	}
+	app.redirectGet("results", to: .admin)
+	app.redirectGet("results", ":voteID", to: .admin)
 
-    app.get("results", ":voteID"){ req in
-        req.redirect(to: .admin)
-    }
-
-	app.post("results", ":voteID"){ req async throws -> Response in
+	app.post("results", ":voteID", use: showResults)
+	func showResults(req: Request) async throws -> Response {
 		guard let voteIDStr = req.parameters.get("voteID") else {
-			return req.redirect(to: .admin)
+			throw Redirect(.admin)
 		}
-
+		
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(sessionID),
 			let vote = await  group.voteForID(voteIDStr)
 		else {
-			return req.redirect(to: .admin)
+			throw Redirect(.admin)
 		}
-    
-        guard let response = try? await getResults(req: req, group: group, vote: vote).encodeResponse(for: req) else {
-            throw Abort(.internalServerError)
-        }
-        return response
+		
+		guard let response = try? await getResults(req: req, group: group, vote: vote).encodeResponse(for: req) else {
+			throw Abort(.internalServerError)
+		}
+		return response
 	}
-
+	
 	struct SelectedOptions: Codable{
 		var options: [String: String]
-
+		
 		func enabledUUIDs()->[UUID]{
-            options
-                .filter(\.value.isOn)
-                .compactMap{UUID($0.key)}
+			options
+				.filter(\.value.isOn)
+				.compactMap{UUID($0.key)}
 		}
 	}
 
@@ -61,16 +57,13 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) {
         // Checks the force parameter
         let force = req.url.query?.split(separator: "&").contains("force=1") ?? false
         
-        let vid: UUID?
-        let vname: String?
+		let id = await vote.id()
+		let vname = await vote.name()
+		
         do{
             switch vote {
             case .alternative(let v):
-                vid  = await v.id
-                vname = await v.name
-
                 let winner = try await v.findWinner(force: force, excluding: excluding)
-
 
                 if winner.winners().isEmpty{
                     throw "An issue occured during counting"
@@ -81,34 +74,28 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) {
                 return AVResultsUI(title: "Your '\(await v.name)' vote results", winners: winner, numberOfVotes: await v.votes.count, enabledOptions: enabledOptions, disabledOptions: excluding)
 
             case .yesno(let v):
-                vid  = await v.id
-                vname = await v.name
-
                 let count = try await v.count(force: force)
                 return await YesNoResultsUI(vote: v, count: count)
             case .simplemajority(let v):
-                vid  = await v.id
-                vname = await v.name
-
                 let count = try await v.count(force: force)
 
                 return SimMajResultsUI(title: await v.name, numberOfVotes: await v.votes.count, count: count)
-
             }
 
         } catch {
             guard let er = error as? [VoteValidationResult] else {
                 return genericErrorPage(error: error)
             }
-            return ValidationErrorUI(title: vname ?? "", validationResults: er, voteID: vid ?? UUID())
+            return ValidationErrorUI(title: vname, validationResults: er, voteID: id)
         }
     }
     
 
 	//MARK: Export CSV
-	app.get("results", ":voteID", "downloadcsv"){ req async throws -> Response in
+	app.get("results", ":voteID", "downloadcsv", use: downloadResultsForVote)
+	func downloadResultsForVote(req: Request) async throws -> Response{
 		guard let voteIDStr = req.parameters.get("voteID") else {
-			return req.redirect(to: .admin)
+			throw Redirect(.admin)
 		}
 
 
@@ -117,26 +104,26 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) {
 			let group = await groupsManager.groupForSession(sessionID),
 			let vote = await group.voteForID(voteIDStr)
 		else {
-			return req.redirect(to: .results(voteIDStr))
+			throw Redirect(.results(voteIDStr))
 		}
 		
-        let csv: String
-        let csvConfiguration = await group.settings.csvConfiguration
-        switch vote {
-        case .alternative(let v):
-            csv = await v.toCSV(config: csvConfiguration)
-        case .yesno(let v):
-            csv = await v.toCSV(config: csvConfiguration)
-        case .simplemajority(let v):
-            csv = await v.toCSV(config: csvConfiguration)
-        }
+		let csv: String
+		let csvConfiguration = await group.settings.csvConfiguration
+		switch vote {
+		case .alternative(let v):
+			csv = await v.toCSV(config: csvConfiguration)
+		case .yesno(let v):
+			csv = await v.toCSV(config: csvConfiguration)
+		case .simplemajority(let v):
+			csv = await v.toCSV(config: csvConfiguration)
+		}
 		
 		return try await downloadResponse(for: req, content: csv, filename: "votes.csv")
 	}
-	
-	app.get("results", ":voteID", "downloadconst"){ req async throws -> Response in
+	app.get("results", ":voteID", "downloadconst", use: downloadConstituentsList)
+	func downloadConstituentsList(req: Request) async throws -> Response{
 		guard let voteIDStr = req.parameters.get("voteID") else {
-			return req.redirect(to: .admin)
+			throw Redirect(.admin)
 		}
 		
 		guard
@@ -144,16 +131,16 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) {
 			let group = await groupsManager.groupForSession(sessionID),
 			let vote = await group.voteForID(voteIDStr)
 		else {
-			return req.redirect(to: .results(voteIDStr))
+			throw Redirect(.results(voteIDStr))
 		}
 
-        let csv = await vote.constituents().toCSV(config: group.settings.csvConfiguration)
+		let csv = await vote.constituents().toCSV(config: group.settings.csvConfiguration)
 
 		return try await downloadResponse(for: req, content: csv, filename: "constituents.csv")
-		
 	}
 }
 
+/// Returns a response which makes the client download the content as a file with the given filename
 func downloadResponse(for req: Request, content: String, filename: String) async throws -> Response{
 	var headers = HTTPHeaders()
 	headers.add(name: .contentDisposition, value: "attachment; filename=\"\(filename)\"")

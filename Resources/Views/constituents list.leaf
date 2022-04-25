@@ -2,7 +2,7 @@
 		#export("body"):
 			<br><hr>
 			#if(showsTags):
-				<h3>Is participating</h3>
+				<h3>Participants</h3>
 				<ul>
 				#for(stat in tagStats):
 				<li>#(stat)</li>
@@ -12,6 +12,7 @@
 			<h3>All constituents</h3>
 			#extend("table"):
 				#export("tablerow"):
+					<td><img src="#(row.imageURL)"></img></td>
 					<td>#(row.userID)</td>
 					<td>#(row.name)</td>
 					#if(showsTags):
