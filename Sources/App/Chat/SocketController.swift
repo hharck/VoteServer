@@ -79,9 +79,6 @@ actor ChatSocketController{
 	
 	private func send(message: ServerChatProtocol, to sockets: [WebSocket]){
 		do {
-			
-			logger.info("Sending: \(message)")
-			
 			let encoder = JSONEncoder()
 			let data = try encoder.encode(message)
 			
@@ -129,7 +126,7 @@ actor ChatSocketController{
 					.filter(\.$groupID == group.id)
 					.sort(\.$timestamp, .descending)
 				if !isAdmin{
-					qb = qb.limit(chatQueryLimit)
+					qb = qb.limit(Int(Config.chatQueryLimit))
 				}
 				
 				let chats = try await qb.all()
@@ -140,33 +137,36 @@ actor ChatSocketController{
 				let msg = try checkMessage(msg: newMsg)
 				
 				if !isAdmin{
-					// Max n messages pr m seconds pr. constituent
-					let time = Date().advanced(by: -messageRateLimiting.seconds)
+					// Max n messages pr. m seconds pr. constituent
+					let time = Date().advanced(by: -Config.chatRateLimiting.seconds)
 					let count = try await Chats.query(on: db)
 						.filter(\.$groupID == group.id)
 						.filter(\.$sender == constituent!.identifier)
 						.filter(\.$timestamp > time)
 						.count()
 					
-					if count >= messageRateLimiting.messages {
+					if count >= Config.chatRateLimiting.messages {
 						sendER(error: .rateLimited, to: ws)
 						return
-						
 					}
 				}
+				
 				let chat = Chats(groupID: group.id, sender: isAdmin ? "Admin" : constituent!.identifier, message: msg, systemsMessage: isAdmin)
 				try await chat.save(on: db)
 				
 				Task{
 					let name: String
+					let imageURL: String?
+
 					if isAdmin{
 						name = "Admin"
+						imageURL = Config.adminProfilePicture
 					} else {
-						name = constituent!.name ?? constituent!.identifier
+						name = constituent!.getNameOrId()
+						imageURL = await group.getGravatarURLForConst(constituent)
 					}
 					
-					
-					let formatted = await chat.chatFormat(senderName: name)
+					let formatted = await chat.chatFormat(senderName: name, imageURL: imageURL)
 					await sendToAll(msg: .newMessage(formatted))
 				}
 			}

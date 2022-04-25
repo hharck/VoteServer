@@ -21,9 +21,19 @@ services:
     tty: true
     environment:
      - LOG_LEVEL=info
-     - VIRTUAL_HOST=vote.smkid.dk
-     - LETSENCRYPT_HOST=vote.smkid.dk
-     - LETSENCRYPT_EMAIL=admin@smkid.dk
+     - VIRTUAL_HOST=${VIRTUAL_HOST}
+     - LETSENCRYPT_HOST=${LETSENCRYPT_HOST}
+     - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+     - maxNameLength=${maxNameLength-100}
+     - joinPhraseLength=${joinPhraseLength-6}
+     - maxChatLength=${maxChatLength-1000}
+     - chatQueryLimit=${chatQueryLimit-100}
+     - chatRateLimitingSeconds=${chatRateLimitingSeconds-10.0}
+     - chatRateLimitingMessages=${chatRateLimitingMessages-10}
+     - defaultValueForUnverifiedConstituents=${defaultValueForUnverifiedConstituents-false}
+     - enableChat=${enableChat-true}
+     - adminProfilePicture=${adminProfilePicture-"/img/icon.png"}
+     
 
   ###################
   ## - Proxy

@@ -4,5 +4,8 @@ cd /opt/VoteServer
 git stash
 git pull
 
-docker-compose pull
-docker-compose restart
+chmod +x ./upgrade.sh
+
+docker compose pull
+docker compose stop
+docker compose up -d
