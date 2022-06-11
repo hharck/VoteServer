@@ -6,7 +6,8 @@ struct ConstituentsListUI: UITableManager{
 	
 	var buttons: [UIButton] = [.backToAdmin,
 							   .reload,
-							   .init(uri: "/admin/constituents/downloadcsv/", text: "Download constituents as CSV", color: .blue, downloadable: true)
+							   .init(uri: "/admin/constituents/downloadcsv/", text: "Download constituents as CSV", color: .blue, downloadable: true),
+							   .init(uri: "/admin/constituents/downloadcurrentlyin/", text: "Download joined constituents as CSV", color: .blue, downloadable: true)
 	]
 	
 	var tableHeaders: [String]
