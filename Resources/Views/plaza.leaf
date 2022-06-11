@@ -1,10 +1,13 @@
 #extend("outerHTML"):
 		#export("extraHead"):
 			#if(showChat):
-				<script>
-					const socketName = "socket";
-				</script>
 				<script src="/js/chat.js"></script>
+				<script>
+					const socketName = "socket/#(generalInformation.groupID)";
+					window.onload = function() {
+						window.onload = socketSetup(socketName);
+					}
+				</script>
 			#endif
 			
 			<style>
@@ -47,7 +50,7 @@
 			#extend("table"):
 			#export("tablerow"):
 			
-				<td>#if(row.showLink):<a href="/vote/#(row.voteID)/">#(row.name)</a>#else:#(row.name)#endif</td>
+				<td>#if(row.showLink):<a href="/group/#(generalInformation.groupID)/vote/#(row.voteID)/">#(row.name)</a>#else:#(row.name)#endif</td>
 				<td>#(row.voteType)</td>	
 				<td align="center">
 				#if(row.isOpen):

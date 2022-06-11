@@ -8,13 +8,8 @@ final class Chats: Model, Content {
 	@ID(key: .id)
 	var id: UUID?
 	
-	//@Parent
-	@Field(key: "group_id")
-	var groupID: UUID
-	
-	//@Parent
-	@Field(key: "sender")
-	var sender: String
+	@Parent(key: "group_and_sender")
+	var groupAndSender: GroupConstLinker
 	
 	@Field(key: "message")
 	var message: String
@@ -25,10 +20,9 @@ final class Chats: Model, Content {
 	@Field(key: "systems_message")
 	var systemsMessage: Bool
 	
-	init(id: UUID? = nil, groupID: UUID, sender: String, message: String, timestamp: Date = Date(), systemsMessage: Bool = false){
+	init(id: UUID? = nil, groupAndSender: GroupConstLinker, message: String, timestamp: Date = Date(), systemsMessage: Bool = false){
 		self.id = id
-		self.groupID = groupID
-		self.sender = sender
+		self.$groupAndSender.id = groupAndSender.id!
 		self.message = message
 		self.timestamp = timestamp
 		self.systemsMessage = systemsMessage
@@ -48,34 +42,37 @@ extension Chats{
 				
 		return ChatFormat(id: self.id!, sender: senderName, message: self.message, imageURL: imageURL, timestamp: self.timestamp, isSystemsMessage: self.systemsMessage)
 	}
+	
+	func format() -> ChatFormat{
+		var name = self.groupAndSender.constituent.name
+		let imageURL: String
+		if self.groupAndSender.isAdmin{
+			name = "Admin - " + name
+			imageURL = Config.adminProfilePicture
+		} else {
+			imageURL = getGravatarURLForUser(self.groupAndSender.constituent)
+		}
+		
+		return ChatFormat(id: self.id!, sender: name, message: self.message, imageURL: imageURL, timestamp: self.timestamp, isSystemsMessage: self.systemsMessage)
+
+	}
 }
 
 extension Array where Element == Chats{
-	func chatFormat(group: Group) async -> [ChatFormat]{
-		let groupID = group.id
-		
-		guard
-			self.allSatisfy( { chat in
-				chat.groupID == groupID
-			})
-		else {
-			fatalError("Chatformat called for messages from different groups")
-		}
-		
-		// [ConstituentIdentifier: (ScreenName, gravatar.com + Email hash)]
+	func chatFormat() async -> [ChatFormat]{
 		var constituents = [String: (name: String, imageURL: String?)]()
 		var output = [ChatFormat]()
 		constituents["Admin"] = ("Admin", Config.adminProfilePicture)
-		
+
 		for chat in self{
-			if constituents[chat.sender] == nil {
-				let const = await group.constituent(for: chat.sender)
-				let imageURL = await group.getGravatarURLForConst(const)
-				
-				constituents[chat.sender] = (name: const?.getNameOrId() ?? "[Deleted]", imageURL: imageURL)
+			let sender = try! chat.joined(GroupConstLinker.self).joined(DBUser.self)
+			if constituents[sender.username] == nil {
+				let imageURL = getGravatarURLForUser(sender)
+				let name = sender.name
+				constituents[sender.username] = (name: name, imageURL: imageURL)
 			}
 			
-			let c = constituents[chat.sender]!
+			let c = constituents[sender.username]!
 			
 			output.append(ChatFormat(id: chat.id!, sender: c.name, message: chat.message, imageURL: c.imageURL, timestamp: chat.timestamp, isSystemsMessage: chat.systemsMessage))
 		}

@@ -1,6 +1,7 @@
 struct AdminUIController: UITableManager{
 	var title: String
 	var errorString: String? = nil
+	var generalInformation: HeaderInformation! = nil
 	var hideIfEmpty: Bool = true
 	
 	var buttons: [UIButton] = [
@@ -8,8 +9,8 @@ struct AdminUIController: UITableManager{
         .init(uri: .createvote(.alternative), text: "Create \"Alternative vote\"", color: .green),
         .init(uri: .createvote(.simpleMajority), text: "Create \"Simple majority vote\"", color: .green),
         .init(uri: .createvote(.yesNo), text: "Create \"Yes/no vote\"", color: .green),
-        .init(uri: "/admin/settings/", text: "Settings", color: .blue),
-		.init(uri: "/admin/constituents/", text: "Manage constituents", color: .blue),
+        .init(uri: "/admin/settings/", text: "Settings", color: .blue, inGroup: true),
+		.init(uri: "/admin/constituents/", text: "Manage constituents", color: .blue, inGroup: true),
 	]
 	
 	var rows = [SimplifiedVoteData]()
@@ -17,7 +18,7 @@ struct AdminUIController: UITableManager{
 	
 	var groupJoinLink: String
 	
-	init(for group: Group) async{
+	init(for group: Group, settings: GroupSettings) async{
 		self.title = group.name
 		groupJoinLink = group.joinPhrase
 		tableHeaders = ["Name", "Vote type", "No. of votes cast", "Open/closed"]
@@ -51,8 +52,8 @@ struct AdminUIController: UITableManager{
 		
 		rows.sort{ $0.name < $1.name}
 		
-		if await group.settings.chatState != .disabled {
-			self.buttons.append(UIButton(uri: "/admin/chats/", text: "Chats", color: .blue))
+		if settings.chatState != .disabled {
+			self.buttons.append(UIButton(uri: "/admin/chats/", text: "Chats", color: .blue, inGroup: true))
 		}
 	}
 	

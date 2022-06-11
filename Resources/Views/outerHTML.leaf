@@ -1,34 +1,33 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<link rel="stylesheet" type="text/css" href="/css/css.css">
+	<head>
+		<meta charset="utf-8">
+		<link rel="stylesheet" type="text/css" href="/css/css.css">
+		
+		<link rel="shortcut icon" type="image/png" href="/img/icon.png">
+		<link rel="shortcut icon" sizes="192x192" href="/img/icon.png">
+		<link rel="apple-touch-icon" href="/img/icon.png">
+		
+		<script src="/js/js.js"></script>
+		#import("extraHead")
+		<title>#(title)</title>
+	</head>
 
-<link rel="shortcut icon" type="image/png" href="/img/icon.png">
-<link rel="shortcut icon" sizes="192x192" href="/img/icon.png">
-<link rel="apple-touch-icon" href="/img/icon.png">
-
-<script src="/js/js.js"></script>
-#import("extraHead")
-<title>#(title)</title>
-</head>
-
-<body>
-<h1>#(title)</h1><hr>
-
-#if(buttons):
-#for(button in buttons):
-	<a href="#(button.uri)" class="#(button.color) button"#if(button.lockable): name="lockableButton" onClick="lockButton()"#endif #if(button.downloadable): download#endif>#(button.text)</a>
-#endfor
-<br>
-#endif
-<br>
-#import("body")
-#if(errorString):
-<br><b><p style="color:red">#(errorString)</p></b>
-#endif
-<br><br><hr>
-If you find a bug, have a suggestion, or the server crashes.<br>
-<a href="https://git.smkid.dk/Harcker/VoteServer/-/issues/new">Feel free to create/report an issue</a> or simply send an email to <a href="mailto:harcker-voteserver-8-issue-@dev.smkid.dk">harcker-voteserver-8-issue-@dev.smkid.dk</a>
-</body>
+	<body>
+		#extend("toolbar"):
+		#endextend
+		<div class="content">
+			<h1>#(title)</h1><hr>
+			<br>
+			#import("body")
+			#if(errorString):
+				<br><b><p style="color:red">#(errorString)</p></b>
+			#endif
+			<br><br><hr>
+			If you find a bug, have a suggestion, or the server crashes.<br>
+			<a href="https://git.smkid.dk/Harcker/VoteServer/-/issues/new">Feel free to create/report an issue</a> or simply send an email to <a href="mailto:harcker-voteserver-8-issue-@dev.smkid.dk">harcker-voteserver-8-issue-@dev.smkid.dk</a>
+			<br>
+			Otherwise, my portfolio is at <a href="https://hansht.dk">https://hansht.dk</a>
+		</div>
+	</body>
 </html>

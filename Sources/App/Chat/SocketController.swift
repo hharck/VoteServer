@@ -1,82 +1,66 @@
 import Vapor
-import Fluent
 import VoteKit
-
-fileprivate struct SocketWrapper{
-	var socket: WebSocket
-	var constituent: ConstituentIdentifier
-	var isVerified: Bool
-}
+import FluentKit
+import Foundation
 
 actor ChatSocketController{
-	private var sockets: [ConstituentIdentifier: SocketWrapper] = [:]
-	private var adminSocket: WebSocket? = nil
+	enum SocketKind: String{
+		case unverified, verified, admin
+	}
 	
-	private let db: Database
+	fileprivate struct SocketWrapper{
+		var socket: WebSocket
+		var userid: UUID
+		var socketKind: SocketKind
+	}
+	
+	private var sockets: [UUID: SocketWrapper] = [:]
+
 	private var logger: Logger!
 	
-	private weak var group: Group?
+	/// Id of the related group
+	private var groupID: UUID
 	
-	public init(db: Database) {
-		self.db = db
+	init(_ group: DBGroup){
+		self.groupID = group.id!
+		self.logger = Logger(label: "Chat socket controller: \(group.joinphrase)")
 	}
 	
-	func setup(group: Group) {
-		self.group = group
-		self.logger = Logger(label: "Chat socket controller: \(group.joinPhrase)")
+	
+	
+	
+	
+	private func remove(userid: UUID) async{
+		sockets.removeValue(forKey: userid)
 	}
 	
-	private func remove(constituent: ConstituentIdentifier) async{
-		sockets.removeValue(forKey: constituent)
-	}
-	
-	func connect(_ ws: WebSocket, constituent: Constituent) async {
-		guard let group = group else {return}
-		
+	func connect(_ ws: WebSocket, userid: UUID, socketKind: SocketKind, db: Database) async {
 		ws.onBinary { [weak self] ws, buffer in
 			guard let self = self, let data = buffer.getData(at: buffer.readerIndex, length: buffer.readableBytes) else { return }
-			await self.onData(ws, constituent: constituent, data)
+			await self.onData(ws, userid: userid, data, db: db)
 		}
-		
 		ws.onText { [weak self] ws, text in
 			guard let self = self, let data = text.data(using: .utf8) else { return }
-			await self.onData(ws, constituent: constituent, data)
+			await self.onData(ws, userid: userid, data, db: db)
 		}
 		ws.onClose.whenSuccess{
 			Task{ [weak self] in
-				await self?.remove(constituent: constituent.identifier)
+				await self?.remove(userid: userid)
 			}
 		}
 
 		ws.pingInterval = .seconds(30)
 		
-		let isVerified = await group.constituentIsVerified(constituent)
-		let wrapper = SocketWrapper(socket: ws, constituent: constituent.identifier, isVerified: isVerified)
+		
+		let wrapper = SocketWrapper(socket: ws, userid: userid, socketKind: socketKind)
 				
-		if let oldSocket = sockets.updateValue(wrapper, forKey: constituent.identifier){
+		if let oldSocket = sockets.updateValue(wrapper, forKey: userid){
 			try? await oldSocket.socket.close()
 		}
 		
+		try? await doQuery(db, socketKind == .admin, ws)
 	}
-	
-	func connectAdmin(_ ws: WebSocket) async {
-		if let oldSocket = adminSocket {
-			try? await oldSocket.close()
-		}
-		
-		ws.onBinary { [weak self] ws, buffer in
-			guard let self = self, let data = buffer.getData(at: buffer.readerIndex, length: buffer.readableBytes) else { return }
-			await self.onData(ws, isAdmin: true, data)
-		}
-		
-		ws.onText { [weak self] ws, text in
-			guard let self = self, let data = text.data(using: .utf8) else { return }
-			await self.onData(ws, isAdmin: true, data)
-		}
-		ws.pingInterval = .seconds(30)
-		adminSocket = ws
-	}
-	
+
 	private func send(message: ServerChatProtocol, to sockets: [WebSocket]){
 		do {
 			let encoder = JSONEncoder()
@@ -92,56 +76,70 @@ actor ChatSocketController{
 	}
 	
 	
-	private func onData(_ ws: WebSocket, constituent: Constituent? = nil, isAdmin: Bool = false, _ data: Data) async {
-		assert((constituent != nil) != isAdmin, "onData needs a constituent or an admin")
-
+	private func onData(_ ws: WebSocket, userid: UUID, _ data: Data, db: Database) async {
 		let decoder = JSONDecoder()
 		guard let request = try? decoder.decode(ClientChatProtocol.self, from: data) else {
-			if group == nil {
-				self.kickAll(onlyUnverified: false, includeAdmins: true)
-				return
-			}
-			
 			sendER(error: .invalidRequest, to: ws)
 			return
 		}
-		
-		await handleRequest(request: request, socket: ws, constituent: constituent, isAdmin: isAdmin)
+				
+		await handleRequest(request: request, socket: ws, userid: userid, db: db)
 	}
 	
-	private func handleRequest(request: ClientChatProtocol, socket ws: WebSocket, constituent: Constituent?, isAdmin: Bool) async{
-		assert((constituent != nil) != isAdmin)
+	fileprivate func doQuery(_ db: Database, _ isAdmin: Bool, _ ws: WebSocket) async throws {
+		var qb = Chats
+			.query(on: db)
+			.join(parent: \.$groupAndSender)
+			.filter(GroupConstLinker.self, \.$group.$id == groupID)
+			.join(from: GroupConstLinker.self, parent: \.$constituent)
+			.sort(\.$timestamp, .descending)
 		
-		guard let group = group else {
-			//Removes and closes all sockets if the group is no longer exsistent
-			self.kickAll(onlyUnverified: false, includeAdmins: true)
-			return
+		if !isAdmin{
+			qb = qb.limit(Int(Config.chatQueryLimit))
 		}
 		
+		let chats = try await qb.all()
+		
+		
+		await self.send(message: .newMessages(chats.chatFormat()), to: ws)
+	}
+	
+	private func handleRequest(request: ClientChatProtocol, socket ws: WebSocket, userid: UUID, db: Database) async{
+
 		do {
+			
+			guard let dbGroup = try await DBGroup.find(groupID, on: db) else {
+				logger.error("Group not found for socket request")
+				self.kickAll()
+				return
+			}
+			
+			guard
+				let user = try await dbGroup
+					.$constituents
+					.query(on: db)
+					.join(parent: \.$constituent)
+					.filter(\.$constituent.$id == userid)
+					.first()
+			else {
+				logger.error("User not found for socket request")
+				return
+			}
+			
+			let isAdmin = user.isAdmin
+			
+			
 			switch request{
 			case .query:
-				var qb = Chats
-					.query(on: db)
-					.filter(\.$groupID == group.id)
-					.sort(\.$timestamp, .descending)
-				if !isAdmin{
-					qb = qb.limit(Int(Config.chatQueryLimit))
-				}
-				
-				let chats = try await qb.all()
-			
-				
-				await self.send(message: .newMessages(chats.chatFormat(group: group)), to: ws)
+				try await doQuery(db, isAdmin, ws)
 			case .send(let newMsg):
 				let msg = try checkMessage(msg: newMsg)
 				
-				if !isAdmin{
+				if !user.isAdmin{
 					// Max n messages pr. m seconds pr. constituent
 					let time = Date().advanced(by: -Config.chatRateLimiting.seconds)
 					let count = try await Chats.query(on: db)
-						.filter(\.$groupID == group.id)
-						.filter(\.$sender == constituent!.identifier)
+						.filter(\.$groupAndSender.$id == userid)
 						.filter(\.$timestamp > time)
 						.count()
 					
@@ -151,24 +149,14 @@ actor ChatSocketController{
 					}
 				}
 				
-				let chat = Chats(groupID: group.id, sender: isAdmin ? "Admin" : constituent!.identifier, message: msg, systemsMessage: isAdmin)
+				let chat = Chats(groupAndSender: user, message: msg, systemsMessage: user.isAdmin)
+				try await chat.$groupAndSender.load(on: db)
+				try await chat.groupAndSender.$constituent.load(on: db)
 				try await chat.save(on: db)
-				
-				Task{
-					let name: String
-					let imageURL: String?
+				let formatted = chat.format()
+				await sendToAll(msg: .newMessage(formatted))
 
-					if isAdmin{
-						name = "Admin"
-						imageURL = Config.adminProfilePicture
-					} else {
-						name = constituent!.getNameOrId()
-						imageURL = await group.getGravatarURLForConst(constituent)
-					}
-					
-					let formatted = await chat.chatFormat(senderName: name, imageURL: imageURL)
-					await sendToAll(msg: .newMessage(formatted))
-				}
+				
 			}
 		} catch let error as ChatError{
 			sendER(error: error, to: ws)
@@ -178,29 +166,26 @@ actor ChatSocketController{
 		}
 	}
 	
-	func close(constituent: ConstituentIdentifier) async{
+	func close(userid: UUID) async{
 		do{
-			try await self.sockets[constituent]?.socket.close()
+			try await self.sockets[userid]?.socket.close()
 		} catch{
-			logger.error("Error while kicking \(constituent) from their chatsocket")
+			logger.error("Error while kicking \(userid) from their chatsocket")
 		}
 	}
 	
-	func kickAll(onlyUnverified: Bool = false, includeAdmins: Bool = false){
-		assert(!(onlyUnverified && includeAdmins))
-		
-		var toClose = self.sockets.values.filter{!onlyUnverified || !$0.isVerified}.map(\.socket)
-		
-		if includeAdmins && adminSocket != nil{
-			toClose.append(adminSocket!)
-		}
+	func kickAll(only kind: SocketKind? = nil){
+		let toClose = self.sockets
+			.values
+			.filter{kind == nil || $0.socketKind == kind}
+			.map(\.socket)
 		
 		Task{ [toClose] in
 			for socket in toClose{
 				do{
 					try await socket.close()
 				} catch{
-					logger.error("Error while kicking all \(onlyUnverified ? "unverified" : "") from their chatsocket")
+					logger.error("Error while kicking \(kind?.rawValue ?? "all") from their chatsocket")
 				}
 				
 			}
@@ -209,31 +194,32 @@ actor ChatSocketController{
 	}
 	
 	func sendToAll(msg: ServerChatProtocol, async: Bool = false, includeAdmin: Bool = true) async{
-		
 		if async{
 			Task{ [weak self] in
 				guard let self = self else {return}
-				var allSockets: [WebSocket] = await self.sockets.values.map(\.socket)
-				if includeAdmin && adminSocket != nil{
-					allSockets.append(adminSocket!)
-				}
+				let allSockets: [WebSocket] = await self
+					.sockets
+					.values
+					.filter{includeAdmin || $0.socketKind != .admin}
+					.map(\.socket)
 				
 				await self.send(message: msg, to: allSockets)
 				
 			}
 		} else {
-			
-			var allSockets: [WebSocket] = sockets.values.map(\.socket)
-			if includeAdmin && adminSocket != nil{
-				allSockets.append(adminSocket!)
-			}
-			
+			let allSockets: [WebSocket] = self
+				.sockets
+				.values
+				.filter{includeAdmin || $0.socketKind != .admin}
+				.map(\.socket)
 			self.send(message: msg, to: allSockets)
 		}
 	}
 	
 	deinit{
-		self.kickAll(onlyUnverified: false, includeAdmins: true)
+		Task{
+			await self.kickAll()
+		}
 	}
 }
 
@@ -243,30 +229,7 @@ extension ChatSocketController{
 	func send(message: ServerChatProtocol, to socket: WebSocket){
 		send(message: message, to: [socket])
 	}
-	
-	//Succes sending
-	
-//	func sendSM(message: serverMessages, to users: [UserID]){
-//		send(message: .withSM(message) , to: users)
-//	}
-//
-//	func sendSM(message: serverMessages, respondingTo reqID: ReqID? = nil, to user: UserID){
-//		sendSM(message: message, to: [user])
-//	}
-//
-//	func sendSM(message: serverMessages, to socket: [WebSocket]){
-//		send(message: .withSM(message), to: socket)
-//	}
-//	func sendSM(message: serverMessages, respondingTo reqID: ReqID? = nil, to socket: WebSocket){
-//		sendSM(message: message, to: [socket])
-//	}
-//
-	//Error sending
-	
-//	func sendER(error: errorCodes, respondingTo reqID: ReqID? = nil, to user: UserID){
-//		send(message: .withError(error, to: reqID), to: [user])
-//	}
-//
+
 	func sendER(error: ChatError, to socket: WebSocket){
 		send(message: .error(error), to: socket)
 	}

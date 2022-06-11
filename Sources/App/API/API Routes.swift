@@ -1,41 +1,60 @@
 import Vapor
 import VoteExchangeFormat
-import Foundation
-func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager: GroupsManager){
+import FluentKit
+
+func APIRoutes(_ API: RoutesBuilder, groupsManager: GroupsManager){
 	let chat = API.grouped("chat")
-	chat.webSocket("socket", onUpgrade: joinChat)
-	chat.webSocket("adminsocket", onUpgrade: joinChat)
+	chat.webSocket("socket", ":groupid", onUpgrade: joinChat)
+	chat.webSocket("adminsocket", ":groupid", onUpgrade: joinChat)
 	
 	func joinChat(req: Request, socket: WebSocket) async{
-		guard Config.enableChat else {
+		// Checks if the user is allowed to chat and whether the request is valid
+		guard
+			Config.enableChat,
+			let user = try? req.auth.require(DBUser.self),
+			let groupID = req.parameters.get("groupid"),
+			let uuid = UUID(uuidString: groupID),
+			let linker = try? await user
+				.$groups
+				.query(on: req.db)
+				.join(parent: \.$group)
+				.filter(\.$group.$id == uuid)
+				.first(),
+			linker.constituentCanChat()
+		else {
 			try? await socket.close()
 			return
 		}
 		
-		if req.url.path.hasSuffix("adminsocket") {
-			guard
-				let sessionID = req.session.authenticated(AdminSession.self),
-				let group = await groupsManager.groupForSession(sessionID)
-			else {
-				try? await socket.close()
-				return
-			}
-			await group.socketController.connectAdmin(socket)
-			return
+		do{
+			let dbGroup = try linker.joined(DBGroup.self)
+			let group = await groupsManager.groupForGroup(dbGroup)
 			
-		} else if req.url.path.hasSuffix("socket") {
-			guard
-				let (group, constituent) = await groupsManager.groupAndVoterForReq(req: req),
-				//Checks that the constituent is allowed to enter the chat
-				await group.constituentCanChat(constituent)
-			else{
-				try? await socket.close()
+			
+			let socketKind: ChatSocketController.SocketKind
+			if req.url.path.hasSuffix("adminsocket/\(groupID)") {
+				socketKind = .admin
+			} else if req.url.path.hasSuffix("socket/\(groupID)") {
+				if linker.isVerified{
+					socketKind = .verified
+				} else {
+					socketKind = .unverified
+				}
+			} else {
+				assertionFailure("This route should only be called with one of the two socket types above")
+				try await socket.close()
 				return
 			}
-			await group.socketController.connect(socket, constituent: constituent)
+			
+			await group.socketController.connect(socket, userid: user.id!, socketKind: socketKind, db: req.db)
+			
+			
+		} catch {
+			try? await socket.close()
+			return
 		}
 	}
-
+	
 	
 	API.get{ _ throws -> Response in
 		throw Abort(.badRequest)
@@ -49,23 +68,21 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 	}
 	
 	API.get("getdata") { req async throws -> GroupData in
-		guard
-			let (group, const) = await groupsManager.groupAndVoterForAPI(req: req),
-			let data = await group.getExchangeData(for: const.identifier)
-		else {
-			throw Abort(.unauthorized)
-		}
+		let linker = try req.auth.require(GroupConstLinker.self, Abort(.unauthorized))
+		let group = linker.group
 		
-		return data
+		return await groupsManager
+			.groupForGroup(group)
+			.getExchangeData(for: linker.constituent.username, constituentsCanSelfResetVotes: group.settings.constituentsCanSelfResetVotes)
 	}
 	
 	/// Returns full information (metadata, options, validators) regarding a vote only if the client are allowed to vote at the moment
 	API.get("getvote", ":voteID", use: getVote)
 	func getVote(req: Request) async throws -> ExtendedVoteData{
-		guard let (group, const) = await groupsManager.groupAndVoterForAPI(req: req) else {
-			throw Abort(.unauthorized)
-		}
-		
+		let linker = try req.auth.require(GroupConstLinker.self, Abort(.unauthorized))
+		let dbGroup = linker.group
+		let group = await groupsManager.groupForGroup(dbGroup)
+		let const = linker.constituent.asConstituent()
 		guard
 			let voteIDStr = req.parameters.get("voteID"),
 			let vote = await group.voteForID(voteIDStr)
@@ -93,9 +110,10 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 	API.post("postvote", ":voteID", use: postVote)
 	func postVote(req: Request) async throws -> [String]{
 		// Retrieve contextual information
-		guard let (group, const) = await groupsManager.groupAndVoterForAPI(req: req) else{
-			throw Abort(.unauthorized) //401
-		}
+		let linker = try req.auth.require(GroupConstLinker.self, Abort(.unauthorized))
+		let dbGroup = linker.group
+		let group = await groupsManager.groupForGroup(dbGroup)
+		let const = linker.constituent.asConstituent()
 		
 		guard
 			let voteIDStr = req.parameters.get("voteID"),

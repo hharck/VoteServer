@@ -1,0 +1,46 @@
+#extend("outerHTML"):
+		#export("body"):
+			<p>Name: #(name)</p>
+			<p>Username: #(username)</p>
+			<p>Email: #(email)</p>
+			<hr>
+			#extend("table"):
+				#export("tablerow"):
+					<td>
+					#if(row.isCurrentlyIn):
+						<a href="/group/#(row.groupID)" class="inlinebutton"><b>#(row.name)</b></a>
+					#else:
+						<b>#(row.name)</b>
+					#endif
+					</td>
+					
+					<td>#(row.tag)</td>
+					
+					<td align="center">
+						#if(row.isAdmin):
+							<span class="dot green"></span>
+						#else:
+							<span class="dot red"></span>
+						#endif
+					</td>
+					
+					<td align="center">
+						#if(row.isVerified):
+							<span class="dot green"></span>
+						#else:
+							<span class="dot red"></span>
+						#endif
+					</td>
+					
+					<td align="center">
+						#if(row.isCurrentlyIn):
+							<span class="dot green"></span>
+						#else:
+						<a href="/group/#(row.groupID)/accept/" class="inlinebutton green"><b>Accept</b></a>
+						<!--<a href="/group/#(row.groupID)/decline/" class="inlinebutton red"><b>Decline</b></a>-->
+						#endif
+					</td>
+				#endexport
+			#endextend
+		#endexport
+#endextend

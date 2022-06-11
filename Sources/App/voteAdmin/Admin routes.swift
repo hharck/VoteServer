@@ -3,34 +3,28 @@ import VoteKit
 import Foundation
 import FluentKit
 
-func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
-	let admin = app.grouped("admin")
-	let voteadmin = app.grouped("voteadmin")
-	let login = app.grouped("login")
+func adminRoutes(_ path: RoutesBuilder, groupsManager: GroupsManager) {
+	let admin = path.grouped(EnsureGroupAdmin()).grouped("admin")
+	let voteadmin = path.grouped("voteadmin")
 
+	voteCreationRoutes(admin.grouped("createvote"), groupsManager: groupsManager)
+	
 	voteadmin.redirectGet(to: .admin)
 	
 	admin.get(use: getAdminPage)
 	func getAdminPage(req: Request) async throws -> AdminUIController {
-		//List of votes
-		guard
-			let sessionID = req.session.authenticated(AdminSession.self),
-			let group = await groupsManager.groupForSession(sessionID)
-		else {
-			throw Redirect(.create)
-		}
-		
-		return await AdminUIController(for: group)
+		let dbGroup = try req.auth.require(DBGroup.self, Redirect(.create))
+		let group = await groupsManager.groupForGroup(dbGroup)
+		return await AdminUIController(for: group, settings: dbGroup.settings)
 	}
     
 	// Changes the open/closed status of the vote passed as ":voteID"
 	voteadmin.get(":voteID", ":command", use: setStatus)
-	func setStatus(req: Request) async -> Response{
+	func setStatus(req: Request) async throws -> Response{
+		let group = await groupsManager.groupForGroup(try req.auth.require(DBGroup.self))
 		if let voteIDStr = req.parameters.get("voteID"),
 		   let commandStr = req.parameters.get("command"),
 		   let command = VoteStatus(rawValue: commandStr),
-		   let sessionID = req.session.authenticated(AdminSession.self),
-		   let group = await groupsManager.groupForSession(sessionID),
 		   let vote = await group.voteForID(voteIDStr)
 		{
             await group.setStatusFor(await vote.id(), to: command)
@@ -46,15 +40,13 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
             let voteIDStr = req.parameters.get("voteID"),
             let voteID = UUID(voteIDStr)
         else {
-			throw Redirect(.admin)
+			throw Abort(.notFound)
 		}
 		
-		guard
-			let adminID = req.session.authenticated(AdminSession.self),
-			let group = await groupsManager.groupForSession(adminID),
-			let vote = await group.voteForID(voteID)
-		else {
-			throw Redirect(.admin)
+		let dbGroup = try req.auth.require(DBGroup.self)
+		let group = await groupsManager.groupForGroup(dbGroup)
+		guard let vote = await group.voteForID(voteID) else {
+			throw Abort(.notFound)
 		}
 		
 		if req.method == .POST {
@@ -68,33 +60,48 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 			if let status = (try? req.content.decode([String:VoteStatus].self))?["statusChange"] {
 				await group.setStatusFor(await vote.id(), to: status)
 			}
-			
-			return await VoteAdminUIController(vote: vote, group: group)
-
-		} else {
-			return await VoteAdminUIController(vote: vote, group: group)
 		}
-     
+		
+		
+		// TODO: Replace when Swift 5.7 is released
+		switch vote {
+		case .alternative(let v):
+			return try await VoteAdminUIController(vote: v, group: dbGroup, status: group.statusFor(v) ?? .closed, db: req.db)
+		case .yesno(let v):
+			return try await VoteAdminUIController(vote: v, group: dbGroup, status: group.statusFor(v) ?? .closed, db: req.db)
+		case .simplemajority(let v):
+			return try await VoteAdminUIController(vote: v, group: dbGroup, status: group.statusFor(v) ?? .closed, db: req.db)
+		}
 	}
 	
 	// Shows a list of constituents and related settings
 	admin.get("constituents", use: constituentsPage)
 	admin.post("constituents", use: constituentsPage)
 	func constituentsPage(req: Request) async throws -> ConstituentsListUI  {
-		guard
-			let sessionID = req.session.authenticated(AdminSession.self),
-			let group = await groupsManager.groupForSession(sessionID)
-		else {
-			throw Redirect(.admin)
-		}
+		let group = try req.auth.require(DBGroup.self, Abort(.notFound))
+		let relatedGroup = await groupsManager.groupForGroup(group)
 		
-		if req.method == .POST,
-		   let status = try? req.content.decode(ChangeVerificationRequirementsData.self).getStatus()
+		if
+			req.method == .POST,
+			let status = try? req.content.decode(ChangeVerificationRequirementsData.self).getStatus()
 		{
-			await group.setSettings(allowsUnverifiedConstituents: status)
+			try await group.updateUnverifiedSetting(status, relatedGroup: relatedGroup, db: req.db)
+			try await group.save(on: req.db)
 		}
 		
-		return await ConstituentsListUI(group: group)
+		let constituents = try await group
+			.$constituents
+			.query(on: req.db)
+			.filter(\.$isBanned == false)
+			.join(parent: \.$constituent)
+			.all()
+		let invites = try await group
+			.$invite
+			.query(on: req.db)
+			.join(parent: \.$invite)
+			.all()
+		
+		return try await ConstituentsListUI(settings: group.settings, constituents: constituents, invites: invites)
 		
 		struct ChangeVerificationRequirementsData: Codable{
 			private var setVerifiedRequirement: String
@@ -112,26 +119,37 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 	
 	admin.get("constituents", "downloadcsv", use: downloadConstituentsCSV)
 	func downloadConstituentsCSV(req: Request) async throws-> Response{
-		guard
-			let sessionID = req.session.authenticated(AdminSession.self),
-			let group = await groupsManager.groupForSession(sessionID)
-		else {
-			throw Redirect(.constituents)
-		}
-		
-		let csv = await group.allPossibleConstituents().toCSV(config: group.settings.csvConfiguration)
+		let group = try req.auth.require(DBGroup.self, Redirect(.constituents))
+		// Retrieve constituents from database
+		let csv = try await group
+			.$constituents
+			.query(on: req.db)
+			.join(parent: \.$constituent)
+			.all()
+		// Convert to constituents
+			.asConstituents()
+		// Convert to CSV
+			.toCSV(config: group.settings.csvConfiguration)
 		return try await downloadResponse(for: req, content: csv, filename: "constituents.csv")
 	}
 	
 	admin.post("resetaccess", ":userID", use: resetaccess)
 	func resetaccess(req: Request) async throws-> Response{
+		let dbGroup = try req.auth.require(DBGroup.self)
+		let group = await groupsManager.groupForGroup(dbGroup)
+		
 		if let userIdentifierbase64 = req.parameters.get("userID")?.trimmingCharacters(in: .whitespacesAndNewlines),
 		   let userIdentifier = String(urlsafeBase64: userIdentifierbase64),
-		   let sessionID = req.session.authenticated(AdminSession.self),
-		   let group = await groupsManager.groupForSession(sessionID),
-		   let constituent = await group.constituent(for: userIdentifier)
+		   let const = try await dbGroup
+			.$constituents
+			.query(on: req.db)
+			.join(parent: \.$constituent)
+			.filter(DBUser.self, \DBUser.$username == userIdentifier)
+			.first()
 		{
-			await group.resetConstituent(constituent)
+			const.isCurrentlyIn = false
+			await group.resetConstituent(const.asConstituent, userid: const.id!, isVerified: const.isVerified)
+			try await const.save(on: req.db)
 		}
 		
 		return req.redirect(to: .constituents)
@@ -142,146 +160,101 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 		guard let voteIDStr = req.parameters.get("voteID") else {
 			throw Redirect(.admin)
 		}
+		let dbGroup = try req.auth.require(DBGroup.self)
+		let group = await groupsManager.groupForGroup(dbGroup)
 		
 		// The single cast vote that should be deleted
 		if let userIdentifierbase64 = req.parameters.get("userID")?.trimmingCharacters(in: .whitespacesAndNewlines),
 		   let constituentID = String(urlsafeBase64: userIdentifierbase64),
-		   let adminID = req.session.authenticated(AdminSession.self),
-		   let group = await groupsManager.groupForSession(adminID),
-		   let vote = await group.voteForID(voteIDStr)
+		   let linker = try await dbGroup.$constituents
+			.query(on: req.db)
+			.filter(\.constituent.$username == constituentID)
+			.first(),
+			let vote = await group.voteForID(voteIDStr)
 		{
-			await group.singleVoteReset(vote: vote, constituentID: constituentID)
+			await group.singleVoteReset(vote: vote, linker: linker)
 		}
 		
 		return req.redirect(to: .voteadmin(voteIDStr))
 	}
 	
-	
-	login.get(use: getLogin)
-	func getLogin(req: Request) async -> LoginUI{
-		let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
-		return LoginUI(showRedirectToPlaza: showRedirectToPlaza)
-	}
-	login.post(use: doLogin)
-	func doLogin(req: Request) async throws -> Response{
-		var joinPhrase: JoinPhrase?
-		do{
-			guard
-				let loginData = try? req.content.decode([String: String].self),
-				let pw = loginData["password"],
-				let jf = loginData["joinPhrase"]
-			else {
-				throw "Invalid request"
-			}
-			joinPhrase = jf
-			
-			
-			// Saves the group
-			guard let session = await groupsManager.login(request: req, joinphrase: jf, password: pw) else{
-				throw "No match for password and join code"
-			}
-			
-			//Registers the session with the client
-			req.session.authenticate(session)
-			return req.redirect(to: .admin)
-			
-		} catch {
-			let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
-			
-			guard let UI = (try? await LoginUI(prefilledJF: joinPhrase ?? "", errorString: error.asString(), showRedirectToPlaza: showRedirectToPlaza).encodeResponse(for: req)) else{
-				throw Redirect(.login)
-			}
-			return UI
-		}
-		
-	}
     // The admin settings page
 	admin.get("settings", use: getSettingsPage)
 	func getSettingsPage(req: Request) async throws-> SettingsUI{
-		guard
-			let sessionID = req.session.authenticated(AdminSession.self),
-			let group = await groupsManager.groupForSession(sessionID)
-		else {
-			throw Redirect(.create)
-		}
-		
-		return await SettingsUI(for: group)
+		let settings = try req.auth.require(DBGroup.self, Redirect(.create)).settings
+		return await SettingsUI(current: settings)
 	}
 	
     // Requests for changing the settings of a group
 	admin.post("settings", use: setSettings)
 	func setSettings(req: Request) async throws-> SettingsUI{
-		guard
-			let sessionID = req.session.authenticated(AdminSession.self),
-			let group = await groupsManager.groupForSession(sessionID)
-		else {
-			throw Redirect(.create)
-		}
+		let dbGroup = try req.auth.require(DBGroup.self, Redirect(.create))
+		let group = await groupsManager.groupForGroup(dbGroup)
 		
 		if let newSettings = try? req.content.decode(SetSettings.self){
-			await newSettings.saveSettings(to: group)
+			try await newSettings.saveSettings(to: dbGroup, ggroup: group, db: req.db)
 		}
 		
-		return await SettingsUI(for: group)
+		return await SettingsUI(current: dbGroup.settings)
 	}
 	
-	admin.get("chats", use: getAdminChats)
-	func getAdminChats(req: Request) async throws -> AdminChatPage{
-		guard
-			let sessionID = req.session.authenticated(AdminSession.self),
-			let group = await groupsManager.groupForSession(sessionID)
-		else {
-			throw Redirect(.create)
-		}
-		guard await group.settings.chatState != .disabled else {
+	admin.get("chats", use: getAdminChatPage)
+	func getAdminChatPage(req: Request) async throws -> AdminChatPage{
+		let group = try req.auth.require(DBGroup.self, Redirect(.create))
+		guard group.settings.chatState != .disabled else {
 			throw Redirect(.admin)
 		}
 		return AdminChatPage()
 	}
+	
 	admin.get("chats", "downloadcsv", use: downloadChats)
 	func downloadChats(req: Request) async throws -> Response{
-		guard
-			Config.enableChat,
-			let sessionID = req.session.authenticated(AdminSession.self),
-			let group = await groupsManager.groupForSession(sessionID)
-				
-		else {
-			return Response(status: .unauthorized)
-		}
+		guard Config.enableChat else {throw Abort(.notFound)}
+		let group = try req.auth.require(DBGroup.self, Abort(.unauthorized))
+		let groupID = try group.requireID()
 		
 		guard let allChats = try? await Chats
 			.query(on: req.db)
-			.filter(\.$groupID == group.id)
+			.filter(\Chats.groupAndSender.group.$id == groupID)
+			.join(parent: \.$groupAndSender)
 			.all() else {
 			return Response(status: .internalServerError)
 		}
 		
 		let header = "Sender,Message,Timestamp,Systems message\n"
 		let content = allChats.map { chat -> String in
-			[chat.sender, chat.message, "\(chat.timestamp)", "\(chat.systemsMessage ? 1 : 0)"].joined(separator: ",")
+			[chat.groupAndSender.constituent.username, chat.message, "\(chat.timestamp)", "\(chat.systemsMessage ? 1 : 0)"]
+				//Remove newlines and replace commas with "SINGLE LOW-9 QUOTATION MARK"
+				.map{ str in
+					str
+						.replacingOccurrences(of: "\n", with: " ")
+						.replacingOccurrences(of: ",", with: "‚")
+						.trimmingCharacters(in: .whitespacesAndNewlines)
+				}
+				.joined(separator: ",")
 		}.joined(separator: "\n")
 		
 		let csv = header + content
-		return try await downloadResponse(for: req, content: csv, filename: "chathistory-\(group.joinPhrase).csv")
+		return try await downloadResponse(for: req, content: csv, filename: "chathistory-\(group.joinphrase).csv")
 	}
 }
 
 fileprivate struct SettingsUI: UITableManager{
     var title: String = "Settings"
     var errorString: String? = nil
+	var generalInformation: HeaderInformation! = nil
     static var template: String = "settings"
-	var buttons: [UIButton] = [.backToAdmin, .reload]
+	var buttons: [UIButton] = [.reload]
     
     var rows: [Setting]
     var tableHeaders: [String] = []
     
     
-    init(for group: Group) async {
-		let current = await group.settings
+    init(current: GroupSettings) async {
         self.rows = [
             Setting("auv", "Allow unverified constituents", type: .bool(current: current.allowsUnverifiedConstituents), disclaimer: current.allowsUnverifiedConstituents ? "Changing this setting will kick unverified constituents" : nil),
             Setting("selfReset", "Constituents can reset their votes", type: .bool(current: current.constituentsCanSelfResetVotes)),
-            Setting("CSVConfiguration", "CSV Export mode", type: .list(options: Array(current.csvKeys.keys), current: current.csvConfiguration.name)),
+            Setting("CSVConfiguration", "CSV Export mode", type: .list(options: Array(GroupSettings.csvKeys.keys), current: current.csvConfiguration.name)),
 			Setting("showTags", "Show tags", type: .bool(current: current.showTags)),
             ]
 		if Config.enableChat{
@@ -313,24 +286,37 @@ fileprivate struct SettingsUI: UITableManager{
 struct SetSettings: Codable{
     var auv: String?
     var selfReset: String?
-    var CSVConfiguration: String?
 	var showTags: String?
+    var CSVConfiguration: String?
 	var chat: GroupSettings.ChatState?
 	
-    func saveSettings(to group: Group) async{
-        let rAUV = convertBool(auv)
-        let rSelfReset = convertBool(selfReset)
-		let rShowTags = convertBool(showTags)
-
+	func saveSettings(to group: DBGroup, ggroup: Group, db: Database) async throws{
+		try await group.updateUnverifiedSetting(convertBool(auv), relatedGroup: ggroup, db: db)
+		group.settings.constituentsCanSelfResetVotes = convertBool(selfReset)
+		group.settings.showTags = convertBool(showTags)
 		
-        let rConfig: CSVConfiguration?
-        if let key = CSVConfiguration{
-            rConfig = await group.settings.csvKeys[key]
-        } else {
-            rConfig = nil
-        }
-        
-		await group.setSettings(allowsUnverifiedConstituents: rAUV, constituentsCanSelfResetVotes: rSelfReset, csvConfiguration: rConfig, showTags: rShowTags, chatState: chat)
+		if
+			let key = CSVConfiguration,
+			let rConfig = GroupSettings.csvKeys[key]
+		{
+			group.settings.csvConfiguration = rConfig
+		}
+		
+		if chat != nil && Config.enableChat {
+			switch chat{
+			case .onlyVerified:
+				await ggroup.socketController.kickAll(only: .unverified)
+			case .disabled:
+				await ggroup.socketController.kickAll()
+			default:
+				break
+			}
+			
+			group.settings.chatState = chat!
+		}
+		
+		
+		try await group.save(on: db)
     }
     // Due to limitations of HTTP/HTML the state of checkboxes is only sent when they're on
     private func convertBool(_ value: String?) -> Bool{

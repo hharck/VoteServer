@@ -1,0 +1,26 @@
+<div class="header">
+	#if(buttons):
+		#for(button in buttons):
+			#if(button.inGroup):
+				<a href="/group/#(generalInformation.groupID)#(button.uri)" class="headerbutton" #if(button.downloadable): download#endif>#(button.text)</a>
+			#else:
+				<a href="#(button.uri)" class="headerbutton" #if(button.downloadable): download#endif>#(button.text)</a>
+			#endif
+		#endfor
+	#endif
+	
+	#if(generalInformation.isAdmin):
+		<a href="/group/#(generalInformation.groupID)/admin/" class="headerbutton">Admin</a>
+	#endif
+	
+	#if(generalInformation.isSignedIn):
+		<a href="/create" class="headerbutton">Create group</a>
+		<a href="/user" class="headerbutton">User</a>
+		<a href="/logout" class="headerbutton">Logout</a>
+	#else:
+		<a href="/login" class="headerbutton">Login</a>
+		<a href="/signup" class="headerbutton">Sign up</a>
+	#endif
+	
+	
+</div>

@@ -3,6 +3,7 @@ import VoteKit
 struct PlazaUI: UITableManager{
 	var title: String = "Plaza"
 	var errorString: String? = nil
+	var generalInformation: HeaderInformation! = nil
 	
 	var buttons: [UIButton] = [.reload]
 	
@@ -21,14 +22,16 @@ struct PlazaUI: UITableManager{
 	static var template: String = "plaza"
 	
 	
-	internal init(errorString: String? = nil, constituent: Constituent, group: Group) async {
+	internal init(errorString: String? = nil, linker: GroupConstLinker, dbGroup: DBGroup, group: Group, user: DBUser) async {
 		self.errorString = errorString
-		self.name = constituent.getNameOrId()
-		self.groupName = group.name
+		self.name = user.name
+		self.groupName = dbGroup.name
 
-		self.showChat = await group.constituentCanChat(constituent)
-		self.allowsVoteDeletion = await group.settings.constituentsCanSelfResetVotes
-	
+		self.showChat = linker.constituentCanChat()
+		self.allowsVoteDeletion = dbGroup.settings.constituentsCanSelfResetVotes
+		let constituent = user.asConstituent()
+		
+		@available(swift, deprecated: 5.7, message: "Use improved generics")
 		func setup<V: SupportedVoteType>(_ vote: V) async{
 			let hasVoted: Bool = await vote.hasConstituentVoted(constituent)
 			guard let status = await group.statusFor(vote) else {

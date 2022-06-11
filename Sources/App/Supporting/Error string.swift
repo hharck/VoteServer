@@ -1,3 +1,4 @@
+import Vapor
 /*
  This protocol and extentension allows any error to be converted into a string error.asString()
  ErrorString allows for a costum conversion of supported types
@@ -12,6 +13,13 @@ extension ErrorString where Self: RawRepresentable, Self.RawValue == String {
 		self.rawValue
 	}
 }
+
+extension ValidationsError: ErrorString  {
+	func errorString() -> String {
+		self.failures.compactMap(\.failureDescription).joined(separator: "\n")
+	}
+}
+
 
 extension Error {
 	func asString() -> String{

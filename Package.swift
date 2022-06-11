@@ -37,7 +37,7 @@ let package = Package(
 				// the `.unsafeFlags` construct required by SwiftPM, this flag is recommended for Release
 				// builds. See <https://github.com/swift-server/guides/blob/main/docs/building.md#building-for-production> for details.
 				.unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
-				.unsafeFlags(["-Xfrontend", "-warn-long-function-bodies=40", "-Xfrontend", "-warn-long-expression-type-checking=40"])
+//				.unsafeFlags(["-Xfrontend", "-warn-long-function-bodies=40", "-Xfrontend", "-warn-long-expression-type-checking=40"])
 			]
 		),
 		.executableTarget(name: "Run", dependencies: [.target(name: "App")]),

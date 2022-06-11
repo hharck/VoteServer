@@ -7,14 +7,15 @@ struct ValidationErrorUI: UIManager{
 	var buttons: [UIButton]
 	var validationResults: [VoteValidationResult]
 	var errorString: String? = nil
+	var generalInformation: HeaderInformation! = nil
 	static var template: String = "validators failed"
 
-	init(title: String, validationResults: [VoteValidationResult], voteID: UUID){
+	init(title: String, validationResults: [VoteValidationResult], groupID: UUID, voteID: UUID){
 		self.title = title
 		self.errorCount = validationResults.countErrors
 		self.validationResults = validationResults
 		
 		
-		self.buttons = [.init(uri: "/results/\(voteID.uuidString)?force=1", text: "Force count", color: .red, lockable: true)]
+		self.buttons = [.init(uri: "group/\(groupID)/results/\(voteID.uuidString)?force=1", text: "Force count", color: .red, lockable: true, inGroup: true)]
 	}
 }

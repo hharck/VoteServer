@@ -1,0 +1,31 @@
+#extend("outerHTML"):
+#export("body"):
+	<form method="POST" onsubmit="lockButton()">
+		<table>
+			<tbody>
+				<tr>
+					<td><label for="name">Name</label></td>
+					<td><input type="text" name="name" value="#(prefilledName)" required></td>
+				</tr>
+				<tr>
+					<td><label for="username">Username</label></td>
+					<td><input type="text" name="username" value="#(prefilledUN)" required></td>
+				</tr>
+				<tr>
+					<td><label for="email">Email</label></td>
+					<td><input type="email" name="email" value="#(prefilledEmail)" required></td>
+				</tr>
+				<tr>
+					<td><label for="password">Password</label></td>
+					<td><input type="password" name="password" value="" required></td>
+				</tr>
+				<tr>
+					<td><label for="password2">Repeat password</label></td>
+					<td><input type="password" name="password2" value="" required></td>
+				</tr>
+			</tbody>
+		</table>
+		<input type="submit" name="lockableButton" class="button green">
+	</form>
+#endexport
+#endextend

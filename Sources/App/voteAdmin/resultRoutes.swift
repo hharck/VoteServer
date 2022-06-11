@@ -1,22 +1,22 @@
 import Vapor
 import AltVoteKit
 import VoteKit
+import Foundation
 
-func ResultRoutes(_ app: Application, groupsManager: GroupsManager) {
-	app.redirectGet("results", to: .admin)
-	app.redirectGet("results", ":voteID", to: .admin)
+func ResultRoutes(_ path: RoutesBuilder, groupsManager: GroupsManager) {
+	let adminOnly = path.grouped(EnsureGroupAdmin())
+	adminOnly.redirectGet("results", to: .admin)
+	adminOnly.redirectGet("results", ":voteID", to: .admin)
 
-	app.post("results", ":voteID", use: showResults)
+	adminOnly.post("results", ":voteID", use: showResults)
 	func showResults(req: Request) async throws -> Response {
 		guard let voteIDStr = req.parameters.get("voteID") else {
 			throw Redirect(.admin)
 		}
 		
-		guard
-			let sessionID = req.session.authenticated(AdminSession.self),
-			let group = await groupsManager.groupForSession(sessionID),
-			let vote = await  group.voteForID(voteIDStr)
-		else {
+		let group = await groupsManager.groupForGroup(try req.auth.require(DBGroup.self))
+		
+		guard let vote = await group.voteForID(voteIDStr) else {
 			throw Redirect(.admin)
 		}
 		
@@ -86,29 +86,27 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) {
             guard let er = error as? [VoteValidationResult] else {
                 return genericErrorPage(error: error)
             }
-            return ValidationErrorUI(title: vname, validationResults: er, voteID: id)
+			return ValidationErrorUI(title: vname, validationResults: er, groupID: group.id, voteID: id)
         }
     }
     
 
 	//MARK: Export CSV
-	app.get("results", ":voteID", "downloadcsv", use: downloadResultsForVote)
+	adminOnly.get("results", ":voteID", "downloadcsv", use: downloadResultsForVote)
 	func downloadResultsForVote(req: Request) async throws -> Response{
 		guard let voteIDStr = req.parameters.get("voteID") else {
 			throw Redirect(.admin)
 		}
 
+		let dbGroup = try req.auth.require(DBGroup.self)
+		let group = await groupsManager.groupForGroup(dbGroup)
 
-		guard
-			let sessionID = req.session.authenticated(AdminSession.self),
-			let group = await groupsManager.groupForSession(sessionID),
-			let vote = await group.voteForID(voteIDStr)
-		else {
+		guard let vote = await group.voteForID(voteIDStr) else {
 			throw Redirect(.results(voteIDStr))
 		}
 		
 		let csv: String
-		let csvConfiguration = await group.settings.csvConfiguration
+		let csvConfiguration = dbGroup.settings.csvConfiguration
 		switch vote {
 		case .alternative(let v):
 			csv = await v.toCSV(config: csvConfiguration)
@@ -120,21 +118,21 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) {
 		
 		return try await downloadResponse(for: req, content: csv, filename: "votes.csv")
 	}
-	app.get("results", ":voteID", "downloadconst", use: downloadConstituentsList)
+	adminOnly.get("results", ":voteID", "downloadconst", use: downloadConstituentsList)
 	func downloadConstituentsList(req: Request) async throws -> Response{
 		guard let voteIDStr = req.parameters.get("voteID") else {
 			throw Redirect(.admin)
 		}
 		
-		guard
-			let sessionID = req.session.authenticated(AdminSession.self),
-			let group = await groupsManager.groupForSession(sessionID),
-			let vote = await group.voteForID(voteIDStr)
-		else {
+		let dbGroup = try req.auth.require(DBGroup.self)
+
+		let group = await groupsManager.groupForGroup(dbGroup)
+		
+		guard let vote = await group.voteForID(voteIDStr) else {
 			throw Redirect(.results(voteIDStr))
 		}
 
-		let csv = await vote.constituents().toCSV(config: group.settings.csvConfiguration)
+		let csv = await vote.constituents().toCSV(config: dbGroup.settings.csvConfiguration)
 
 		return try await downloadResponse(for: req, content: csv, filename: "constituents.csv")
 	}

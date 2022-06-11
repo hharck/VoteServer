@@ -2,10 +2,9 @@ import VoteKit
 import Vapor
 //Represents data received on a request to create a group
 struct GroupCreatorData: Codable{
-	var groupName: String
-	var file: String?
-	private var adminpw: String
-	var allowsUnverifiedConstituents: String?
+	private let groupName: String
+	private let file: String?
+	private let allowsUnverifiedConstituents: String?
 }
 
 extension GroupCreatorData{
@@ -20,85 +19,108 @@ extension GroupCreatorData{
 		return trim
 	}
 	
-	
-	func getHashedPassword(for req: Request) throws -> String {
-        return try hashPassword(pw: adminpw, groupName: try self.getGroupName(), for: req.application)
-	}
-	
-	func getConstituents() throws -> Set<Constituent>{
-		guard self.file != nil, !self.file!.isEmpty else {
+	func getEmails() throws -> [(value: String, tag: String?)] {
+		guard let file = file else {
 			return []
 		}
-		if self.file!.count > 1_000_000 {
-			throw GroupCreationError.nameTooLong
+		
+		let list = file
+			.split(separator: "\n")
+			.map{ val -> [String] in
+				String(val)
+					.split(separator: ",", omittingEmptySubsequences: false)
+					.map{$0.trimmingCharacters(in: .whitespacesAndNewlines)}
+			}
+		guard list.count >= 2 else{
+			throw GroupCreationError.atLeastOneUserRequried
 		}
-		do{
-			
-			let constituents = try constituentsListFromCSV(file: self.file!, maxNameLength: Int(Config.maxNameLength))
-			
-			// Checks that no one is using the name or identifier "admin"
-			if (constituents.map(\.identifier) + constituents.compactMap(\.name).map{$0.lowercased()}).contains(where: {$0.contains("admin")}){
-				throw DecodeConstituentError.invalidIdentifier
-			}
-			
-			guard constituents.map(\.identifier).nonUniques().isEmpty else {
-				throw GroupCreationError.userAddedMultipleTimes
-			}
-			guard constituents.compactMap(\.email).nonUniques().isEmpty else {
-				throw GroupCreationError.emailAddedMultipleTimes
-
-			}
-				  
-			
-			return Set(constituents)
-			
-		} catch let er as DecodeConstituentError{
-			switch er {
-			case .invalidIdentifier:
-				throw GroupCreationError.invalidIdentifier
-			case .nameTooLong:
-				throw GroupCreationError.nameTooLong
-			case .invalidCSV:
-				throw GroupCreationError.invalidCSV
-			case .invalidTag:
-				throw GroupCreationError.invalidTag
-			case .invalidEmail:
-				throw GroupCreationError.invalidEmail
+		
+		
+		// Validates length
+		for row in list {
+			if let tooLong = row.first(where: {$0.count > Config.maxNameLength}) {
+				throw GroupCreationError.nameTooLong(name: String(tooLong))
 			}
 		}
+		
+		// Validates header
+		let header = list.first!
+		guard header == ["email","tag"] else {
+			throw GroupCreationError.invalidCSV(line: "Header")
+		}
+		
+		// Validates body
+		let body = list.dropFirst()
+		
+		if let tooShort = body.first(where: {$0.count != 2}) {
+			throw GroupCreationError.invalidCSV(line: "\(tooShort)")
+		}
+		
+		let userList: [(value: String, tag: String?)] = body.map{
+			let tag: String? = $0[1].isEmpty ? nil : String($0[1])
+			return (value: String($0[0]), tag: tag)
+		}
+		
+		// Check uniqueness
+		let nonUniques = userList.map(\.value).nonUniques()
+		if !nonUniques.isEmpty {
+			throw GroupCreationError.userAddedMultipleTimes(users: nonUniques.joined(separator: ", "))
+		}
+		
+		
+		// Verify emails
+		if let firstError = userList
+			.map(\.value)
+			.map({ email -> (result: ValidatorResult, email: String) in
+				(result: Validator.internationalEmail.validate(email), email: email)
+			})
+				.first(where: \.result.isFailure)
+		{
+			throw GroupCreationError.invalidEmail(email: firstError.email)
+		}
+		
+		
+		return userList
 	}
 	
-    /// Checks if the received data indicates that non verified constituents are allowed
+	/// Checks if the received data indicates that non verified constituents are allowed
 	func allowsUnverified() -> Bool{
-		self.allowsUnverifiedConstituents == "on"
+		self.allowsUnverifiedConstituents.isOn
 	}
 }
 
 enum GroupCreationError: ErrorString{
 	func errorString() -> String {
 		switch self {
-		case .userAddedMultipleTimes:
-			return "User appears multiple times."
+			
 		case .invalidIdentifier:
 			return "One or more invalid user identifiers were found."
 		case .groupNameTooLong:
 			return "The name of the group was too long (\(Config.maxNameLength))."
 		case .invalidGroupname:
 			return "The group name is invalid."
-		case .invalidPassword:
-			return "The password is either too short or too simple."
-		case .invalidCSV:
-			return "The supplied CSV file was invalid, the separators needs to be \",\" and newlines. Check that the header row is \"Name,Identifier,Tag,Email\". Tag and Email are optional."
-		case .nameTooLong:
-			return "One of the supplied constituents has a name/identifier/tag which surpasses the maximum name length (\(Config.maxNameLength)). "
+			
+			// CSV related
+		case .userAddedMultipleTimes(let nonUniques):
+			return "Some users appears multiple times.\n\(nonUniques)"
+		case .invalidCSV(let line):
+			return "The supplied CSV file was invalid, the separators needs to be \",\" and newlines. Check that the header row is \"Name,Identifier,Tag,Email\". Tag and Email are optional.\nError at \"\(line)\""
+		case .nameTooLong(let name):
+			return "\"\(name)\" surpasses the maximum name length (\(Config.maxNameLength)). "
 		case .invalidTag:
 			return "One of the supplied tags are invalid, either by having the prefix \"-\" or exceeding the length limit (\(Config.maxNameLength))."
-		case .invalidEmail:
-			return "One of the supplied emails are invalid."
-		case .emailAddedMultipleTimes:
-			return "An email was added multiple times."
+		case .invalidEmail(let email):
+			return "The email: \"\(email)\" is invalid."
+		case .atLeastOneUserRequried:
+			return "At least one constituent is required"
+		case .adminMustBeIncluded:
+			return "You must include yourself in the group"
 		}
 	}
 	
-	case userAddedMultipleTimes, invalidIdentifier, groupNameTooLong, invalidGroupname, invalidPassword, invalidCSV, nameTooLong, invalidTag, invalidEmail, emailAddedMultipleTimes
+	case invalidIdentifier, groupNameTooLong, invalidGroupname, invalidTag, atLeastOneUserRequried, adminMustBeIncluded
+	case userAddedMultipleTimes(users: String)
+	case nameTooLong(name: String)
+	case invalidEmail(email: String)
+	case invalidCSV(line: String)
 }

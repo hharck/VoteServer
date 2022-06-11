@@ -1,15 +1,18 @@
 #extend("outerHTML"):
 		#export("extraHead"):
-			<script>
-				const socketName = "adminsocket";
-			</script>
 			<script src="/js/chat.js"></script>
+			<script>
+					const socketName = "adminsocket/#(generalInformation.groupID)";
+					window.onload = function() {
+						window.onload = socketSetup(socketName);
+					}
+			</script>
 		#endexport
 		
 		#export("body"):
 			#extend("chatview"):
 			#endextend
-					
-			<a href="/admin/chats/downloadcsv" class="blue button" download>Download chat history</a>
+			<br>
+			<a href="/group/#(generalInformation.groupID)/admin/chats/downloadcsv" class="blue button" download>Download chat history</a>
 		#endexport
 #endextend

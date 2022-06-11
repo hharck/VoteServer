@@ -3,9 +3,6 @@
 			<form method='POST' onsubmit="lockButton()" enctype="multipart/form-data" action="/create">
 				<b><label for="groupName">Group name</label></b><br>
 				<input type="text" id="groupName" name="groupName" value="#(groupName)" required>
-				<br>
-				<b><label for="adminpw">Admin password</label></b><br>
-				<input type="password" id="adminpw" name="adminpw" value="" required>
 				<br><br>
 				<label for="file">(Optional) Upload a CSV file contaning all verified users</label><br>
 				<input type="file" id="file" accept=".csv" name="file"><br><br>

@@ -1,12 +1,12 @@
 import AltVoteKit
 import VoteKit
-import Foundation
 import VoteExchangeFormat
 
 struct AltVotePageGenerator: VotePage{
 	var title: String
-    var errorString: String?
-    var buttons: [UIButton] = [.backToPlaza]
+    var errorString: String? = nil
+	var generalInformation: HeaderInformation! = nil
+    var buttons: [UIButton] = [.GroupOnly.backToPlaza]
     
 	var numbers: [PriorityData]
 	var options: [VoteOption]

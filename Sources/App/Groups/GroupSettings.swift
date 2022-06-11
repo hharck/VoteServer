@@ -6,9 +6,6 @@ struct GroupSettings: Codable, Sendable{
         self.constituentsCanSelfResetVotes = constituentsCanSelfResetVotes
         self.csvConfiguration = csvConfiguration
         
-		let allCSVConfigurations: [CSVConfiguration] = [.defaultConfiguration(),.SMKid(), .defaultWithTags()]
-        self.csvKeys = allCSVConfigurations.reduce(into: [String: CSVConfiguration](), { $0[$1.name] = $1})
-		
 		self.showTags = showTags
 		
 		self.chatState = Config.enableChat ? .forAll : .disabled
@@ -22,7 +19,10 @@ struct GroupSettings: Codable, Sendable{
     
     var csvConfiguration: CSVConfiguration = .defaultConfiguration()
     
-    let csvKeys: [String: CSVConfiguration]
+	static let csvKeys: [String: CSVConfiguration] = {
+		let allCSVConfigurations: [CSVConfiguration] = [.defaultConfiguration(),.SMKid(), .defaultWithTags()]
+		return allCSVConfigurations.reduce(into: [String: CSVConfiguration](), { $0[$1.name] = $1})
+	}()
 	
 	/// Whether tags and tag statistic should be shown in the constituents list
 	var showTags: Bool

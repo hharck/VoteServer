@@ -1,4 +1,5 @@
 import Vapor
+import Fluent
 
 struct GroupsCommand: Command{
     let groupsManager: GroupsManager
@@ -13,9 +14,6 @@ struct GroupsCommand: Command{
         
         @Flag(name: "delete", short: "d")
         var delete: Bool
-        
-        @Option(name: "password", short: "p")
-         var newPassword: String?
     }
     
     var help: String {
@@ -25,17 +23,17 @@ struct GroupsCommand: Command{
         [join phrase] - The joinphrase to use
         -i - Get info for the for this join phrase
         -d - Delete the group linked to this join phrase
-        -p [Password] - Sets the password
         """
     }
     
     func run(using context: CommandContext, signature: Signature) throws {
-        let trimVal = signature.value.trimmingCharacters(in: .whitespacesAndNewlines)
+		guard let app = app else {return}
+		let trimVal = signature.value.trimmingCharacters(in: .whitespacesAndNewlines)
         
         if trimVal.isEmpty || trimVal == "list"{
             Task{
                 context.console.print("All groups:")
-                let allGroups = await groupsManager.listAllGroups()
+				let allGroups = await groupsManager.listAllGroups(db: app.db)
                 context.console.print(allGroups)
 
             }
@@ -50,45 +48,31 @@ struct GroupsCommand: Command{
             throw "Only one flag at a time"
         }
         
-        if signature.newPassword != nil && !signature.newPassword!.isEmpty{
-            if signature.info || signature.delete{
-                throw "Only one flag at a time"
-            }
-        
-            let pw = signature.newPassword!.trimmingCharacters(in: .whitespacesAndNewlines)
-            
+		if signature.delete{
             Task{
-                guard let app = app, let group = await groupsManager.groupForJoinPhrase(joinPhrase) else {
-                    throw "Group not found"
-                }
-                guard let digest = try? hashPassword(pw: pw, groupName: group.name, for: app) else {
-                    throw "Invalid or insecure password"
-                }
-                await group.setPasswordTo(digest: digest)
-                context.console.print("Password was set")
-
-            }
-            
-        } else if signature.delete{
-            Task{
-                if await groupsManager.deleteGroup(jf: joinPhrase){
-                    context.console.print("Successfully deleted: \(joinPhrase)")
-                    return
-                } else {
-                    throw "Unable to delete: \(joinPhrase)"
-                }
+				let filter = DBGroup.query(on: app.db).filter(\.$joinphrase == joinPhrase)
+				guard try await filter.count() != 0 else {
+					context.console.error("Not found", newLine: true)
+					return
+				}
+				try await filter.delete()
+				context.console.print("Successfully deleted: \(joinPhrase)")
             }
         } else {
             
             Task{
-                guard
-                    let group = await groupsManager.groupForJoinPhrase(joinPhrase),
-                    let lastAccess = await groupsManager.getLastAccess(for: group)
+				guard
+					let group = try await DBGroup
+						.query(on: app.db)
+						.filter(\.$joinphrase == joinPhrase)
+						.first(),
+					let lastAccess = group.lastAccess?.description
                 else {
                     throw "Group not found"
                 }
                 
-                let result = "Group:\"\(group.name)\"\nWith \(await group.constituentsSessionID.count) constituents in session\nGroup was last accessed at: " + lastAccess
+				let currIn = try await group.$constituents.query(on: app.db).filter(\.$isCurrentlyIn == true).count()
+                let result = "Group:\"\(group.name)\"\nWith \(currIn) constituents in session\nGroup was last accessed at: " + lastAccess
                 context.console.print(result)
                 
             }

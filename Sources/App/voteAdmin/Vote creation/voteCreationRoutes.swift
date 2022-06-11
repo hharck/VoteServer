@@ -1,29 +1,30 @@
 import Vapor
 import VoteKit
 import AltVoteKit
-func voteCreationRoutes(_ app: Application, groupsManager: GroupsManager) {
+import Fluent
+
+func voteCreationRoutes(_ path: RoutesBuilder, groupsManager: GroupsManager) {
     /// Shows admins a page which'' let them create the kind of vote supplied in the "type" parameter
-    app.get("createvote", ":type", use: createVote)
-	app.post("createvote", ":type", use: createVote)
+    path.get(":type", use: createVote)
+	path.post(":type", use: createVote)
 	func createVote(req: Request) async throws -> Response{
-		guard
-			let sessionID = req.session.authenticated(AdminSession.self),
-			let group = await groupsManager.groupForSession(sessionID)
-		else {
-			throw Redirect(.create)
-		}
+		#warning("Check if user is allowed to create a vote")
+		let dbGroup = try req.auth.require(DBGroup.self, Redirect(.create))
+		
 		guard let parameter = req.parameters.get("type"), let type = VoteTypes.StringStub(rawValue: parameter) else {
 			throw Redirect(.admin)
 		}
 		
+		let group = await groupsManager.groupForGroup(dbGroup)
+		
 		if req.method == .POST{
 			switch type {
 			case .alternative:
-				return try await treat(req: req, AlternativeVote.self, group: group)
+				return try await treat(req: req, AlternativeVote.self, group: group, dbGroup: dbGroup)
 			case .yesNo:
-				return try await treat(req: req, yesNoVote.self, group: group)
+				return try await treat(req: req, yesNoVote.self, group: group, dbGroup: dbGroup)
 			case .simpleMajority:
-				return try await treat(req: req, SimpleMajority.self, group: group)
+				return try await treat(req: req, SimpleMajority.self, group: group, dbGroup: dbGroup)
 			}
 		} else {
 			switch type {
@@ -39,7 +40,7 @@ func voteCreationRoutes(_ app: Application, groupsManager: GroupsManager) {
 }
 
 /// Attempts to create a vote for a given request
-fileprivate func treat<V: SupportedVoteType>(req: Request, _ type: V.Type, group: Group) async throws -> Response{
+fileprivate func treat<V: SupportedVoteType>(req: Request, _ type: V.Type, group: Group, dbGroup: DBGroup) async throws -> Response{
     var voteHTTPData: VoteCreationReceivedData<V>? = nil
 
     do {
@@ -47,13 +48,30 @@ fileprivate func treat<V: SupportedVoteType>(req: Request, _ type: V.Type, group
         voteHTTPData = try req.content.decode(VoteCreationReceivedData<V>.self)
 
         // Since it voteHTTPData was just set it'll in this scope be treated as not being an optional
-        let voteHTTPData = voteHTTPData!
-
-        async let constituents = group.verifiedConstituents.union(await group.unverifiedConstituents)
-
-        // Validates the data and generates a Vote object
-
-        let title = try voteHTTPData.getTitle()
+		let voteHTTPData = voteHTTPData!
+		
+		
+		let c = try await dbGroup
+			.$constituents
+			.query(on: req.db)
+			.filter(\.$isBanned == false)
+			.join(DBUser.self, on: \DBUser.$id == \GroupConstLinker.$constituent.$id)
+			.all()
+		
+//		c.first!.jo
+//		print(c.first?.joined(<#T##model: Schema.Protocol##Schema.Protocol#>))
+//		print(c.first?.constituent.name)
+		let constituents = Set(try c.asConstituents())
+			
+//			try await dbGroup.$constituents
+//				.query(on: req.db)
+//				.filter(\.$isCurrentlyIn == true)
+//				.join(GroupConstLinker.self, on: \GroupConstLinker.$constituent.$id == \)
+//				.all()
+//
+		
+		// Validates the data and generates a Vote object
+		let title = try voteHTTPData.getTitle()
         let partValidators = voteHTTPData.getPartValidators()
         let genValidators = voteHTTPData.getGenValidators()
         let options = try voteHTTPData.getOptions()
@@ -63,13 +81,13 @@ fileprivate func treat<V: SupportedVoteType>(req: Request, _ type: V.Type, group
         case .alternative:
             let tieBreakers: [TieBreaker] = [.dropAll, .removeRandom, .keepRandom]
             
-            let vote = AlternativeVote(name: title, options: options, constituents: await constituents, tieBreakingRules: tieBreakers, genericValidators: genValidators as! [GenericValidator<AlternativeVote.voteType>], particularValidators: partValidators as! [AlternativeVote.particularValidator])
+            let vote = AlternativeVote(name: title, options: options, constituents: constituents, tieBreakingRules: tieBreakers, genericValidators: genValidators as! [GenericValidator<AlternativeVote.voteType>], particularValidators: partValidators as! [AlternativeVote.particularValidator])
             await group.addVoteToGroup(vote: vote)
         case .yesNo:
-            let vote = yesNoVote(name: title, options: options, constituents: await constituents, genericValidators: genValidators as! [GenericValidator<yesNoVote.yesNoVoteType>], particularValidators: partValidators as! [yesNoVote.particularValidator])
+            let vote = yesNoVote(name: title, options: options, constituents: constituents, genericValidators: genValidators as! [GenericValidator<yesNoVote.yesNoVoteType>], particularValidators: partValidators as! [yesNoVote.particularValidator])
             await group.addVoteToGroup(vote: vote)
         case .simpleMajority:
-            let vote = SimpleMajority(name: title, options: options, constituents: await constituents, genericValidators: genValidators as! [GenericValidator<SimpleMajority.SimpleMajorityVote>], particularValidators: partValidators as! [SimpleMajority.particularValidator])
+            let vote = SimpleMajority(name: title, options: options, constituents: constituents, genericValidators: genValidators as! [GenericValidator<SimpleMajority.SimpleMajorityVote>], particularValidators: partValidators as! [SimpleMajority.particularValidator])
             await group.addVoteToGroup(vote: vote)
         }
 

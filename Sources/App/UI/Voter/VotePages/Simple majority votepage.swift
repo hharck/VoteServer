@@ -3,10 +3,9 @@ import VoteKit
 struct SimMajVotePage: VotePage{
     var title: String
     var errorString: String? = nil
-    var buttons: [UIButton] = [.backToPlaza]
-    
-    static var template: String = "votePages/simplemajority"
-    
+	var generalInformation: HeaderInformation! = nil
+    var buttons: [UIButton] = [.GroupOnly.backToPlaza]
+        
     var canVoteBlank: Bool = false
     var hideUI: Bool = false
     
@@ -34,5 +33,6 @@ struct SimMajVotePage: VotePage{
         var name: String
         var status: String
     }
+	static var template: String = "votePages/simplemajority"
 }
 

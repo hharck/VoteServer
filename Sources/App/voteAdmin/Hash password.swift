@@ -4,8 +4,12 @@ func hashPassword(pw: String, groupName: String, for app: Application) throws ->
     let trimmedPW = pw.trimmingCharacters(in: .whitespacesAndNewlines)
     
     guard trimmedPW.count >= 7, groupName.count < 3 || (!trimmedPW.contains(groupName) && !groupName.contains(trimmedPW)) else {
-        throw GroupCreationError.invalidPassword
+        throw UserCreationError.invalidPassword
     }
     
     return try app.password.hash(trimmedPW)
+}
+
+enum UserCreationError: Error{
+	case invalidPassword
 }

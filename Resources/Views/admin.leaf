@@ -31,7 +31,7 @@
 			<br><br>
 			#extend("table"):
 				#export("tablerow"):
-					<td><a href="/voteadmin/#(row.voteID)/">#(row.name)</a></td>
+					<td><a href="/group/#(generalInformation.groupID)/voteadmin/#(row.voteID)/">#(row.name)</a></td>
                     <td>#(row.voteType)</td>
 					<td>#(row.totalVotesCast)</td>
 					
@@ -45,9 +45,9 @@
 					<td align="center">
 					
 					#if(row.isOpen):
-						<a class="red button" href="/voteadmin/#(row.voteID)/close">Close vote</a>
+						<a class="red button" href="/group/#(generalInformation.groupID)/voteadmin/#(row.voteID)/close">Close vote</a>
 					#else:
-						<a class="green button" href="/voteadmin/#(row.voteID)/open">Open vote</a>
+						<a class="green button" href="/group/#(generalInformation.groupID)/voteadmin/#(row.voteID)/open">Open vote</a>
 					#endif
 					</td>
 				#endexport

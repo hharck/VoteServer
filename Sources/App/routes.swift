@@ -3,13 +3,22 @@ import AltVoteKit
 
 /// Calls all route creaters, which inturn registers and handles the available paths in the app
 func routes(_ app: Application, groupsManager: GroupsManager) throws {
-	app.redirectGet(to: .create)
+	app.redirectGet(to: .user)
+	let path = app.grouped(UserAuthenticator())
+	userRoutes(path)
+	#warning("Tilføj Guard middleware til alle ruter")
+	let signedIn = path.grouped(UserAuthenticator(), DBUser.guardMiddleware())//.grouped(DBUser.guardMiddleware())
+	let inGroup = signedIn.grouped("group", ":groupID").grouped(GroupAuthMiddleware())
 	
-	groupCreationRoutes(app, groupsManager: groupsManager)
-	voteCreationRoutes(app, groupsManager: groupsManager)
-	votingRoutes(app, groupsManager: groupsManager)
-    ResultRoutes(app, groupsManager: groupsManager)
-    adminRoutes(app, groupsManager: groupsManager)
-    groupJoinRoutes(app, groupsManager: groupsManager)
-    APIRoutes(app, routesGroup: app.grouped("api", "v1"), groupsManager: groupsManager)
+	
+	let requiresGroupAdmin = inGroup.grouped(EnsureGroupAdmin())
+	
+	groupCreationRoutes(path.grouped(UserAuthenticator()).grouped("create"), groupsManager: groupsManager)
+	
+	plazaRoutes(inGroup, groupsManager: groupsManager)
+	votingRoutes(inGroup.grouped("vote", ":voteID"), groupsManager: groupsManager)
+	
+    ResultRoutes(requiresGroupAdmin, groupsManager: groupsManager)
+    adminRoutes(requiresGroupAdmin, groupsManager: groupsManager)
+    APIRoutes(signedIn.grouped("api", "v1"), groupsManager: groupsManager)
 }

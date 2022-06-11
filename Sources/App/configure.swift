@@ -20,17 +20,25 @@ public func configure(_ app: Application) throws {
 	// Adds support for using leaf to render views
     app.views.use(.leaf)
 	
-	//DB
+	// DB
 	app.databases.use(.sqlite(.file("db.sqlite")), as: .sqlite)
 
+	// Migrations
 	app.migrations.add(CreateChats())
+	app.migrations.add(CreateDBGroup())
+	app.migrations.add(CreateUsers())
+	app.migrations.add(CreateGroupConstLinker())
+	app.migrations.add(CreateInvite())
+	app.migrations.add(CreateInvitedUser())
+
+	
 	app.migrations.add(SessionRecord.migration)
 
 	try app.autoMigrate().wait()
 	
 	
 	// Enables sessions
-	app.sessions.use(.memory)
+	app.sessions.use(.fluent)
 	app.middleware.use(app.sessions.middleware)
 
 	// Defines password hashing function
@@ -44,7 +52,8 @@ public func configure(_ app: Application) throws {
     
 	// Handle errors resulting in a redirect
 	app.middleware.use(RedirectErrorHandler())
-
+	app.middleware.use(RedirectUnauth())
+	
     // Register routes
     try routes(app, groupsManager: groupsManager)
 }

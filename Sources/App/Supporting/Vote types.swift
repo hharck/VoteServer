@@ -3,6 +3,7 @@ import AltVoteKit
 import Foundation
 import VoteExchangeFormat
 
+@available(swift, deprecated: 5.7, message: "Use improved generics")
 enum VoteTypes{
     case alternative(AlternativeVote)
     case yesno(yesNoVote)
@@ -43,6 +44,7 @@ enum VoteTypes{
 
 
 extension VoteTypes{
+	@available(swift, deprecated: 5.7, message: "Use improved generics")
     func id() async -> UUID {
         switch self {
         case .alternative(let v):
@@ -53,7 +55,7 @@ extension VoteTypes{
             return await v.id
         }
     }
-    
+	@available(swift, deprecated: 5.7, message: "Use improved generics")
     func name() async -> String {
         switch self {
         case .alternative(let v):
@@ -64,7 +66,7 @@ extension VoteTypes{
             return await v.name
         }
     }
-    
+	@available(swift, deprecated: 5.7, message: "Use improved generics")
     func constituents() async -> Set<Constituent> {
         switch self {
         case .alternative(let v):
@@ -75,7 +77,7 @@ extension VoteTypes{
             return await v.constituents
         }
     }
-    
+	@available(swift, deprecated: 5.7, message: "Use improved generics")
     func options() async -> [VoteOption] {
         switch self {
         case .alternative(let v):
