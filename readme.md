@@ -1,12 +1,15 @@
 # VoteServer
 
-Setup script for Ubuntu 20.04 which install Docker and Docker-compose and continues to run the server.
+Setup script for Ubuntu 20.04 which installs Docker and Docker-compose and continues to run the server.
 
 `wget -O - https://git.smkid.dk/Harcker/VoteServer/-/raw/main/prepare%20docker.sh | bash`
+>**Known issue:**
+>The script may need to run twice to finish
+
 
 # Configuration
-For additional configuration, the following environment variables can be set. The default configuration (And available keys) is:
-
+For additional configuration, the following environment variables can be set. The default configuration (And available keys) is:  
+**`.env`**
 > maxNameLength=100  
 > joinPhraseLength=6  
 > maxChatLength=1000  
@@ -24,3 +27,13 @@ Furthermore for Letsencrypt support (HTTPS), add the following keys to your `.en
 > VIRTUAL_HOST="vote.smkid.dk"  
 > LETSENCRYPT_HOST="vote.smkid.dk"  
 > LETSENCRYPT_EMAIL="admin@smkid.dk"   
+
+## Related projects
+This project includes 3 first party Swift packages: 
+- [VoteKit](https://git.smkid.dk/Harcker/VoteKit) 
+>Definitions and counting of simple vote types
+- [AltVoteKit](https://git.smkid.dk/Harcker/AltVoteKit) 
+>Definitions and counting of votes using the Alternative Vote  
+- [VoteExchangeFormat](https://git.smkid.dk/Harcker/VoteExchangeFormat)
+> API object definitions, currently used by iOS client
+
