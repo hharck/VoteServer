@@ -18,10 +18,16 @@ public func configure(_ app: Application) throws {
 	app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
 	
 	// Adds support for using leaf to render views
-    app.views.use(.leaf)
+	app.views.use(.leaf)
 	
 	//DB
-	app.databases.use(.sqlite(.file("/library/pers/db.sqlite")), as: .sqlite)
+	#if os(macOS)
+		app.databases.use(.sqlite(.file("db.sqlite")), as: .sqlite)
+	#else
+		try FileManager.default.createDirectory(atPath: "/persistence/", withIntermediateDirectories: true, attributes: nil)
+		app.databases.use(.sqlite(.file("/persistence/db.sqlite")), as: .sqlite)
+	#endif
+
 	app.migrations.add(CreateChats())
 	app.migrations.add(SessionRecord.migration)
 
