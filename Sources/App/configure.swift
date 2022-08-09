@@ -21,8 +21,7 @@ public func configure(_ app: Application) throws {
     app.views.use(.leaf)
 	
 	//DB
-	app.databases.use(.sqlite(.file("db.sqlite")), as: .sqlite)
-
+	app.databases.use(.sqlite(.file("/library/pers/db.sqlite")), as: .sqlite)
 	app.migrations.add(CreateChats())
 	app.migrations.add(SessionRecord.migration)
 
