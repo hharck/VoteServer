@@ -123,6 +123,19 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 		return try await downloadResponse(for: req, content: csv, filename: "constituents.csv")
 	}
 	
+	admin.get("constituents", "downloadcurrentlyin", use: downloadCurrentlyInCSV)
+	func downloadCurrentlyInCSV(req: Request) async throws-> Response{
+		guard
+			let sessionID = req.session.authenticated(AdminSession.self),
+			let group = await groupsManager.groupForSession(sessionID)
+		else {
+			throw Redirect(.constituents)
+		}
+		
+		let csv = await group.joinedConstituentsByID.values.toCSV(config: group.settings.csvConfiguration)
+		return try await downloadResponse(for: req, content: csv, filename: "joined-constituents.csv")
+	}
+	
 	admin.post("resetaccess", ":userID", use: resetaccess)
 	func resetaccess(req: Request) async throws-> Response{
 		if let userIdentifierbase64 = req.parameters.get("userID")?.trimmingCharacters(in: .whitespacesAndNewlines),
