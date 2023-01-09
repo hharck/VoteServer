@@ -28,7 +28,7 @@ final class InvitedUser: Model, Content {
 		return Self.init(email: email, token: token)
 	}
 	
-	private init(email: String, token: String, expiresOn: Date = Date().addingTimeInterval(3 * 24 * 60 * 60)){
+	private init(email: String, token: String, expiresOn: Date = Date().addingTimeInterval(Config.tokenExpiration)){
 		self.email = email
 		self.emailHash = getHashFor(email)
 		self.createToken = token

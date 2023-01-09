@@ -8,6 +8,7 @@ struct Config{
 	let defaultValueForUnverifiedConstituents: Bool
 	let enableChat: Bool
 	let adminProfilePicture: String
+	let tokenExpiration: TimeInterval
 	
 	private(set) static var config: Config!
 	
@@ -29,12 +30,22 @@ struct Config{
 		let defaultValueForUnverifiedConstituents: Bool = Environment.key("defaultValueForUnverifiedConstituents", defaultValue: defaultConfig.defaultValueForUnverifiedConstituents)
 		let enableChat: Bool = Environment.key("enableChat", defaultValue: defaultConfig.enableChat)
 		let adminProfilePicture: String = Environment.key("adminProfilePicture", defaultValue: defaultConfig.adminProfilePicture)
+		let tokenExpiration: TimeInterval = Environment.key("adminProfilePicture", defaultValue: defaultConfig.tokenExpiration)
 		
-		return Config(maxNameLength: maxNameLength, joinPhraseLength: joinPhraseLength, maxChatLength: maxChatLength, chatQueryLimit: chatQueryLimit, chatRateLimiting: chatRateLimiting, defaultValueForUnverifiedConstituents: defaultValueForUnverifiedConstituents, enableChat: enableChat, adminProfilePicture: adminProfilePicture)
+		return Config(maxNameLength: maxNameLength, joinPhraseLength: joinPhraseLength, maxChatLength: maxChatLength, chatQueryLimit: chatQueryLimit, chatRateLimiting: chatRateLimiting, defaultValueForUnverifiedConstituents: defaultValueForUnverifiedConstituents, enableChat: enableChat, adminProfilePicture: adminProfilePicture, tokenExpiration: tokenExpiration)
 	}
 	
 	private static func getDefaultConfig() -> Config{
-		Config(maxNameLength: 100, joinPhraseLength: 6, maxChatLength: 1000, chatQueryLimit: 100, chatRateLimiting: (seconds: 10.0, messages: 10), defaultValueForUnverifiedConstituents: false, enableChat: true, adminProfilePicture: "/img/icon.png")
+		Config(
+			maxNameLength: 100,
+			joinPhraseLength: 6,
+			maxChatLength: 1000,
+			chatQueryLimit: 100,
+			chatRateLimiting: (seconds: 10.0, messages: 10),
+			defaultValueForUnverifiedConstituents: false,
+			enableChat: true,
+			adminProfilePicture: "/img/icon.png",
+			tokenExpiration: 3 * 24 * 60 * 60)
 	}
 }
 
@@ -47,6 +58,7 @@ extension Config{
 	static var defaultValueForUnverifiedConstituents: Bool {Self.config.defaultValueForUnverifiedConstituents}
 	static var enableChat: Bool {Self.config.enableChat}
 	static var adminProfilePicture: String {Self.config.adminProfilePicture}
+	static var tokenExpiration: TimeInterval {Self.config.tokenExpiration}
 
 }
 
