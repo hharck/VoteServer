@@ -30,7 +30,7 @@ struct Config{
 		let defaultValueForUnverifiedConstituents: Bool = Environment.key("defaultValueForUnverifiedConstituents", defaultValue: defaultConfig.defaultValueForUnverifiedConstituents)
 		let enableChat: Bool = Environment.key("enableChat", defaultValue: defaultConfig.enableChat)
 		let adminProfilePicture: String = Environment.key("adminProfilePicture", defaultValue: defaultConfig.adminProfilePicture)
-		let tokenExpiration: TimeInterval = Environment.key("adminProfilePicture", defaultValue: defaultConfig.tokenExpiration)
+		let tokenExpiration: TimeInterval = Environment.key("tokenExpiration", defaultValue: defaultConfig.tokenExpiration)
 		
 		return Config(maxNameLength: maxNameLength, joinPhraseLength: joinPhraseLength, maxChatLength: maxChatLength, chatQueryLimit: chatQueryLimit, chatRateLimiting: chatRateLimiting, defaultValueForUnverifiedConstituents: defaultValueForUnverifiedConstituents, enableChat: enableChat, adminProfilePicture: adminProfilePicture, tokenExpiration: tokenExpiration)
 	}

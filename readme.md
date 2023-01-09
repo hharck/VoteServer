@@ -16,6 +16,7 @@ For additional configuration, the following environment variables can be set. Th
 > defaultValueForUnverifiedConstituents=false  
 > enableChat=true  
 > adminProfilePicture="/img/icon.png" 
+> tokenExpiration=259200
  
  ## Docker compose: 
  Add the values above to an `.env`-file in the same directory as `docker-compose.yml`. (Or rather the directory from which `docker-compose up` is called)
