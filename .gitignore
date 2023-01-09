@@ -8,3 +8,4 @@ DerivedData/
 db.sqlite
 .swiftpm
 .gitlab-ci.yml
+.env
