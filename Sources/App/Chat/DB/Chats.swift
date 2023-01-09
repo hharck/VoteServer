@@ -33,7 +33,6 @@ final class Chats: Model, Content {
 	}
 }
 
-
 extension Chats{
 	func chatFormat(senderName: String, imageURL: String?) async -> ChatFormat{
 		guard self.id != nil else {
@@ -78,5 +77,4 @@ extension Array where Element == Chats{
 		}
 		return output
 	}
-	
 }

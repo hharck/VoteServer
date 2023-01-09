@@ -2,26 +2,16 @@ import VoteExchangeFormat
 import Vapor
 import VoteKit
 
-func convertVoteToMetadata<V: SupportedVoteType>(_ v: V, constituentID: ConstituentIdentifier, group: Group) async -> VoteMetadata{
+func convertVoteToMetadata(_ v: any DVoteProtocol, constituentID: ConstituentIdentifier, group: Group) async -> VoteMetadata{
     async let id = v.id
     async let name = v.name
     async let hasVoted = v.hasConstituentVoted(constituentID)
     let isOpen = await group.statusFor(await id) == .open
     
-    let kind: VoteMetadata.Kind
-    switch V.enumCase{
-    case .alternative:
-        kind = .AlternativeVote
-    case .simpleMajority:
-        kind = .SimMajVote
-    case .yesNo:
-        kind = .YNVote
-    }
-    
-    return VoteMetadata(id: await id, name: await name, kind: kind, isOpen: isOpen, hasVoted: await hasVoted)
+	return await VoteMetadata(id: id, name: name, kind: v.kind, isOpen: isOpen, hasVoted: hasVoted)
 }
 
-func convertVotesToMetadata<V: SupportedVoteType>(_ data: [V], constituentID: ConstituentIdentifier, group: Group) async -> Set<VoteMetadata>{
+func convertVotesToMetadata(_ data: [any DVoteProtocol], constituentID: ConstituentIdentifier, group: Group) async -> Set<VoteMetadata>{
     var result = Set<VoteMetadata>()
     for v in data{
         result.insert(await convertVoteToMetadata(v, constituentID: constituentID, group: group))
@@ -37,13 +27,12 @@ extension ExchangeOption{
 }
 
 extension ExtendedVoteData{
-    init<V: SupportedVoteType>(_ v: V, constituentID: ConstituentIdentifier, group: Group) async{
-        async let metadata = convertVoteToMetadata(v,constituentID: constituentID, group: group)
-        async let validatorKeys = v.genericValidators.map(\.id) + v.particularValidators.map(\.id)
-		async let options = v.options.map(ExchangeOption.init)
+	init(_ vote: some DVoteProtocol, constituentID: ConstituentIdentifier, group: Group) async{
+        async let metadata = convertVoteToMetadata(vote, constituentID: constituentID, group: group)
+        async let validatorKeys = vote.genericValidators.map(\.id) + vote.particularValidators.map(\.id)
+		async let options = vote.options.map(ExchangeOption.init)
         self = ExtendedVoteData(metadata: await metadata, options: await options, validatorKeys: await validatorKeys)
     }
-    
 }
 
 // Marks all datatypes from the API as 'Content' to allow an instance of these to be returned directly in a route

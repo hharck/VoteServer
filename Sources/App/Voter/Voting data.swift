@@ -5,10 +5,11 @@ import VoteExchangeFormat
 
 // Defines data received from a vote page
 protocol VotingData: VoteData{
-    associatedtype Vote: SupportedVoteType
-    
-    func asSingleVote(for vote: Vote, constituent: Constituent) async throws -> Vote.voteType
-    func asCorrespondingPersistenseData()-> Vote.VotePageUI.PersistanceData?
+    associatedtype Vote: VoteProtocol
+	associatedtype PersistenceData
+	
+	func asSingleVote(for vote: Vote, constituent: Constituent) async throws -> Vote.voteType
+    func asCorrespondingPersistenceData() -> PersistenceData?
 }
 
 extension YnVotingData: VotingData{
@@ -69,8 +70,7 @@ extension YnVotingData: VotingData{
         }
     }
     
-    
-    func asCorrespondingPersistenseData()-> [UUID:Bool]?{
+    func asCorrespondingPersistenceData() -> [UUID:Bool]? {
         if votes == nil || votes!.isEmpty {
             return nil
         }
@@ -104,7 +104,7 @@ extension SimpleMajorityVotingData: VotingData{
         
     }
     
-    func asCorrespondingPersistenseData()-> UUID?{
+    func asCorrespondingPersistenceData() -> UUID? {
         if selectedOption != nil {
             return UUID(selectedOption!)
         } else {
@@ -177,7 +177,7 @@ extension AltVotingData: VotingData{
 		return SingleVote(constituent, rankings: realOptions)
 	}
     
-    func asCorrespondingPersistenseData()->Self?{
+    func asCorrespondingPersistenceData() -> Self? {
         return self
     }
 }

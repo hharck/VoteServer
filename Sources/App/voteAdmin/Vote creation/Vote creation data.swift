@@ -1,5 +1,5 @@
 import VoteKit
-struct VoteCreationReceivedData<V: SupportedVoteType>: Codable{
+struct VoteCreationReceivedData<V: VoteProtocol>: Codable{
 	let nameOfVote: String
 	let options: String
 	

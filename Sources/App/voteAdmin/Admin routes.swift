@@ -27,7 +27,7 @@ func adminRoutes(_ path: RoutesBuilder, groupsManager: GroupsManager) {
 		   let command = VoteStatus(rawValue: commandStr),
 		   let vote = await group.voteForID(voteIDStr)
 		{
-            await group.setStatusFor(await vote.id(), to: command)
+            await group.setStatusFor(await vote.id, to: command)
 		}
 		return req.redirect(to: .admin)
 	}
@@ -58,20 +58,11 @@ func adminRoutes(_ path: RoutesBuilder, groupsManager: GroupsManager) {
 			
 			// Checks if any status change is requested
 			if let status = (try? req.content.decode([String:VoteStatus].self))?["statusChange"] {
-				await group.setStatusFor(await vote.id(), to: status)
+				await group.setStatusFor(await vote.id, to: status)
 			}
 		}
 		
-		
-		// TODO: Replace when Swift 5.7 is released
-		switch vote {
-		case .alternative(let v):
-			return try await VoteAdminUIController(vote: v, group: dbGroup, status: group.statusFor(v) ?? .closed, db: req.db)
-		case .yesno(let v):
-			return try await VoteAdminUIController(vote: v, group: dbGroup, status: group.statusFor(v) ?? .closed, db: req.db)
-		case .simplemajority(let v):
-			return try await VoteAdminUIController(vote: v, group: dbGroup, status: group.statusFor(v) ?? .closed, db: req.db)
-		}
+		return try await VoteAdminUIController(vote: vote, group: dbGroup, status: group.statusFor(vote) ?? .closed, db: req.db)
 	}
 	
 	// Shows a list of constituents and related settings

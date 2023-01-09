@@ -1,7 +1,8 @@
 import Vapor
+import Fluent
 import VoteKit
 import AltVoteKit
-import Fluent
+import VoteExchangeFormat
 
 func voteCreationRoutes(_ path: RoutesBuilder, groupsManager: GroupsManager) {
     /// Shows admins a page which'' let them create the kind of vote supplied in the "type" parameter
@@ -11,7 +12,7 @@ func voteCreationRoutes(_ path: RoutesBuilder, groupsManager: GroupsManager) {
 		#warning("Check if user is allowed to create a vote")
 		let dbGroup = try req.auth.require(DBGroup.self, Redirect(.create))
 		
-		guard let parameter = req.parameters.get("type"), let type = VoteTypes.StringStub(rawValue: parameter) else {
+		guard let parameter = req.parameters.get("type"), let type = VoteMetadata.Kind(rawValue: parameter) else {
 			throw Redirect(.admin)
 		}
 		
@@ -19,20 +20,20 @@ func voteCreationRoutes(_ path: RoutesBuilder, groupsManager: GroupsManager) {
 		
 		if req.method == .POST{
 			switch type {
-			case .alternative:
+			case .AlternativeVote:
 				return try await treat(req: req, AlternativeVote.self, group: group, dbGroup: dbGroup)
-			case .yesNo:
+			case .YNVote:
 				return try await treat(req: req, yesNoVote.self, group: group, dbGroup: dbGroup)
-			case .simpleMajority:
+			case .SimMajVote:
 				return try await treat(req: req, SimpleMajority.self, group: group, dbGroup: dbGroup)
 			}
 		} else {
 			switch type {
-			case .alternative:
+			case .AlternativeVote:
 				return try await showUI(for: req, AlternativeVote.self)
-			case .yesNo:
+			case .YNVote:
 				return try await showUI(for: req, yesNoVote.self)
-			case .simpleMajority:
+			case .SimMajVote:
 				return try await showUI(for: req, SimpleMajority.self)
 			}
 		}
@@ -40,8 +41,8 @@ func voteCreationRoutes(_ path: RoutesBuilder, groupsManager: GroupsManager) {
 }
 
 /// Attempts to create a vote for a given request
-fileprivate func treat<V: SupportedVoteType>(req: Request, _ type: V.Type, group: Group, dbGroup: DBGroup) async throws -> Response{
-    var voteHTTPData: VoteCreationReceivedData<V>? = nil
+fileprivate func treat<V: VoteProtocol>(req: Request, _ type: V.Type, group: Group, dbGroup: DBGroup) async throws -> Response{
+	var voteHTTPData: VoteCreationReceivedData<V>? = nil
 
     do {
 
@@ -77,16 +78,16 @@ fileprivate func treat<V: SupportedVoteType>(req: Request, _ type: V.Type, group
         let options = try voteHTTPData.getOptions()
 
         // Initialises the vote for the given type
-        switch V.enumCase{
-        case .alternative:
+        switch type.kind {
+        case .AlternativeVote:
             let tieBreakers: [TieBreaker] = [.dropAll, .removeRandom, .keepRandom]
             
             let vote = AlternativeVote(name: title, options: options, constituents: constituents, tieBreakingRules: tieBreakers, genericValidators: genValidators as! [GenericValidator<AlternativeVote.voteType>], particularValidators: partValidators as! [AlternativeVote.particularValidator])
             await group.addVoteToGroup(vote: vote)
-        case .yesNo:
+        case .YNVote:
             let vote = yesNoVote(name: title, options: options, constituents: constituents, genericValidators: genValidators as! [GenericValidator<yesNoVote.yesNoVoteType>], particularValidators: partValidators as! [yesNoVote.particularValidator])
             await group.addVoteToGroup(vote: vote)
-        case .simpleMajority:
+        case .SimMajVote:
             let vote = SimpleMajority(name: title, options: options, constituents: constituents, genericValidators: genValidators as! [GenericValidator<SimpleMajority.SimpleMajorityVote>], particularValidators: partValidators as! [SimpleMajority.particularValidator])
             await group.addVoteToGroup(vote: vote)
         }
@@ -100,7 +101,7 @@ fileprivate func treat<V: SupportedVoteType>(req: Request, _ type: V.Type, group
 
 
 
-fileprivate func showUI<V: SupportedVoteType>(for req: Request, _ type: V.Type = V.self, errorString: String? = nil, persistentData: VoteCreationReceivedData<V>? = nil) async throws -> Response{
+fileprivate func showUI<V: VoteProtocol>(for req: Request, _ type: V.Type = V.self, errorString: String? = nil, persistentData: VoteCreationReceivedData<V>? = nil) async throws -> Response{
     
     //Finds available validators
     let gen = GenericValidator<V.voteType>
@@ -119,7 +120,7 @@ fileprivate func showUI<V: SupportedVoteType>(for req: Request, _ type: V.Type =
 
 
 
-struct ValidatorData<V: SupportedVoteType>: Codable{
+struct ValidatorData<V: VoteProtocol>: Codable{
     var id: String
     var name: String
     var isEnabled: Bool

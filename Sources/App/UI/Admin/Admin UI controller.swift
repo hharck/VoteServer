@@ -1,3 +1,6 @@
+import VoteKit
+import AltVoteKit
+
 struct AdminUIController: UITableManager{
 	var title: String
 	var errorString: String? = nil
@@ -6,9 +9,9 @@ struct AdminUIController: UITableManager{
 	
 	var buttons: [UIButton] = [
 		.reload,
-        .init(uri: .createvote(.alternative), text: "Create \"Alternative vote\"", color: .green),
-        .init(uri: .createvote(.simpleMajority), text: "Create \"Simple majority vote\"", color: .green),
-        .init(uri: .createvote(.yesNo), text: "Create \"Yes/no vote\"", color: .green),
+		.init(uri: .createvote(AlternativeVote.shortName), text: "Create \"Alternative vote\"", color: .green),
+		.init(uri: .createvote(SimpleMajority.shortName), text: "Create \"Simple majority vote\"", color: .green),
+		.init(uri: .createvote(yesNoVote.shortName), text: "Create \"Yes/no vote\"", color: .green),
         .init(uri: "/admin/settings/", text: "Settings", color: .blue, inGroup: true),
 		.init(uri: "/admin/constituents/", text: "Manage constituents", color: .blue, inGroup: true),
 	]
@@ -22,36 +25,25 @@ struct AdminUIController: UITableManager{
 		self.title = group.name
 		groupJoinLink = group.joinPhrase
 		tableHeaders = ["Name", "Vote type", "No. of votes cast", "Open/closed"]
-		
-		let (alt, yn, simMaj) = await group.allVotes()
-		for vote in alt {
-			await genRow(vote)
-		}
-		
-		for vote in yn {
-			await genRow(vote)
-		}
-		
-		for vote in simMaj {
-			await genRow(vote)
-		}
-		
-		
-		func genRow<V: SupportedVoteType>(_ vote: V) async{
+		for vote in await group.allVotes() {
 			var status = await group.statusFor(vote)
 			if status == nil{
 				assertionFailure("Vote without status was found.")
-                await group.setStatusFor(vote.id, to: .closed)
+				await group.setStatusFor(vote.id, to: .closed)
 				status = .closed
 			}
 			
-            await rows.append(SimplifiedVoteData(name: vote.name, voteType: V.typeName, isOpen: status == .open, totalVotesCast: await vote.votes.count, voteID: await vote.id.uuidString))
+			// Workaround for compiler crash in Swift 5.7
+			func addRow<V: DVoteProtocol>(vote: V) async {
+				let newRow = await SimplifiedVoteData(name: vote.name, voteType: vote.shortName, isOpen: status == .open, totalVotesCast: vote.votes.count, voteID: vote.id.uuidString)
+				rows.append(newRow)
+			}
 			
+			await addRow(vote: vote)
 		}
-		
-		
-		rows.sort{ $0.name < $1.name}
-		
+
+		rows.sort{ $0.name < $1.name }
+
 		if settings.chatState != .disabled {
 			self.buttons.append(UIButton(uri: "/admin/chats/", text: "Chats", color: .blue, inGroup: true))
 		}

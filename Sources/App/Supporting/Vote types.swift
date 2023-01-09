@@ -1,124 +1,53 @@
 import VoteKit
 import AltVoteKit
-import Foundation
 import VoteExchangeFormat
 
-@available(swift, deprecated: 5.7, message: "Use improved generics")
-enum VoteTypes{
-    case alternative(AlternativeVote)
-    case yesno(yesNoVote)
-    case simplemajority(SimpleMajority)
-    
-    enum StringStub: String{
-        case alternative = "alternativevote"
-        case yesNo = "yesno"
-        case simpleMajority = "simplemajority"
-        
-        init(_ voteTypes: VoteTypes){
-            switch voteTypes {
-            case .alternative(_):
-                self = .alternative
-            case .yesno(_):
-                self = .yesNo
-            case .simplemajority(_):
-                self = .simpleMajority
-            }
-        }
-    }
-    
-    init<V: SupportedVoteType>(vote: V){
-        switch V.enumCase{
-        case .alternative:
-            self = .alternative(vote as! AlternativeVote)
-        case .yesNo:
-            self = .yesno(vote as! yesNoVote)
-        case .simpleMajority:
-            self = .simplemajority(vote as! SimpleMajority)
-        }
-    }
-    
-    func asStub() -> StringStub{
-        StringStub(self)
-    }
+extension VoteProtocol {
+	static var shortName: String { Self.typeName.lowercased().replacingOccurrences(of: " ", with: "-") }
+	var longName: String { Self.typeName }
+	var shortName: String { Self.shortName }
+	static var minimumRequiredOptions: Int {
+		switch kind {
+			case .YNVote:
+				return 1
+			case .SimMajVote, .AlternativeVote:
+				return 2
+		}
+	}
+	
+	static var kind: VoteMetadata.Kind {
+		switch shortName {
+			case "yes-no":
+				return .YNVote
+			case "simple-majority":
+				return .SimMajVote
+			case "alternative-vote":
+				return .AlternativeVote
+			default:
+				fatalError("Unknown vote type: \(shortName)")
+		}
+	}
+	var kind: VoteMetadata.Kind { Self.kind }
+	
 }
 
-
-extension VoteTypes{
-	@available(swift, deprecated: 5.7, message: "Use improved generics")
-    func id() async -> UUID {
-        switch self {
-        case .alternative(let v):
-            return await v.id
-        case .yesno(let v):
-            return await v.id
-        case .simplemajority(let v):
-            return await v.id
-        }
-    }
-	@available(swift, deprecated: 5.7, message: "Use improved generics")
-    func name() async -> String {
-        switch self {
-        case .alternative(let v):
-            return await v.name
-        case .yesno(let v):
-            return await v.name
-        case .simplemajority(let v):
-            return await v.name
-        }
-    }
-	@available(swift, deprecated: 5.7, message: "Use improved generics")
-    func constituents() async -> Set<Constituent> {
-        switch self {
-        case .alternative(let v):
-            return await v.constituents
-        case .yesno(let v):
-            return await v.constituents
-        case .simplemajority(let v):
-            return await v.constituents
-        }
-    }
-	@available(swift, deprecated: 5.7, message: "Use improved generics")
-    func options() async -> [VoteOption] {
-        switch self {
-        case .alternative(let v):
-            return await v.options
-        case .yesno(let v):
-            return await v.options
-        case .simplemajority(let v):
-            return await v.options
-        }
-    }
+protocol DVoteProtocol: VoteProtocol {
+	associatedtype VotePageUI: VotePage where VotePageUI.VoteType == Self
+	associatedtype ReceivedData: VotingData where ReceivedData.Vote == Self, ReceivedData.PersistenceData == VotePageUI.PersistenceData
 }
 
-/// Adds the types associated with each kind of vote
-protocol SupportedVoteType: VoteProtocol{
-    associatedtype ReceivedData: VotingData where ReceivedData.Vote == Self
-    associatedtype VotePageUI: VotePage where VotePageUI.VoteType == Self
-    static var enumCase: VoteTypes.StringStub {get}
-    static var minimumRequiredOptions: Int {get}
+extension AlternativeVote: DVoteProtocol {
+	typealias VotePageUI = AltVotePageGenerator
+	typealias ReceivedData = AltVotingData
+
 }
+extension SimpleMajority: DVoteProtocol {
+	typealias VotePageUI = SimMajVotePage
+	typealias ReceivedData = SimpleMajorityVotingData
 
-
-extension AlternativeVote: SupportedVoteType{
-    typealias ReceivedData = AltVotingData
-    typealias PersistanceData = AltVotingData
-    typealias VotePageUI = AltVotePageGenerator
-    static let enumCase: VoteTypes.StringStub = .alternative
-    static let minimumRequiredOptions: Int = 2
 }
+extension yesNoVote: DVoteProtocol {
+	typealias VotePageUI = YesNoVotePage
+	typealias ReceivedData = YnVotingData
 
-extension yesNoVote: SupportedVoteType{
-    typealias ReceivedData = YnVotingData
-    typealias PersistanceData = [UUID:Bool]
-    typealias VotePageUI = YesNoVotePage
-    static let enumCase: VoteTypes.StringStub = .yesNo
-    static let minimumRequiredOptions: Int = 1
-}
-
-extension SimpleMajority: SupportedVoteType{
-    typealias ReceivedData = SimpleMajorityVotingData
-    typealias PersistanceData = UUID
-    typealias VotePageUI = SimMajVotePage
-    static let enumCase: VoteTypes.StringStub = .simpleMajority
-    static let minimumRequiredOptions: Int = 2
 }

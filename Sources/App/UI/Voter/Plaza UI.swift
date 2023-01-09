@@ -31,35 +31,16 @@ struct PlazaUI: UITableManager{
 		self.allowsVoteDeletion = dbGroup.settings.constituentsCanSelfResetVotes
 		let constituent = user.asConstituent()
 		
-		@available(swift, deprecated: 5.7, message: "Use improved generics")
-		func setup<V: SupportedVoteType>(_ vote: V) async{
+		for vote in await group.allVotes() {
 			let hasVoted: Bool = await vote.hasConstituentVoted(constituent)
 			guard let status = await group.statusFor(vote) else {
 				return
 			}
 			
-			await rows.append(VoteListElement(voteID: vote.id, name: vote.name, isOpen: status == .open, hasVoted: hasVoted, voteType: V.typeName))
+			await rows.append(VoteListElement(voteID: vote.id, name: vote.name, isOpen: status == .open, hasVoted: hasVoted, voteType: vote.longName))
 		}
 		
-		
-		
-		let (alt, yn, simmaj) = await group.allVotes()
-		
-		for vote in alt {
-			await setup(vote)
-		}
-		
-		for vote in yn {
-			await setup(vote)
-		}
-		
-		for vote in simmaj {
-			await setup(vote)
-		}
-		
-	
 		rows.sort(by: {$0.name < $1.name})
-		
 	}
 	
 	

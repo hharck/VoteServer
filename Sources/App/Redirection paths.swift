@@ -34,7 +34,7 @@ enum RedirectionPaths: RedirectionPath{
 }
 
 enum GroupSpecificPaths: RedirectionPath{
-	case createvote(VoteTypes.StringStub)
+	case createvote(String)
 	case voteadmin(String?)
 	case results(String)
 	case admin
@@ -43,8 +43,8 @@ enum GroupSpecificPaths: RedirectionPath{
 	
 	func stringValue() -> String{
 		switch self {
-		case .createvote(let string):
-			return "admin/createvote/" + string.rawValue
+		case .createvote(let voteTypeName):
+			return "admin/createvote/" + voteTypeName
 		case .voteadmin(let id):
 			if id == nil {
 				return "voteadmin"
@@ -62,7 +62,6 @@ enum GroupSpecificPaths: RedirectionPath{
 		}
 	}
 }
-
 
 extension Request{
 	func redirect(to location: RedirectionPaths, type: RedirectType = .normal) -> Response {

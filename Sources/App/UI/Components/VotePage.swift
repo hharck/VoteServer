@@ -1,7 +1,8 @@
+import VoteKit
 /// The basis for a page in which a user can cast a vote
 protocol VotePage: UIManager{
-    associatedtype VoteType: SupportedVoteType
-    associatedtype PersistanceData: Codable
+    associatedtype VoteType: DVoteProtocol
+    associatedtype PersistenceData: Codable
 
     var canVoteBlank: Bool {get}
     var hideUI: Bool {get set}
@@ -10,7 +11,7 @@ protocol VotePage: UIManager{
     static func hasVoted(title: String) async -> Self
     
     /// The default initialiser; title is mostly just vote.name, but due to the possibility of a nil vote, it has to be supplied manually
-    init(title: String, vote: VoteType?, errorString: String?, persistentData: PersistanceData?) async
+    init(title: String, vote: VoteType?, errorString: String?, persistentData: PersistenceData?) async
 }
 
 extension VotePage{

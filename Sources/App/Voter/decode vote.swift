@@ -1,18 +1,19 @@
 import VoteKit
 import AltVoteKit
 import Vapor
+import VoteExchangeFormat
 
 /// Decodes and stores data POSTed to /vote/[voteid] OR the API
 /// - Throws: VotingDataError
 /// - Returns: Either a view to be presented be non API clients or the result as a String for API clients
-func decodeAndStore<V: SupportedVoteType>(group: Group, vote: V, constituent: Constituent, req: Request) async -> ((data: V.ReceivedData?, error: Error)?, [String]?){
-    var votingData: V.ReceivedData
+func decodeAndStore<V: DVoteProtocol>(group: Group, vote: V, constituent: Constituent, req: Request) async -> ((data: V.ReceivedData?, error: Error)?, [String]?) {
+	var votingData: V.ReceivedData
     do {
-        votingData = try req.content.decode(V.ReceivedData.self)
+		votingData = try req.content.decode(V.ReceivedData.self)
     } catch {
         // Workaround for an empty set of radio buttons leading to error 422
-        if (V.enumCase == .yesNo || V.enumCase == .simpleMajority), let e = error as? AbortError, e.status == .unprocessableEntity {
-            votingData = V.ReceivedData.blank()
+		if (V.kind == .YNVote || V.kind == .SimMajVote), let e = error as? AbortError, e.status == .unprocessableEntity {
+			votingData = V.ReceivedData.blank()
         } else {
             return ((nil, error), nil)
         }
@@ -30,32 +31,27 @@ func decodeAndStore<V: SupportedVoteType>(group: Group, vote: V, constituent: Co
     
     // Returns a list of priorities to show the user as confirmation for a cast vote
     let prio: [String]
-    switch V.enumCase{
-    case .alternative:
-        let tmp = (voteStub as! SingleVote).rankings.map(\.name)
-        if tmp.isEmpty{
-            prio = ["Voted blank"]
-        } else{
-            prio = tmp
-        }
-    case .yesNo:
-        let val = (voteStub as! yesNoVote.yesNoVoteType).values
-        if val.isEmpty{
-            prio = ["Voted blank"]
-        } else {
-            // Fetches the full list of options to recall them in order
-            prio = await vote.options.map{ opt -> String in
-                let suffix: String
-                if let option = val[opt]{
-                    suffix = option ? "Yes" : "No"
-                } else {
-                    suffix = "Blank"
-                }
-                return opt.name + ": " + suffix
-            }
-        }
-    case .simpleMajority:
-        prio = [(voteStub as! SimpleMajority.SimpleMajorityVote).preferredOption?.name ?? "Voted blank"]
-    }
-    return (nil, prio)
+	if voteStub.isBlank {
+		prio = ["Voted blank"]
+	} else {
+		switch V.kind {
+			case .AlternativeVote:
+				prio = (voteStub as! SingleVote).rankings.map(\.name)
+			case .YNVote:
+				let val = (voteStub as! yesNoVote.yesNoVoteType).values
+				// Fetches the full list of options to recall them in order
+				prio = await vote.options.map{ opt -> String in
+					let suffix: String
+					if let option = val[opt]{
+						suffix = option ? "Yes" : "No"
+					} else {
+						suffix = "Blank"
+					}
+					return opt.name + ": " + suffix
+				}
+			case .SimMajVote:
+				prio = [(voteStub as! SimpleMajority.SimpleMajorityVote).preferredOption?.name ?? "Voted blank"]
+		}
+	}
+	return (nil, prio)
 }

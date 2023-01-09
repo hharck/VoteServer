@@ -42,7 +42,7 @@ final class DBGroup: Model, Content {
 
 extension DBGroup: Authenticatable{}
 
-extension DBGroup{
+extension DBGroup {
 	/// - Warning: Does not save
 	func updateUnverifiedSetting(_ newValue: Bool, relatedGroup: Group, db: Database) async throws {
 		if !newValue && settings.allowsUnverifiedConstituents {

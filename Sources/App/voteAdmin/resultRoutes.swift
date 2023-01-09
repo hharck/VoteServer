@@ -36,11 +36,10 @@ func ResultRoutes(_ path: RoutesBuilder, groupsManager: GroupsManager) {
 		}
 	}
 
-
-	func getResults(req: Request, group: Group, vote: VoteTypes) async -> UIManager{
+	func getResults(req: Request, group: Group, vote: any DVoteProtocol) async -> UIManager{
 
          //Makes sure the vote is closed
-        await group.setStatusFor(await vote.id(), to: .closed)
+		await group.setStatusFor(await vote.id, to: .closed)
 
         
         // Checks the exclude parameter
@@ -49,7 +48,7 @@ func ResultRoutes(_ path: RoutesBuilder, groupsManager: GroupsManager) {
             let enabled = options.enabledUUIDs()
 
             //Finds all options that were not selected by the user
-            excluding = Set(await vote.options().filter { option in
+			excluding = Set(await vote.options.filter { option in
                 !enabled.contains(option.id)
             })
         }
@@ -57,31 +56,31 @@ func ResultRoutes(_ path: RoutesBuilder, groupsManager: GroupsManager) {
         // Checks the force parameter
         let force = req.url.query?.split(separator: "&").contains("force=1") ?? false
         
-		let id = await vote.id()
-		let vname = await vote.name()
+		let id = await vote.id
+		let vname = await vote.name
 		
         do{
-            switch vote {
-            case .alternative(let v):
-                let winner = try await v.findWinner(force: force, excluding: excluding)
+			if let vote = vote as? AlternativeVote {
+				let winner = try await vote.findWinner(force: force, excluding: excluding)
 
-                if winner.winners().isEmpty{
-                    throw "An issue occured during counting"
-                }
+				if winner.winners().isEmpty{
+					throw "An issue occured during counting"
+				}
 
-                let enabledOptions = Set(await v.options).subtracting(excluding)
+				let enabledOptions = Set(await vote.options).subtracting(excluding)
 
-                return AVResultsUI(title: "Your '\(await v.name)' vote results", winners: winner, numberOfVotes: await v.votes.count, enabledOptions: enabledOptions, disabledOptions: excluding)
+				return AVResultsUI(title: "Your '\(await vote.name)' vote results", winners: winner, numberOfVotes: await vote.votes.count, enabledOptions: enabledOptions, disabledOptions: excluding)
 
-            case .yesno(let v):
-                let count = try await v.count(force: force)
-                return await YesNoResultsUI(vote: v, count: count)
-            case .simplemajority(let v):
-                let count = try await v.count(force: force)
+			} else if let vote = vote as? yesNoVote {
+				let count = try await vote.count(force: force)
+				return await YesNoResultsUI(vote: vote, count: count)
+			} else if let vote = vote as? SimpleMajority {
+				let count = try await vote.count(force: force)
 
-                return SimMajResultsUI(title: await v.name, numberOfVotes: await v.votes.count, count: count)
-            }
-
+				return SimMajResultsUI(title: await vote.name, numberOfVotes: await vote.votes.count, count: count)
+			} else {
+				fatalError("Unknown vote type found")
+			}
         } catch {
             guard let er = error as? [VoteValidationResult] else {
                 return genericErrorPage(error: error)
@@ -105,17 +104,8 @@ func ResultRoutes(_ path: RoutesBuilder, groupsManager: GroupsManager) {
 			throw Redirect(.results(voteIDStr))
 		}
 		
-		let csv: String
 		let csvConfiguration = dbGroup.settings.csvConfiguration
-		switch vote {
-		case .alternative(let v):
-			csv = await v.toCSV(config: csvConfiguration)
-		case .yesno(let v):
-			csv = await v.toCSV(config: csvConfiguration)
-		case .simplemajority(let v):
-			csv = await v.toCSV(config: csvConfiguration)
-		}
-		
+		let csv = await vote.toCSV(config: csvConfiguration)
 		return try await downloadResponse(for: req, content: csv, filename: "votes.csv")
 	}
 	adminOnly.get("results", ":voteID", "downloadconst", use: downloadConstituentsList)
@@ -132,7 +122,7 @@ func ResultRoutes(_ path: RoutesBuilder, groupsManager: GroupsManager) {
 			throw Redirect(.results(voteIDStr))
 		}
 
-		let csv = await vote.constituents().toCSV(config: dbGroup.settings.csvConfiguration)
+		let csv = await vote.constituents.toCSV(config: dbGroup.settings.csvConfiguration)
 
 		return try await downloadResponse(for: req, content: csv, filename: "constituents.csv")
 	}

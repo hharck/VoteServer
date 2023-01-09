@@ -1,4 +1,5 @@
-struct VoteCreatorUI<V: SupportedVoteType>: UIManager{
+import VoteKit
+struct VoteCreatorUI<V: VoteProtocol>: UIManager{
 	var title: String
 	var errorString: String? = nil
 	var generalInformation: HeaderInformation! = nil
@@ -12,7 +13,7 @@ struct VoteCreatorUI<V: SupportedVoteType>: UIManager{
     var buttons: [UIButton] = []
     
 	init(errorString: String? = nil, validatorsGeneric: [ValidatorData<V>], validatorsParticular: [ValidatorData<V>], _ persistentData: VoteCreationReceivedData<V>? = nil) {
-        self.title = "Create \(V.typeName)"
+		self.title = "Create \(V.shortName)"
         self.errorString = errorString
         self.nameOfVote = persistentData?.nameOfVote
         self.options = persistentData?.options.trimmingCharacters(in: .whitespacesAndNewlines)

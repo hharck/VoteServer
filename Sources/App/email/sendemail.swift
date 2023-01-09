@@ -13,11 +13,7 @@ extension EmailBackend{
 		Task{
 			await self.sendEmail(to: to, subject: subject, body: body)
 		}
-		
-		
 	}
-
-	
 }
 
 enum EmailSendingError: ErrorString{
@@ -34,9 +30,8 @@ enum EmailSendingError: ErrorString{
 	}
 }
 
-
-
 struct EmailToLog: EmailBackend{
+	#warning("Avoid renitialisation")
 	private let logger = Logger(label: "Email sending")
 	func sendEmail(to: String, subject: String, body: String) async{
 		logger.info("""
@@ -47,5 +42,4 @@ struct EmailToLog: EmailBackend{
    \(body)
    """)
 	}
-	
 }

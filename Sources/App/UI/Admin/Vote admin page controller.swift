@@ -36,14 +36,13 @@ struct VoteAdminUIController: UITableManager{
 	
 	static var template: String = "voteadmin"
     
-	init<V: SupportedVoteType>(vote: V, group: DBGroup, status: VoteStatus, db: Database) async throws {
+	init<V: DVoteProtocol>(vote: V, group: DBGroup, status: VoteStatus, db: Database) async throws {
 		self.voteCount = await vote.votes.count
 		self.constituentsCount = await vote.constituents.count
 		
 		// Sets the page title to the name of the vote, and conditionally adds " (closed)"
 		self.title = await vote.name + (status == .open ? "" : " (closed)")
 		self.voteName = await vote.name
-		
 		self.showGetResults = voteCount >= 2 && status == .closed
 		self.isOpen = status == .open
 		
@@ -51,11 +50,9 @@ struct VoteAdminUIController: UITableManager{
 		self.settings = await vote.particularValidators.map(\.name) + vote.genericValidators.map(\.name)
 		self.options = await vote.options.map(\.name)
 		
-		
 		var tempRows = [ConstituentIdentifier: ConstituentAndStatus]()
 		
 		let votes = await vote.votes
-		
 		
 		let verified = try await group
 			.$constituents

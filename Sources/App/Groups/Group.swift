@@ -24,9 +24,7 @@ actor Group{
 	private var statusForVote = [VoteID: VoteStatus]()
 	
     /// The different kinds of votes, stored by their id
-	private var AltVotesByID = [VoteID: AlternativeVote]()
-	private var SimMajVotesByID = [VoteID: SimpleMajority]()
-	private var YNVotesByID = [VoteID: yesNoVote]()
+	private var vvID = [VoteID: any DVoteProtocol]()
 	
 	// Cached values
 	
@@ -93,15 +91,9 @@ actor Group{
 extension Group{
 	
 	func resetConstituent(_ constituent: Constituent, userid: UUID, isVerified: Bool) async{
+		// Removes unverified from all votes
 		if !isVerified{
-			// Removes unverified from all votes
-			for v in AltVotesByID.values{
-				await v.removeConstituent(constituent)
-			}
-			for v in YNVotesByID.values{
-				await v.removeConstituent(constituent)
-			}
-			for v in SimMajVotesByID.values{
+			for v in vvID.values {
 				await v.removeConstituent(constituent)
 			}
 		}
@@ -119,25 +111,19 @@ extension Group{
 		await self.socketController.kickAll(only: .unverified)
 		
 		//Removes all unverified constituents who hasn't cast a vote
-		func procedure<V: SupportedVoteType>(_ vote: V) async{
-			await vote
-				.setConstituents(vote.constituents
-								 // Removes all unverified
-					.subtracting(unverifiedConstituents)
-								 // Adds everyone who has already voted, including unverified
-					.union(vote.votes.map(\.constituent)))
+		for v in vvID.values{
+			await v.removeUnverifiedConstituents(unverifiedConstituents)
 		}
-		
-		
-		for v in AltVotesByID.values{
-			await procedure(v)
-		}
-		for v in YNVotesByID.values{
-			await procedure(v)
-		}
-		for v in SimMajVotesByID.values{
-			await procedure(v)
-		}
+	}
+}
+
+extension VoteProtocol {
+	func removeUnverifiedConstituents(_ unverifiedConstituents: Set<Constituent>) async {
+		self.constituents = constituents
+		// Removes all unverified
+			 .subtracting(unverifiedConstituents)
+		// Adds everyone who has already voted, including unverified
+			 .union(votes.map(\.constituent))
 	}
 }
 
@@ -197,20 +183,13 @@ extension Group{
 //MARK: Handle votes (elections)
 extension Group {
     /// Finds a vote by its id
-    func voteForID(_ id: VoteID) -> VoteTypes?{
-        if let v = AltVotesByID[id]{
-            return VoteTypes(vote: v)
-        } else if let v = YNVotesByID[id]{
-            return VoteTypes(vote: v)
-        } else if let v = SimMajVotesByID[id]{
-            return VoteTypes(vote: v)
-        } else {
-            return nil
-        }
+    func voteForID(_ id: VoteID) -> (any DVoteProtocol)?{
+		guard let vote = vvID[id] else { return nil }
+		return vote
     }
 	
     /// Finds a vote by a string representation of its id
-    func voteForID(_ id: String) -> VoteTypes?{
+    func voteForID(_ id: String) -> (any DVoteProtocol)?{
         guard let voteID = VoteID(id) else {
             return nil
         }
@@ -219,8 +198,8 @@ extension Group {
     
     
 	/// Returns three arrays, all containing all instances for each kind of vote
-	func allVotes() -> ([AlternativeVote],[yesNoVote],[SimpleMajority]){
-		return (Array(AltVotesByID.values), Array(YNVotesByID.values), Array(SimMajVotesByID.values))
+	func allVotes() -> [any DVoteProtocol] {
+		return Array(vvID.values)
 	}
 
     /// Gets the status for the id of a vote
@@ -229,14 +208,11 @@ extension Group {
     }
     
 	/// Gets the status of a vote
-	func statusFor<V: SupportedVoteType>(_ vote: V) async -> VoteStatus?{
+	func statusFor(_ vote: any DVoteProtocol) async -> VoteStatus?{
         statusForVote[await vote.id]
 	}
 
-
-
-
-	func setStatusFor<V: SupportedVoteType>(_ vote: V, to value: VoteStatus) async{
+	func setStatusFor(_ vote: any DVoteProtocol, to value: VoteStatus) async{
         await setStatusFor(await vote.id, to: value)
 	}
     func setStatusFor(_ vote: VoteID, to value: VoteStatus) async{
@@ -250,58 +226,27 @@ extension Group {
     }
 	
 	/// Adds new votes to the group
-	func addVoteToGroup<V: SupportedVoteType>(vote: V) async{
+	func addVoteToGroup(vote: any DVoteProtocol) async{
 		let voteID = await vote.id
-		
-		switch V.enumCase{
-        case .alternative:
-			AltVotesByID[voteID] = vote as? AlternativeVote
-        case .yesNo:
-			YNVotesByID[voteID] = vote as? yesNoVote
-        case .simpleMajority:
-			SimMajVotesByID[voteID] = vote as? SimpleMajority
-		}
-		
+		vvID[voteID] = vote
 		statusForVote[voteID] = .closed
-        
         let vName = await vote.name
-        logger.info("Vote of kind \"\(V.typeName)\" named \"\(vName)\" was added to the group")
+		logger.info("Vote named \"\(vName)\" was added to the group")
 	}
     
     /// Removes a vote (election) from this Group
-    func removeVoteFromGroup(vote: VoteTypes) async {
-        let id = await vote.id()
+    func removeVoteFromGroup(vote: any DVoteProtocol) async {
+        let id = await vote.id
 
         self.statusForVote[id] = nil
-
-        switch vote.asStub(){
-        case .alternative:
-            AltVotesByID[id] = nil
-        case .simpleMajority:
-            SimMajVotesByID[id] = nil
-        case .yesNo:
-            YNVotesByID[id] = nil
-        }
+		vvID[id] = nil
     }
 	
-    func singleVoteReset(vote: VoteTypes, linker: GroupConstLinker) async{
-        switch vote {
-        case .alternative(let v):
-            await singleVoteReset(vote: v, linker: linker)
-        case .yesno(let v):
-            await singleVoteReset(vote: v, linker: linker)
-        case .simplemajority(let v):
-            await singleVoteReset(vote: v, linker: linker)
-        }
-    }
-        
-    
     /// Removes a vote by the constituent in the group given in the URL; if the user has been kicked out, it will be removed from the vote's list of verified constituents
-    func singleVoteReset<V: SupportedVoteType>(vote: V, linker: GroupConstLinker) async{
+    func singleVoteReset(vote: any DVoteProtocol, linker: GroupConstLinker) async{
 		let constituentID = linker.constituent.username
 		await vote.resetVoteForUser(constituentID)
         
-		
         // If the user is no longer in the group, it'll be removed from the constituents list in the vote
         if linker.isBanned{
             let newConstitutents = await vote.constituents.filter{ const in
@@ -311,7 +256,6 @@ extension Group {
         }
     }
 }
-
 
 enum VoteStatus: String, Codable{
 	case open = "open"
