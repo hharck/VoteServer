@@ -10,11 +10,10 @@ struct YesNoResultsUI: UITableManager{
     
     static var template: String = "results/yesno"
     
-    var tableHeaders: [String] = ["Name", "Yes", "No"]  //The "Blank" column is only added if the vote allows for it
+    var tableHeaders: [String] = ["Option", "Yes", "No"]  //The "Blank" column is only added if the vote allows for it
     var showBlank: Bool = false
     
     var rows: [Row]
-
     
     init(vote: yesNoVote, count: [VoteOption : (yes: UInt, no: UInt, blank: UInt)]) async{
         self.title = await vote.name
