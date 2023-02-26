@@ -8,11 +8,12 @@ struct GroupCreatorUI: UIManager{
 	
 	private var groupName: String?
 	private var allowsUnverifiedConstituents: Bool
+    private var generatePasswords: Bool
 	
 	internal init(errorString: String? = nil, _ persistentData: GroupCreatorData? = nil) {
 		self.groupName = persistentData?.groupName
-		self.allowsUnverifiedConstituents = persistentData?.allowsUnverified() ?? Config.defaultValueForUnverifiedConstituents
-		
+		self.allowsUnverifiedConstituents = persistentData?.allowsUnverified ?? Config.defaultValueForUnverifiedConstituents
+        self.generatePasswords = persistentData?.requiresPasswordGeneration ?? false
 		self.errorString = errorString
 	}
 }

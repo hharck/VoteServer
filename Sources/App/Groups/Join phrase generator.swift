@@ -9,6 +9,7 @@ func joinPhraseGenerator(chars: UInt = Config.joinPhraseLength) -> String{
 	return String((1...chars).map{ _ in possibleChars.randomElement()!})
 }
 
+let numberOfPossibleJoinPhraseChars = possibleChars.count
 fileprivate let possibleChars: Set<Character> = {
 	//Based on https://stackoverflow.com/a/63760652/5257653
 	let aScalars: String.UnicodeScalarView = "a".unicodeScalars

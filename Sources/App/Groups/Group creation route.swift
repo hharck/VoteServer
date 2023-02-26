@@ -13,7 +13,7 @@ func groupCreationRoutes(_ app: Application, groupsManager: GroupsManager) {
 			let session = AdminSession()
 			
 			// Saves the group
-			guard await groupsManager.createGroup(session: session.sessionID, db: req.db, name: try groupData.getGroupName(), constituents: try groupData.getConstituents(), pwdigest: try groupData.getHashedPassword(for: req), allowsUnverified: groupData.allowsUnverified()) else {
+            guard await groupsManager.createGroup(session: session.sessionID, db: req.db, name: try groupData.getGroupName(), constituents: try groupData.getConstituents(), pwdigest: try groupData.getHashedPassword(for: req), allowsUnverified: groupData.allowsUnverified) else {
 				throw Abort(.internalServerError)
 			}
 			

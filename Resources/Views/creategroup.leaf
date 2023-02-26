@@ -12,6 +12,10 @@
 
 				<input type="checkbox" id="allowsUnverifiedConstituents" name="allowsUnverifiedConstituents" #if(allowsUnverifiedConstituents):checked#endif>
 				<label for="allowsUnverifiedConstituents">Allow access for unverified users</label><br>
+
+                <input type="checkbox" id="generatePasswords" name="generatePasswords" #if(generatePasswords):checked#endif>
+                <label for="generatePasswords">Generate a unique access token for each constituent</label><br>
+                
 				<input type="submit" name="lockableButton" class="button green">
 			</form>
 		#endexport
