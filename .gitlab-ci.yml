@@ -66,6 +66,7 @@ publish-docker-image:
   needs: ["build-docker-image", "swift-unit-test"]
 
 bump-version:
+  stage: publish
   only:
     refs:
       - web
