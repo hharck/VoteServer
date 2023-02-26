@@ -85,7 +85,7 @@ bump-version:
   - git reset --hard origin/main
   - git branch -D main || true
   - git checkout --track origin/main
-  - rm version.swift  || true
+  - rm Sources/App/version.swift || true
   - echo "let version = \"$VERSION\"" >> Sources/App/version.swift
   - git add -A .
   - git commit -am "Bumped version to $VERSION" || echo "No changes, nothing to commit!"
