@@ -10,6 +10,8 @@ struct LoginUI: UIManager{
         }
 	}
 	
+    var version: String = App.version
+    
     var buttons: [UIButton]
 	
 	var title: String = "Login"

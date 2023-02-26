@@ -1,6 +1,7 @@
 import Foundation
 struct SuccessfullVoteUI: UIManager{
-	var title: String
+    var version: String = App.version
+    var title: String
 	var voterID: String
 	var priorities: [String]
 	

@@ -22,7 +22,8 @@ struct AVResultsUI: UIManager{
 		}
 	}
 	
-	var title: String
+    var version: String = App.version
+    var title: String
 	var errorString: String? = nil
     var buttons: [UIButton] = [.backToAdmin]
 	static var template: String = "results/altvote"

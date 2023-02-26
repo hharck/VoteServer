@@ -1,6 +1,8 @@
 import Foundation
 import VoteKit
 struct YesNoVotePage: VotePage, UITableManager{
+    var version: String = App.version
+    
     var title: String
     var errorString: String? = nil
     var buttons: [UIButton] = [.backToPlaza]

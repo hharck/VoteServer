@@ -1,5 +1,7 @@
 import VoteKit
 struct YesNoResultsUI: UITableManager{
+    var version: String = App.version
+    
     var numberOfVotes: Int
     
     var title: String

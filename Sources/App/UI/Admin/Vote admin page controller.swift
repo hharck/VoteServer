@@ -1,7 +1,8 @@
 import VoteKit
 /// A page showing the validators, options and constituents in a vote
 struct VoteAdminUIController: UITableManager{
-	let title: String
+    var version: String = App.version
+    let title: String
 	var errorString: String? = nil
 
 	var tableHeaders = ["", "User id", "Name", "Has voted", "Verified", ""]

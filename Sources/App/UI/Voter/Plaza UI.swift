@@ -1,7 +1,8 @@
 import Foundation
 import VoteKit
 struct PlazaUI: UITableManager{
-	var title: String = "Plaza"
+    var version: String = App.version
+    var title: String = "Plaza"
 	var errorString: String? = nil
 	
 	var buttons: [UIButton] = [.reload]

@@ -1,6 +1,9 @@
 import Vapor
 protocol UIManager: Codable, AsyncResponseEncodable, ResponseEncodable{
-	/// The title of the page
+    /// The version of the app
+    var version: String { get }
+    
+    /// The title of the page
 	var title: String {get}
 	
 	/// Errors to be shown

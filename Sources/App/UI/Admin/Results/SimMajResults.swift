@@ -1,5 +1,6 @@
 import VoteKit
 struct SimMajResultsUI: UIManager{
+    var version: String = App.version
     var numberOfVotes: Int
     
     var title: String

@@ -280,6 +280,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 }
 
 fileprivate struct SettingsUI: UITableManager{
+    var version: String = App.version
     var title: String = "Settings"
     var errorString: String? = nil
     static var template: String = "settings"
