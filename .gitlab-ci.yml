@@ -79,4 +79,7 @@ bump-version:
   - git config --global user.email '${GITLAB_USER_EMAIL}'
   - git config --global user.name '${GITLAB_USER_ID}'
   - git add -A && git commit -m 'Bumped version (test)'
+  - git tag $NEW_VERSION
   - git push origin HEAD:$BRANCH
+  - git push origin $NEW_VERSION
+  when: manual 
