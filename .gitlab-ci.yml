@@ -64,3 +64,19 @@ publish-docker-image:
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   needs: ["build-docker-image", "swift-unit-test"]
+
+bump-version:
+  only:
+    variables:
+    - $CI_COMMIT_TAG =~ /v?\d+.\d+.\d+-?.*$/  
+  except:
+   - branches
+  tags:
+    - dind
+  script:
+  - echo "Abc"
+  - git remote set-url origin https://${CI_USERNAME}:${CI_PUSH_TOKEN}@$REPO
+  - git config --global user.email '${GITLAB_USER_EMAIL}'
+  - git config --global user.name '${GITLAB_USER_ID}'
+  - git add -A && git commit -m 'Bumped version (test)'
+  - git push origin HEAD:$BRANCH
