@@ -90,3 +90,4 @@ bump-version:
   - git commit -am "Bumped version to $VERSION" || echo "No changes, nothing to commit!"
   - git tag -f $VERSION
   - git push -o ci.skip "https://bot:${PUSH_TOKEN}@${CI_REPOSITORY_URL#*@}" main --tags
+  when: manual
