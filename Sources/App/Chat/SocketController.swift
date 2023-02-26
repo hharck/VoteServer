@@ -243,30 +243,7 @@ extension ChatSocketController{
 	func send(message: ServerChatProtocol, to socket: WebSocket){
 		send(message: message, to: [socket])
 	}
-	
-	//Succes sending
-	
-//	func sendSM(message: serverMessages, to users: [UserID]){
-//		send(message: .withSM(message) , to: users)
-//	}
-//
-//	func sendSM(message: serverMessages, respondingTo reqID: ReqID? = nil, to user: UserID){
-//		sendSM(message: message, to: [user])
-//	}
-//
-//	func sendSM(message: serverMessages, to socket: [WebSocket]){
-//		send(message: .withSM(message), to: socket)
-//	}
-//	func sendSM(message: serverMessages, respondingTo reqID: ReqID? = nil, to socket: WebSocket){
-//		sendSM(message: message, to: [socket])
-//	}
-//
-	//Error sending
-	
-//	func sendER(error: errorCodes, respondingTo reqID: ReqID? = nil, to user: UserID){
-//		send(message: .withError(error, to: reqID), to: [user])
-//	}
-//
+
 	func sendER(error: ChatError, to socket: WebSocket){
 		send(message: .error(error), to: socket)
 	}
