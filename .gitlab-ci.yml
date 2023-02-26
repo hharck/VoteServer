@@ -83,7 +83,7 @@ bump-version:
   - git remote set-url origin "https://bot:${PUSH_TOKEN}@${CI_REPOSITORY_URL#*@}"
   - git fetch origin
   - git reset --hard origin/main
-  - git branch -D main
+  - git branch -D main || true
   - git checkout --track origin/main
   - rm version.swift  || true
   - echo "let version = \"$VERSION\"" >> Sources/App/version.swift
