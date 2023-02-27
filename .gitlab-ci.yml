@@ -79,6 +79,8 @@ bump-version:
   tags:
     - shell
   script:
+  - git config user.name "S/M-Bot"
+  - git config user.email "project8_bot@noreply.git.smkid.dk"
   - git clean -f
   - git remote set-url origin "https://bot:${PUSH_TOKEN}@${CI_REPOSITORY_URL#*@}"
   - git fetch origin
