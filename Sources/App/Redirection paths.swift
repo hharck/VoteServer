@@ -45,19 +45,19 @@ enum RedirectionPaths{
 }
 
 extension Request{
-	func redirect(to location: RedirectionPaths, type: RedirectType = .normal) -> Response {
-		self.redirect(to: "/" + location.stringValue() + "/", type: type)
-	}
+    func redirect(to location: RedirectionPaths, type: Vapor.Redirect = .normal) -> Response {
+        redirect(to: "/" + location.stringValue() + "/", redirectType: type)
+    }
 }
 
 extension RedirectionPaths: AsyncResponseEncodable, ResponseEncodable{
-	func encodeResponse(for req: Request) async throws -> Response {
-		req.redirect(to: self)
-	}
-	
-	func encodeResponse(for req: Request) -> EventLoopFuture<Response> {
-		req.eventLoop.makeSucceededFuture(req.redirect(to: self))
-	}
+    func encodeResponse(for req: Request) throws -> Response {
+        req.redirect(to: self)
+    }
+
+    func encodeResponse(for req: Request) -> EventLoopFuture<Response> {
+        req.eventLoop.makeSucceededFuture(req.redirect(to: self))
+    }
 }
 
 // Enables creating routes directly for redirection
