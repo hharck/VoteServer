@@ -24,8 +24,16 @@ public func configure(_ app: Application) throws {
 	#if os(macOS)
 		app.databases.use(.sqlite(.file("db.sqlite")), as: .sqlite)
 	#else
-		try FileManager.default.createDirectory(atPath: "/persistence/", withIntermediateDirectories: true, attributes: nil)
-		app.databases.use(.sqlite(.file("/persistence/db.sqlite")), as: .sqlite)
+    do {
+        logger.info("Attempting to store database on the file system")
+        try FileManager.default.createDirectory(atPath: "persistence/", withIntermediateDirectories: true, attributes: nil)
+        app.databases.use(.sqlite(.file("persistence/db.sqlite")), as: .sqlite)
+    } catch {
+        logger.error("Unable to store database due to the following error: \(error.localizedDescription)")
+        logger.info("Using in-memory database")
+
+        app.databases.use(.sqlite(.memory), as: .sqlite)
+    }
 	#endif
 
 	app.migrations.add(CreateChats())
