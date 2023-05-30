@@ -329,7 +329,9 @@ extension Group {
 		
 		// If changed to open, ask clients to reload
 		if oldValue == .closed && value == .open{
-			await socketController.sendToAll(msg: .requestReload, async: true, includeAdmin: false)
+            Task {
+                await socketController.sendToAll(msg: .requestReload, includeAdmin: false)
+            }
 		}
     }
 	

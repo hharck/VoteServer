@@ -81,11 +81,11 @@ actor ChatSocketController{
 		do {
 			let encoder = JSONEncoder()
 			let data = try encoder.encode(message)
-			
+
 			sockets.forEach {
 				$0.send(raw: data, opcode: .binary)
 			}
-			
+
 		} catch {
 			logger.report(error: error)
 		}
@@ -167,7 +167,7 @@ actor ChatSocketController{
 					}
 					
 					let formatted = await chat.chatFormat(senderName: name, imageURL: imageURL)
-					await sendToAll(msg: .newMessage(formatted))
+                    sendToAll(msg: .newMessage(formatted))
 				}
 			}
 		} catch let error as ChatError{
@@ -189,10 +189,10 @@ actor ChatSocketController{
 	func kickAll(onlyUnverified: Bool = false, includeAdmins: Bool = false){
 		assert(!(onlyUnverified && includeAdmins))
 		
-		var toClose = self.sockets.values.filter{!onlyUnverified || !$0.isVerified}.map(\.socket)
+		var toClose = sockets.values.filter{!onlyUnverified || !$0.isVerified}.map(\.socket)
 		
-		if includeAdmins && adminSocket != nil{
-			toClose.append(adminSocket!)
+		if includeAdmins, let adminSocket {
+			toClose.append(adminSocket)
 		}
 		
 		Task{ [toClose] in
@@ -208,32 +208,17 @@ actor ChatSocketController{
 		
 	}
 	
-	func sendToAll(msg: ServerChatProtocol, async: Bool = false, includeAdmin: Bool = true) async{
-		
-		if async{
-			Task{ [weak self] in
-				guard let self = self else {return}
-				var allSockets: [WebSocket] = await self.sockets.values.map(\.socket)
-				if includeAdmin && adminSocket != nil{
-					allSockets.append(adminSocket!)
-				}
-				
-				await self.send(message: msg, to: allSockets)
-				
-			}
-		} else {
-			
-			var allSockets: [WebSocket] = sockets.values.map(\.socket)
-			if includeAdmin && adminSocket != nil{
-				allSockets.append(adminSocket!)
-			}
-			
-			self.send(message: msg, to: allSockets)
-		}
+    func sendToAll(msg: ServerChatProtocol, includeAdmin: Bool = true) {
+        var allSockets: [WebSocket] = sockets.values.map(\.socket)
+        if includeAdmin, let adminSocket {
+            allSockets.append(adminSocket)
+        }
+
+        send(message: msg, to: allSockets)
 	}
 	
-	deinit{
-		self.kickAll(onlyUnverified: false, includeAdmins: true)
+	deinit {
+        sockets.values.map(\.socket).forEach { $0.close(promise: nil) }
 	}
 }
 
@@ -247,5 +232,4 @@ extension ChatSocketController{
 	func sendER(error: ChatError, to socket: WebSocket){
 		send(message: .error(error), to: socket)
 	}
-	
 }
