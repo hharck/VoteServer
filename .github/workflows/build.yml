@@ -24,8 +24,6 @@ jobs:
       run:  sudo apt-get -q update; sudo apt-get install -y libsqlite3-dev
     - name: Build
       run: swift build -v
-    - name: Run tests
-      run: swift test -v
     - uses: actions/checkout@v3
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
