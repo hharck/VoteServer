@@ -14,16 +14,7 @@ env:
   
 jobs:
   build:
-    permissions:
-      actions: read
-      checks: write
-      contents: write
-      deployments: write
-      packages: write
-      pull-requests: read
-      statuses: read
-    runs-on: ubuntu-latest #macos-latest
-
+    runs-on: ubuntu-latest 
     steps:
     - uses: swift-actions/setup-swift@v1.26.0
       with:
@@ -31,9 +22,22 @@ jobs:
     # Swift version to configure
     - uses: actions/checkout@v4
     - name: Install sqllite3
-      run:  sudo apt-get -q update; sudo apt-get install -y libsqlite3-dev
+      run: sudo apt-get -q update; sudo apt-get install -y libsqlite3-dev
     - name: Build
-      run: echo "swift build"
+      run: swift build
+
+  docker:
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-latest #macos-latest
+    needs: build
+    steps:
+    - uses: swift-actions/setup-swift@v1.26.0
+      with:
+         swift-version: 5.9.2 
+    # Swift version to configure
+    - uses: actions/checkout@v4
     - uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
       with:
           registry: ${{ env.REGISTRY }}
