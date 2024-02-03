@@ -8,10 +8,15 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  
 jobs:
   build:
-
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-latest #macos-latest
 
     steps:
@@ -19,11 +24,25 @@ jobs:
       with:
          swift-version: 5.9.2 
     # Swift version to configure
-    - uses: actions/checkout@v3
-    - name: Install xmllint
+    - uses: actions/checkout@v4
+    - name: Install sqllite3
       run:  sudo apt-get -q update; sudo apt-get install -y libsqlite3-dev
     - name: Build
       run: swift build
-    - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+    - uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+      with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+      with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+    - name: Build and push Docker image
+      uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
