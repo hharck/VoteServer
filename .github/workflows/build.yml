@@ -15,8 +15,13 @@ env:
 jobs:
   build:
     permissions:
-      contents: read
+      actions: read
+      checks: write
+      contents: write
+      deployments: write
       packages: write
+      pull-requests: read
+      statuses: read
     runs-on: ubuntu-latest #macos-latest
 
     steps:
