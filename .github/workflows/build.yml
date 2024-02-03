@@ -1,0 +1,31 @@
+# This workflow will build a Swift project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-swift
+
+name: Swift
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest #macos-latest
+
+    steps:
+    - uses: swift-actions/setup-swift@v1.26.0
+      with:
+         swift-version: 5.9.2 
+    # Swift version to configure
+    - uses: actions/checkout@v3
+    - name: Install xmllint
+      run:  sudo apt-get -q update; sudo apt-get install -y libsqlite3-dev
+    - name: Build
+      run: swift build -v
+    - name: Run tests
+      run: swift test -v
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
