@@ -3,7 +3,16 @@ import XCTVapor
 //import Vapor
 
 final class AppTests: XCTestCase {
-	
+    override func setUp() {
+        var location = #file
+        let expectedSuffix = "Tests/" + #fileID
+     	precondition(location.hasSuffix(expectedSuffix))
+        
+        location.removeLast(expectedSuffix.count)
+        
+        FileManager.default.changeCurrentDirectoryPath(location)
+    }
+    
     func testDefaultStuff() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
