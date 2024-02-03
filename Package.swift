@@ -14,10 +14,10 @@ let package = Package(
 		.package(url: "https://github.com/vapor/fluent.git", from: "4.0.0"),
 		.package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
 		// VoteKit definitions
-        .package(url: "https://git.smkid.dk/Harcker/VoteKit", "0.5.0"..<"0.6.0"), //HTTPS
-		.package(url: "https://git.smkid.dk/Harcker/AltVoteKit", "0.5.0"..<"0.6.0"), //HTTPS
+        .package(url: "https://github.com/TheHarcker/VoteKit, "0.5.0"..<"0.6.0"), //HTTPS
+		.package(url: "https://github.com/TheHarcker/AltVoteKit", "0.5.0"..<"0.6.0"), //HTTPS
 		// VoteExchangeFormat, defines API protocols
-		.package(url: "https://git.smkid.dk/Harcker/VoteExchangeFormat", branch: "main"),
+		.package(url: "https://github.com/TheHarcker/VoteExchangeFormat", branch: "main"),
 	],
 	targets: [
 		.target(
