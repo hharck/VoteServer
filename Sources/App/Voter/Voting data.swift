@@ -15,7 +15,7 @@ extension YnVotingData: VotingData{
     func asSingleVote(for vote: yesNoVote, constituent: Constituent) async throws -> yesNoVote.yesNoVoteType{
         
         // Cheks if the vote is explicitly blank, and whether that is allowed
-        if blank == true || votes == nil || votes!.isEmpty{
+        guard blank != true, let votes, !votes.isEmpty else {
             if blank == nil && votes == nil{
                 throw VotingDataError.invalidRequest
             }
@@ -34,7 +34,7 @@ extension YnVotingData: VotingData{
         }
         
         // Converts the input
-        let values = try getValues(votes: votes!)
+        let values = try getValues(votes: votes)
         let val = try values.reduce(into: [VoteOption: Bool]()) { partialResult, d in
             guard let option = uuidToOption[d.key] else {
                 throw VotingDataError.invalidRequest
@@ -79,7 +79,7 @@ extension YnVotingData: VotingData{
 
 }
 
-extension SimpleMajorityVotingData: VotingData{
+extension SimpleMajorityVotingData: VotingData {
     func asSingleVote(for vote: SimpleMajority, constituent: Constituent) async throws -> SimpleMajority.SimpleMajorityVote{
         // Cheks if the vote is explicitly blank, and whether that is allowed
         if blank == true || selectedOption == nil{
