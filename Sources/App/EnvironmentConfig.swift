@@ -9,12 +9,19 @@ struct Config{
 	let enableChat: Bool
 	let adminProfilePicture: String
 	
-	private(set) static var config: Config!
+    // Only set during setup
+    nonisolated(unsafe) private(set) static var config: Config! {
+        willSet {
+            MainActor.assertIsolated()
+        }
+    }
 	
+    @MainActor
 	static func setGlobalConfig() {
 		self.config = getEnvironmentConfig()
 	}
 	
+    @MainActor
 	static func setDefaultConfig(){
 		self.config = getDefaultConfig()
 	}

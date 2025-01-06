@@ -2,7 +2,8 @@ import Fluent
 import Vapor
 import VoteKit
 
-final class Chats: Model, Content {
+// @unchecked Sendable in accordance with https://blog.vapor.codes/posts/fluent-models-and-sendable/
+final class Chats: Model, Content, @unchecked Sendable {
 	static let schema = "Chats"
 	
 	@ID(key: .id)

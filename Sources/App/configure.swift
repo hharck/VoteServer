@@ -4,6 +4,7 @@ import Fluent
 import FluentSQLiteDriver
 
 // configures your application
+@MainActor
 public func configure(_ app: Application) throws {
 	let logger = Logger(label: "Config")
 	// Set configuration variables from environment

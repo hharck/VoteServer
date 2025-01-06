@@ -13,6 +13,7 @@ final class AppTests: XCTestCase {
         FileManager.default.changeCurrentDirectoryPath(location)
     }
     
+    @MainActor
     func testDefaultStuff() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
@@ -36,6 +37,7 @@ final class AppTests: XCTestCase {
     }
 	
 	// Runs a signup flow
+    @MainActor
 	func testCreateGroup() throws {
 		let app = Application(.testing)
 		defer { app.shutdown() }

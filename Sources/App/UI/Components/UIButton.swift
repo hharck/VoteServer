@@ -24,10 +24,10 @@ struct UIButton: Codable{
 	}
 	
 	//MARK: Default buttons
-	static var reload: UIButton = UIButton(uri: "", text: "Reload page", color: .blue)
-	static var backToAdmin: UIButton = UIButton(uri: .admin, text: "⬅︎Back to overview", color: .blue)
-	static var backToPlaza: UIButton = 	UIButton(uri: .plaza, text: "⬅︎Back to plaza", color: .blue)
-	static var createGroup: UIButton = UIButton(uri: .create, text: "Create group", color: .green)
-    static var join: UIButton = UIButton(uri: .join, text: "Join", color: .green)
-    static var login: UIButton = UIButton(uri: .login, text: "Admin login", color: .green)
+	static let reload = UIButton(uri: "", text: "Reload page", color: .blue)
+	static let backToAdmin = UIButton(uri: .admin, text: "⬅︎Back to overview", color: .blue)
+	static let backToPlaza = 	UIButton(uri: .plaza, text: "⬅︎Back to plaza", color: .blue)
+	static let createGroup = UIButton(uri: .create, text: "Create group", color: .green)
+    static let join = UIButton(uri: .join, text: "Join", color: .green)
+    static let login = UIButton(uri: .login, text: "Admin login", color: .green)
 }
