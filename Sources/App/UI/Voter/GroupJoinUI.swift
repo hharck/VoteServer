@@ -18,5 +18,5 @@ struct GroupJoinUI: UIManager{
 	var prefilledUserid: String
 	var errorString: String?
     var buttons: [UIButton]
-	static var template: String = "joingroup"
+	static let template: String = "joingroup"
 }

@@ -2,7 +2,7 @@ struct VoteCreatorUI<V: SupportedVoteType>: UIManager{
     var version: String = App.version
     var title: String
 	var errorString: String?
-	static var template: String {"createvote"}
+	static let template: String = "createvote"
 	
     let validatorsGeneric: [ValidatorData<V>]
     let validatorsParticular: [ValidatorData<V>]

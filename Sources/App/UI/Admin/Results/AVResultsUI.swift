@@ -26,7 +26,7 @@ struct AVResultsUI: UIManager{
     var title: String
 	var errorString: String? = nil
     var buttons: [UIButton] = [.backToAdmin]
-	static var template: String = "results/altvote"
+	static let template: String = "results/altvote"
 	
 	var winners: [VoteOption]
 	var hasMultipleWinners: Bool

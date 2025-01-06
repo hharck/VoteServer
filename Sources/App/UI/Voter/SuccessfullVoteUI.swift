@@ -8,5 +8,5 @@ struct SuccessfullVoteUI: UIManager{
 	var buttons: [UIButton] = [.backToPlaza]
 	var errorString: String? = nil
 	
-	static var template: String = "success"
+	static let template: String = "success"
 }

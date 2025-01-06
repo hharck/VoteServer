@@ -20,6 +20,6 @@ struct LoginUI: UIManager{
 	
 	var prefilledJF: String?
 	
-	static var template: String = "login"
+	static let template: String = "login"
 	
 }

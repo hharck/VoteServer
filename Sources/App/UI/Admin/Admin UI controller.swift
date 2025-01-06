@@ -57,7 +57,7 @@ struct AdminUIController: UITableManager{
 		}
 	}
 	
-	static var template: String = "admin"
+	static let template: String = "admin"
 }
 
 //TODO: Merge with similar type for plaza

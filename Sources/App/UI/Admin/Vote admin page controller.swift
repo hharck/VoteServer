@@ -33,7 +33,7 @@ struct VoteAdminUIController: UITableManager{
 	/// The id for the vote being presented
 	let voteID: String
 	
-	static var template: String = "voteadmin"
+	static let template: String = "voteadmin"
 	
     
     init(vote: VoteTypes, group: Group) async{

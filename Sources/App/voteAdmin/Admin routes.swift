@@ -283,7 +283,7 @@ fileprivate struct SettingsUI: UITableManager{
     var version: String = App.version
     var title: String = "Settings"
     var errorString: String? = nil
-    static var template: String = "settings"
+    static let template: String = "settings"
 	var buttons: [UIButton] = [.backToAdmin, .reload]
     
     var rows: [Setting]

@@ -6,7 +6,7 @@ struct YesNoVotePage: VotePage, UITableManager{
     var title: String
     var errorString: String? = nil
     var buttons: [UIButton] = [.backToPlaza]
-    static var template: String = "votePages/yesno"
+    static let template: String = "votePages/yesno"
     
     var rows: [Row] = []
     var tableHeaders: [String] = ["Name", "Yes", "No"]

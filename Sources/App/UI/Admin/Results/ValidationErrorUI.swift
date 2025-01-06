@@ -7,7 +7,7 @@ struct ValidationErrorUI: UIManager{
 	var buttons: [UIButton]
 	var validationResults: [VoteValidationResult]
 	var errorString: String? = nil
-	static var template: String = "validators failed"
+	static let template: String = "validators failed"
 
 	init(title: String, validationResults: [VoteValidationResult], voteID: UUID){
 		self.title = title

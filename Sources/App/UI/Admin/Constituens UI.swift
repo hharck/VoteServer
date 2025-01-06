@@ -16,7 +16,7 @@ struct ConstituentsListUI: UITableManager{
 
 	var allowsUnverified: Bool
 	
-	static var template: String = "constituents list"
+	static let template: String = "constituents list"
 	
 	var showsTags: Bool
 	var tagStats: [String]? = nil

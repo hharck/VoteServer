@@ -5,7 +5,7 @@ struct GroupCreatorUI: UIManager{
 	
 	var buttons: [UIButton] = [.join, .login]
 	
-	static var template: String = "creategroup"
+	static let template: String = "creategroup"
 	
 	private var groupName: String?
 	private var allowsUnverifiedConstituents: Bool

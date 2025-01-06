@@ -19,7 +19,7 @@ struct PlazaUI: UITableManager{
     
 	var showChat: Bool
 	
-	static var template: String = "plaza"
+	static let template: String = "plaza"
 	
 	
 	internal init(errorString: String? = nil, constituent: Constituent, group: Group) async {
