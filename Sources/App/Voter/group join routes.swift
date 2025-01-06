@@ -3,14 +3,14 @@ import VoteKit
 import Foundation
 func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) {
 	app.get("join", use: getJoin)
-	func getJoin(req: Request) async -> GroupJoinUI {
+    @Sendable func getJoin(req: Request) async -> GroupJoinUI {
 		let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
 		return GroupJoinUI(title: "Join", showRedirectToPlaza: showRedirectToPlaza)
 	}
 	
 	// Prefills the field with the joinphrase and redirects invalid joinphrases
 	app.get("join", ":joinphrase", use: joinWithPhrase)
-	func joinWithPhrase(req: Request) async throws -> GroupJoinUI{
+    @Sendable func joinWithPhrase(req: Request) async throws -> GroupJoinUI{
 		guard
 			let jf = req.parameters.get("joinphrase"),
 			let group = await groupsManager.groupForJoinPhrase(jf)
@@ -23,13 +23,13 @@ func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) {
 	
 	app.post("join", use: postJoin)
 	app.post("join", ":joinphrase", use: postJoin)
-	func postJoin(req: Request) async throws -> Response{
+    @Sendable func postJoin(req: Request) async throws -> Response{
 		try await joinGroup(req, groupsManager, forAPI: false)
 	}
 	
 	// Shows a plaza containing votes available for the user and a chatfield
 	app.get("plaza", use: getPlaza)
-	func getPlaza(req: Request) async throws -> PlazaUI {
+    @Sendable func getPlaza(req: Request) async throws -> PlazaUI {
 		guard let (group, constituent) = await groupsManager.groupAndVoterForReq(req: req) else {
 			throw Redirect(.join)
 		}
@@ -38,7 +38,7 @@ func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) {
 	}
     
 	app.post("plaza", use: postPlaza)
-	func postPlaza(req: Request) async throws -> PlazaUI{
+    @Sendable func postPlaza(req: Request) async throws -> PlazaUI{
 		guard let (group, constituent) = await groupsManager.groupAndVoterForReq(req: req) else {
 			throw Redirect(.join)
 		}

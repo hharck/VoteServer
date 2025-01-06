@@ -7,7 +7,7 @@ func votingRoutes(_ app: Application, groupsManager: GroupsManager) {
     
     /// Shows the voting ui for the supplied voteID
 	app.get("vote", ":voteID", use: getVote)
-	func getVote(req: Request) async throws -> View{
+    @Sendable func getVote(req: Request) async throws -> View{
 		guard let (group, vote, constituent) = await voteGroupAndUserID(for: req) else{
 			throw Redirect(.plaza)
 		}
@@ -25,7 +25,7 @@ func votingRoutes(_ app: Application, groupsManager: GroupsManager) {
     
     /// Receives the vote the constituent wants to cast, and either accepts the vote or an error will be shown to the user
 	app.post("vote", ":voteID", use: postVote)
-	func postVote(req: Request) async throws -> View {
+    @Sendable func postVote(req: Request) async throws -> View {
         guard let (group, vote, constituent) = await voteGroupAndUserID(for: req) else{
 			throw Redirect(.plaza)
         }
@@ -55,7 +55,7 @@ func votingRoutes(_ app: Application, groupsManager: GroupsManager) {
     
     /// Checks that a vote can be accessed and renders the vote page
     /// - Returns: The relevant vote page; either in a "Redy to vote state" or an error state
-    func checkAndShow<V: SupportedVoteType>(group: Group, constituent: Constituent, vote: V, errorString: String? = nil, persistentData: V.VotePageUI.PersistanceData? = nil) async -> UIManager{
+    @Sendable func checkAndShow<V: SupportedVoteType>(group: Group, constituent: Constituent, vote: V, errorString: String? = nil, persistentData: V.VotePageUI.PersistanceData? = nil) async -> UIManager{
         //Checks that the vote is open
         guard await group.statusFor(vote) == .open  else {
             return await V.VotePageUI.closed(title: await vote.name)
@@ -74,7 +74,7 @@ func votingRoutes(_ app: Application, groupsManager: GroupsManager) {
     
     /// Returns a UI dependent on the success of decoding and storing votes
     /// - Returns: The UI to show, either a vote page where the constituent can try to fix the error or a success page which shows what was voted for
-    func d<V: SupportedVoteType>(group: Group, vote: V, constituent: Constituent, req: Request) async -> UIManager{
+    @Sendable func d<V: SupportedVoteType>(group: Group, vote: V, constituent: Constituent, req: Request) async -> UIManager{
         
         let p: ((data: V.ReceivedData?, error: Error)?, [String]?) = await decodeAndStore(group: group, vote: vote, constituent: constituent, req: req)
         assert(p.0 == nil || p.1 == nil)
@@ -91,7 +91,7 @@ func votingRoutes(_ app: Application, groupsManager: GroupsManager) {
     
     
     
-    func voteGroupAndUserID(for req: Request) async -> (group: Group, vote: VoteTypes, constituent: Constituent)?{
+    @Sendable func voteGroupAndUserID(for req: Request) async -> (group: Group, vote: VoteTypes, constituent: Constituent)?{
         guard
             let voterSession = req.session.authenticated(VoterSession.self),
             let groupID = req.session.authenticated(GroupSession.self),

@@ -3,7 +3,7 @@ import Vapor
 func groupCreationRoutes(_ app: Application, groupsManager: GroupsManager) {
 	app.get("create", use: GroupCreatorUI.init)
 	app.post("create", use: createGroup)
-	func createGroup(req: Request) async throws -> GroupCreatorUI{
+    @Sendable func createGroup(req: Request) async throws -> GroupCreatorUI{
 		var groupData: GroupCreatorData?
 		do{
 			groupData = try req.content.decode(GroupCreatorData.self)

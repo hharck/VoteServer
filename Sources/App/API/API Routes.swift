@@ -6,7 +6,7 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 	chat.webSocket("socket", onUpgrade: joinChat)
 	chat.webSocket("adminsocket", onUpgrade: joinChat)
 	
-	func joinChat(req: Request, socket: WebSocket) async{
+    @Sendable func joinChat(req: Request, socket: WebSocket) async{
 		guard Config.enableChat else {
 			try? await socket.close()
 			return
@@ -44,7 +44,7 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 	/// userID: String
 	/// joinPhrase: String
 	API.post("join", use: joinGroup)
-	func joinGroup(req: Request) async throws -> Response{
+	@Sendable func joinGroup(req: Request) async throws -> Response{
 		try await App.joinGroup(req, groupsManager, forAPI: true)
 	}
 	
@@ -61,7 +61,7 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 	
 	/// Returns full information (metadata, options, validators) regarding a vote only if the client are allowed to vote at the moment
 	API.get("getvote", ":voteID", use: getVote)
-	func getVote(req: Request) async throws -> ExtendedVoteData{
+    @Sendable func getVote(req: Request) async throws -> ExtendedVoteData{
 		guard let (group, const) = await groupsManager.groupAndVoterForAPI(req: req) else {
 			throw Abort(.unauthorized)
 		}
@@ -91,7 +91,7 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 	}
 	
 	API.post("postvote", ":voteID", use: postVote)
-	func postVote(req: Request) async throws -> [String]{
+    @Sendable func postVote(req: Request) async throws -> [String]{
 		// Retrieve contextual information
 		guard let (group, const) = await groupsManager.groupAndVoterForAPI(req: req) else{
 			throw Abort(.unauthorized) //401

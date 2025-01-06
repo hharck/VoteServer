@@ -11,7 +11,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 	voteadmin.redirectGet(to: .admin)
 	
 	admin.get(use: getAdminPage)
-	func getAdminPage(req: Request) async throws -> AdminUIController {
+	@Sendable func getAdminPage(req: Request) async throws -> AdminUIController {
 		//List of votes
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
@@ -25,7 +25,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
     
 	// Changes the open/closed status of the vote passed as ":voteID"
 	voteadmin.get(":voteID", ":command", use: setStatus)
-	func setStatus(req: Request) async -> Response{
+    @Sendable func setStatus(req: Request) async -> Response{
 		if let voteIDStr = req.parameters.get("voteID"),
 		   let commandStr = req.parameters.get("command"),
 		   let command = VoteStatus(rawValue: commandStr),
@@ -41,7 +41,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 	// Shows an overview for a specific vote, with information such as who has voted and who has not
 	voteadmin.get(":voteID", use: postVoteAdmin)
 	voteadmin.post(":voteID", use: postVoteAdmin)
-	func postVoteAdmin(req: Request) async throws -> VoteAdminUIController {
+    @Sendable func postVoteAdmin(req: Request) async throws -> VoteAdminUIController {
 		guard
             let voteIDStr = req.parameters.get("voteID"),
             let voteID = UUID(voteIDStr)
@@ -80,7 +80,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 	// Shows a list of constituents and related settings
 	admin.get("constituents", use: constituentsPage)
 	admin.post("constituents", use: constituentsPage)
-	func constituentsPage(req: Request) async throws -> ConstituentsListUI  {
+    @Sendable func constituentsPage(req: Request) async throws -> ConstituentsListUI  {
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(sessionID)
@@ -111,7 +111,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 	}
 	
 	admin.get("constituents", "downloadcsv", use: downloadConstituentsCSV)
-	func downloadConstituentsCSV(req: Request) async throws-> Response{
+    @Sendable func downloadConstituentsCSV(req: Request) async throws-> Response{
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(sessionID)
@@ -124,7 +124,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 	}
 	
 	admin.get("constituents", "downloadcurrentlyin", use: downloadCurrentlyInCSV)
-	func downloadCurrentlyInCSV(req: Request) async throws-> Response{
+    @Sendable func downloadCurrentlyInCSV(req: Request) async throws-> Response{
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(sessionID)
@@ -137,7 +137,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 	}
 	
 	admin.post("resetaccess", ":userID", use: resetaccess)
-	func resetaccess(req: Request) async throws-> Response{
+    @Sendable func resetaccess(req: Request) async throws-> Response{
 		if let userIdentifierbase64 = req.parameters.get("userID")?.trimmingCharacters(in: .whitespacesAndNewlines),
 		   let userIdentifier = String(urlsafeBase64: userIdentifierbase64),
 		   let sessionID = req.session.authenticated(AdminSession.self),
@@ -150,7 +150,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 		return req.redirect(to: .constituents)
 	}
 	voteadmin.post("reset", ":voteID", ":userID", use: resetAccessToVote)
-	func resetAccessToVote(req: Request) async throws-> Response{
+    @Sendable func resetAccessToVote(req: Request) async throws-> Response{
 		// Retrieves the vote id from the uri
 		guard let voteIDStr = req.parameters.get("voteID") else {
 			throw Redirect(.admin)
@@ -171,12 +171,12 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 	
 	
 	login.get(use: getLogin)
-	func getLogin(req: Request) async -> LoginUI{
+    @Sendable func getLogin(req: Request) async -> LoginUI{
 		let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
 		return LoginUI(showRedirectToPlaza: showRedirectToPlaza)
 	}
 	login.post(use: doLogin)
-	func doLogin(req: Request) async throws -> Response{
+    @Sendable func doLogin(req: Request) async throws -> Response{
 		var joinPhrase: JoinPhrase?
 		do{
 			guard
@@ -210,7 +210,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 	}
     // The admin settings page
 	admin.get("settings", use: getSettingsPage)
-	func getSettingsPage(req: Request) async throws-> SettingsUI{
+    @Sendable func getSettingsPage(req: Request) async throws-> SettingsUI{
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(sessionID)
@@ -223,7 +223,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 	
     // Requests for changing the settings of a group
 	admin.post("settings", use: setSettings)
-	func setSettings(req: Request) async throws-> SettingsUI{
+    @Sendable func setSettings(req: Request) async throws-> SettingsUI{
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(sessionID)
@@ -239,7 +239,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 	}
 	
 	admin.get("chats", use: getAdminChats)
-	func getAdminChats(req: Request) async throws -> AdminChatPage{
+    @Sendable func getAdminChats(req: Request) async throws -> AdminChatPage{
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(sessionID)
@@ -252,7 +252,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 		return AdminChatPage()
 	}
 	admin.get("chats", "downloadcsv", use: downloadChats)
-	func downloadChats(req: Request) async throws -> Response{
+    @Sendable func downloadChats(req: Request) async throws -> Response{
 		guard
 			Config.enableChat,
 			let sessionID = req.session.authenticated(AdminSession.self),
