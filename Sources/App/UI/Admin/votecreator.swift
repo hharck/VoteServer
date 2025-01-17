@@ -1,5 +1,4 @@
 struct VoteCreatorUI: UIManager{
-    var version: String = App.version
     var title: String
 	var errorString: String?
 	static let template: String = "createvote"

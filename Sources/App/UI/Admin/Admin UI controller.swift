@@ -1,5 +1,4 @@
 struct AdminUIController: UITableManager{
-    var version: String = App.version
 	var title: String
 	var errorString: String? = nil
 	var hideIfEmpty: Bool = true

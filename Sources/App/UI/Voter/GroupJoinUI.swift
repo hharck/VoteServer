@@ -12,7 +12,6 @@ struct GroupJoinUI: UIManager{
         }
 	}
 	
-    var version: String = App.version
     var title: String
 	var prefilledJF: String
 	var prefilledUserid: String

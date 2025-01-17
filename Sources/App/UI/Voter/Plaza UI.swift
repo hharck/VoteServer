@@ -1,7 +1,6 @@
 import Foundation
 import VoteKit
 struct PlazaUI: UITableManager{
-    var version: String = App.version
     var title: String = "Plaza"
 	var errorString: String? = nil
 	

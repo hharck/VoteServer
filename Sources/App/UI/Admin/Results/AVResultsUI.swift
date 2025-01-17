@@ -22,7 +22,6 @@ struct AVResultsUI: UIManager{
 		}
 	}
 	
-    var version: String = App.version
     var title: String
 	var errorString: String? = nil
     var buttons: [UIButton] = [.backToAdmin]

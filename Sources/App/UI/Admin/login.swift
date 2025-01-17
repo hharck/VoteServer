@@ -9,8 +9,6 @@ struct LoginUI: UIManager{
             self.buttons = [ .join, .createGroup]
         }
 	}
-	
-    var version: String = App.version
     
     var buttons: [UIButton]
 	

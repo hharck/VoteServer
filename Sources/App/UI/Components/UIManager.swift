@@ -1,8 +1,5 @@
 import Vapor
-protocol UIManager: Codable, AsyncResponseEncodable, ResponseEncodable{
-    /// The version of the app
-    var version: String { get }
-    
+protocol UIManager: Codable, AsyncResponseEncodable, ResponseEncodable{  
     /// The title of the page
 	var title: String {get}
 	

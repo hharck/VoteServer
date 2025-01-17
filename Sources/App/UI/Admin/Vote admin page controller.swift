@@ -1,7 +1,6 @@
 import VoteKit
 /// A page showing the validators, options and constituents in a vote
 struct VoteAdminUIController: UITableManager{
-    var version: String = App.version
     let title: String
 	var errorString: String? = nil
 

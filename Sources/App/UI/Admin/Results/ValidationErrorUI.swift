@@ -1,7 +1,6 @@
 import VoteKit
 import Foundation
 struct ValidationErrorUI: UIManager{
-    var version: String = App.version
     var title: String
     var errorCount: Int
     var buttons: [UIButton]

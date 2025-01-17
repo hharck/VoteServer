@@ -1,7 +1,6 @@
 import Foundation
 import VoteKit
 struct SimMajVotePage: VotePage{
-    var version: String = App.version
     var title: String
     var errorString: String? = nil
     var buttons: [UIButton] = [.backToPlaza]

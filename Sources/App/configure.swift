@@ -23,6 +23,7 @@ public func configure(_ app: Application) throws {
     
     // Adds support for using leaf to render views
     app.views.use(.leaf)
+    app.leaf.tags["version"] = VersionTag()
     
     //DB
 #if os(macOS)

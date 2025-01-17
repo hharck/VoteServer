@@ -1,8 +1,6 @@
 import Foundation
 import VoteKit
 struct YesNoVotePage: VotePage, UITableManager{
-    var version: String = App.version
-    
     var title: String
     var errorString: String? = nil
     var buttons: [UIButton] = [.backToPlaza]
@@ -18,8 +16,6 @@ struct YesNoVotePage: VotePage, UITableManager{
     var allowsResetting = false
     
     init(title: String, vote: YesNoVote?, errorString: String? = nil, persistentData: [UUID:Bool]? = nil) async {
-        
-        
         if let vote = vote {
             self.canVoteBlank = await !vote.genericValidators.contains(.noBlankVotes)
             rows = await vote.options.map{ option in

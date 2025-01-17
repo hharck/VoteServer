@@ -1,6 +1,5 @@
 import VoteKit
 struct ConstituentsListUI: UITableManager{
-    var version: String = App.version
     var title: String = "Constituents"
 	var errorString: String? = nil
 	var hideIfEmpty: Bool = true

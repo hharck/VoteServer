@@ -1,5 +1,4 @@
 struct GroupCreatorUI: UIManager{
-    var version: String = App.version
     var title: String = "Create grouped vote"
 	var errorString: String? = nil
 	

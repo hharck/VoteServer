@@ -4,7 +4,6 @@ import Foundation
 import VoteExchangeFormat
 
 struct AltVotePageGenerator: VotePage{
-    var version: String = App.version
     var title: String
     var errorString: String?
     var buttons: [UIButton] = [.backToPlaza]
