@@ -4,7 +4,7 @@ import XCTVapor
 
 final class AppTests: XCTestCase {
     override func setUp() {
-        var location = #file
+        var location = #filePath
         let expectedSuffix = "Tests/" + #fileID
      	precondition(location.hasSuffix(expectedSuffix))
         
