@@ -92,11 +92,10 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) {
     
     //MARK: Export CSV
     app.get("results", ":voteID", "downloadcsv", use: downloadResultsForVote)
-    @Sendable func downloadResultsForVote(req: Request) async throws -> Response{
+    @Sendable func downloadResultsForVote(req: Request) async throws -> Response {
         guard let voteIDStr = req.parameters.get("voteID") else {
             throw Redirect(.admin)
         }
-        
         
         guard
             let sessionID = req.session.authenticated(AdminSession.self),
@@ -120,7 +119,7 @@ func ResultRoutes(_ app: Application, groupsManager: GroupsManager) {
         return try await downloadResponse(for: req, content: csv, filename: "votes.csv")
     }
     app.get("results", ":voteID", "downloadconst", use: downloadConstituentsList)
-    @Sendable func downloadConstituentsList(req: Request) async throws -> Response{
+    @Sendable func downloadConstituentsList(req: Request) async throws -> Response {
         guard let voteIDStr = req.parameters.get("voteID") else {
             throw Redirect(.admin)
         }
