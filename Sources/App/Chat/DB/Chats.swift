@@ -42,9 +42,10 @@ final class Chats: Model, Content, @unchecked Sendable {
 
 
 extension Chats{
-	func chatFormat(senderName: String, imageURL: String?) async -> ChatFormat{
+	func chatFormat(senderName: String, imageURL: String?) async -> ChatFormat? {
 		guard self.id != nil else {
-			fatalError("Attempted to access chat which hasn't been saved")
+            assertionFailure("Attempted to access chat which hasn't been saved")
+            return nil
 		}
 				
 		return ChatFormat(id: self.id!, sender: senderName, message: self.message, imageURL: imageURL, timestamp: self.timestamp, isSystemsMessage: self.systemsMessage)

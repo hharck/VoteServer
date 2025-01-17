@@ -16,10 +16,10 @@ struct AltVotePageGenerator: VotePage{
 	
 	init(title: String, vote: AlternativeVote?, errorString: String? = nil, persistentData: AltVotingData? = nil) async {
 		
-		if let options = await vote?.options {
-			assert(options.count != 0 || errorString != nil)
-
-			canVoteBlank = await !vote!.genericValidators.contains(.noBlankVotes)
+		if let vote {
+            let options = await vote.options
+            assert(!options.isEmpty || errorString != nil)
+			canVoteBlank = await !vote.genericValidators.contains(.noBlankVotes)
 			
 			
 			if let priorities = persistentData?.priorities{

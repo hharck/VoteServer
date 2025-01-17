@@ -74,9 +74,9 @@ func votingRoutes(_ app: Application, groupsManager: GroupsManager) {
     
     /// Returns a UI dependent on the success of decoding and storing votes
     /// - Returns: The UI to show, either a vote page where the constituent can try to fix the error or a success page which shows what was voted for
-    @Sendable func d<V: SupportedVoteType>(group: Group, vote: V, constituent: Constituent, req: Request) async -> UIManager{
+    @Sendable func d<V: SupportedVoteType>(group: Group, vote: V, constituent: Constituent, req: Request) async throws(Abort) -> UIManager{
         
-        let p: ((data: V.ReceivedData?, error: Error)?, [String]?) = await decodeAndStore(group: group, vote: vote, constituent: constituent, req: req)
+        let p: ((data: V.ReceivedData?, error: Error)?, [String]?) = try await decodeAndStore(group: group, vote: vote, constituent: constituent, req: req)
         assert(p.0 == nil || p.1 == nil)
         
         

@@ -39,7 +39,7 @@ struct AdminUIController: UITableManager{
 		
 		func genRow<V: SupportedVoteType>(_ vote: V) async{
 			var status = await group.statusFor(vote)
-			if status == nil{
+			if status == nil {
 				assertionFailure("Vote without status was found.")
                 await group.setStatusFor(vote.id, to: .closed)
 				status = .closed

@@ -5,7 +5,7 @@ import Vapor
 /// Decodes and stores data POSTed to /vote/[voteid] OR the API
 /// - Throws: VotingDataError
 /// - Returns: Either a view to be presented be non API clients or the result as a String for API clients
-@Sendable func decodeAndStore<V: SupportedVoteType>(group: Group, vote: V, constituent: Constituent, req: Request) async -> ((data: V.ReceivedData?, error: Error)?, [String]?){
+@Sendable func decodeAndStore<V: SupportedVoteType>(group: Group, vote: V, constituent: Constituent, req: Request) async throws(Abort) -> ((data: V.ReceivedData?, error: Error)?, [String]?){
     var votingData: V.ReceivedData
     do {
         votingData = try req.content.decode(V.ReceivedData.self)
@@ -19,7 +19,12 @@ import Vapor
     }
     
     /// The vote as a VoteStub
-    guard let voteStub = try? await votingData.asSingleVote(for: vote, constituent: constituent) else{
+    let voteStub: V.VoteType
+    do {
+        voteStub = try await votingData.asSingleVote(for: vote, constituent: constituent)
+    } catch let error as VotingDataError {
+        return ((votingData, error), nil)
+    } catch {
         return ((votingData, VotingDataError.invalidRequest), nil)
     }
     
@@ -29,33 +34,42 @@ import Vapor
     }
     
     // Returns a list of priorities to show the user as confirmation for a cast vote
-    let prio: [String]
-    switch V.enumCase{
+    let prio: [String] = switch V.enumCase{
     case .alternative:
-        let tmp = (voteStub as! SingleVote).rankings.map(\.name)
-        if tmp.isEmpty{
-            prio = ["Voted blank"]
-        } else{
-            prio = tmp
+        if let tmp = (voteStub as? SingleVote)?.rankings.map(\.name) {
+            if tmp.isEmpty{
+                ["Voted blank"]
+            } else{
+                tmp
+            }
+        } else {
+            throw Abort(.internalServerError)
         }
     case .yesNo:
-        let val = (voteStub as! yesNoVote.yesNoVoteType).values
-        if val.isEmpty{
-            prio = ["Voted blank"]
-        } else {
-            // Fetches the full list of options to recall them in order
-            prio = await vote.options.map{ opt -> String in
-                let suffix: String
-                if let option = val[opt]{
-                    suffix = option ? "Yes" : "No"
-                } else {
-                    suffix = "Blank"
+        if let val = (voteStub as? YesNoVote.YesNoVoteType)?.values {
+            if val.isEmpty {
+                ["Voted blank"]
+            } else {
+                // Fetches the full list of options to recall them in order
+                await vote.options.map{ opt -> String in
+                    let suffix: String
+                    if let option = val[opt]{
+                        suffix = option ? "Yes" : "No"
+                    } else {
+                        suffix = "Blank"
+                    }
+                    return opt.name + ": " + suffix
                 }
-                return opt.name + ": " + suffix
             }
+        } else {
+            throw Abort(.internalServerError)
         }
     case .simpleMajority:
-        prio = [(voteStub as! SimpleMajority.SimpleMajorityVote).preferredOption?.name ?? "Voted blank"]
+        if let vote = voteStub as? SimpleMajority.SimpleMajorityVote {
+            [vote.preferredOption?.name ?? "Voted blank"]
+        } else {
+            throw Abort(.internalServerError)
+        }
     }
     return (nil, prio)
 }

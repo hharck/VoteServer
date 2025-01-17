@@ -16,30 +16,21 @@ enum RedirectionPaths{
     
 	func stringValue() -> String{
 		switch self {
-		case .create:
-			return "create"
-		case .createvote(let string):
-            return "createvote/" + string.rawValue
+		case .create: "create"
+		case .createvote(let string): "createvote/" + string.rawValue
 		case .voteadmin(let id):
-			if id == nil {
-				return "voteadmin"
+			if let id {
+                "voteadmin/\(id)"
 			} else {
-				return "voteadmin/\(id!)"
+                "voteadmin"
 			}
-		case .results(let id):
-			return "results/\(id)"
-        case .admin:
-            return "admin"
-        case .join:
-			return "join"
-		case .plaza:
-			return "plaza"
-		case .constituents:
-			return "admin/constituents"
-		case .login:
-			return "login"
-        case .API(let APIPath):
-            return "api/v1/" + APIPath.relativeStringValue()
+		case .results(let id): "results/\(id)"
+        case .admin: "admin"
+        case .join: "join"
+		case .plaza: "plaza"
+		case .constituents: "admin/constituents"
+		case .login: "login"
+        case .API(let APIPath): "api/v1/" + APIPath.relativeStringValue()
 		}
 	}
 }

@@ -50,18 +50,18 @@ struct GroupsCommand: Command{
             throw "Only one flag at a time"
         }
         
-        if signature.newPassword != nil && !signature.newPassword!.isEmpty{
+        if let newPassword = signature.newPassword, !newPassword.isEmpty{
             if signature.info || signature.delete{
                 throw "Only one flag at a time"
             }
         
-            let pw = signature.newPassword!.trimmingCharacters(in: .whitespacesAndNewlines)
+            let trimmedPassword = newPassword.trimmingCharacters(in: .whitespacesAndNewlines)
             
-            Task{
+            Task {
                 guard let app = app, let group = await groupsManager.groupForJoinPhrase(joinPhrase) else {
                     throw "Group not found"
                 }
-                guard let digest = try? hashPassword(pw: pw, groupName: group.name, for: app) else {
+                guard let digest = try? hashPassword(pw: trimmedPassword, groupName: group.name, for: app) else {
                     throw "Invalid or insecure password"
                 }
                 await group.setPasswordTo(digest: digest)
@@ -70,7 +70,7 @@ struct GroupsCommand: Command{
             }
             
         } else if signature.delete{
-            Task{
+            Task {
                 if await groupsManager.deleteGroup(jf: joinPhrase){
                     context.console.print("Successfully deleted: \(joinPhrase)")
                     return
@@ -79,8 +79,7 @@ struct GroupsCommand: Command{
                 }
             }
         } else {
-            
-            Task{
+            Task {
                 guard
                     let group = await groupsManager.groupForJoinPhrase(joinPhrase),
                     let lastAccess = await groupsManager.getLastAccess(for: group)

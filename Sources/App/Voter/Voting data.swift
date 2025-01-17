@@ -70,9 +70,11 @@ extension YnVotingData: VotingData{
     }
     
     
-    func asCorrespondingPersistenseData()-> [UUID:Bool]?{
-        if votes == nil || votes!.isEmpty {
-            return nil
+    func asCorrespondingPersistenseData()-> [UUID:Bool]? {
+        if let votes, !votes.isEmpty {
+            try? getValues(votes: votes)
+        } else {
+            nil
         }
         return try? getValues(votes: votes!)
     }
@@ -81,13 +83,12 @@ extension YnVotingData: VotingData{
 
 extension SimpleMajorityVotingData: VotingData {
     func asSingleVote(for vote: SimpleMajority, constituent: Constituent) async throws -> SimpleMajority.SimpleMajorityVote{
+        // A request with blank and selectedOption as nil
+        if selectedOption == nil && blank == nil {
+            throw VotingDataError.invalidRequest
+        }
         // Cheks if the vote is explicitly blank, and whether that is allowed
-        if blank == true || selectedOption == nil{
-            // A request with blank and selectedOption as nil
-            if blank == nil{
-                throw VotingDataError.invalidRequest
-            }
-            
+        guard blank == false, let selectedOption else {            
             if await vote.genericValidators.contains(.noBlankVotes){
                 throw VotingDataError.blankVotesNotAllowed
             } else {
@@ -96,7 +97,7 @@ extension SimpleMajorityVotingData: VotingData {
         }
         
         // Finds the option that was voted for 
-        guard let uuid = UUID(selectedOption!), let option = await vote.options.first(where: {$0.id == uuid}) else {
+        guard let uuid = UUID(selectedOption), let option = await vote.options.first(where: {$0.id == uuid}) else {
             throw VotingDataError.invalidRequest
         }
         
@@ -105,8 +106,8 @@ extension SimpleMajorityVotingData: VotingData {
     }
     
     func asCorrespondingPersistenseData()-> UUID?{
-        if selectedOption != nil {
-            return UUID(selectedOption!)
+        if let selectedOption {
+            return UUID(selectedOption)
         } else {
             return nil
         }

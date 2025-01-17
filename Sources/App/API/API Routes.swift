@@ -113,17 +113,17 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 		let p: ((data: Any?, error: Error)?, [String]?)
 		switch vote {
 		case .alternative(let v):
-			p = await decodeAndStore(group: group, vote: v, constituent: const, req: req)
+			p = try await decodeAndStore(group: group, vote: v, constituent: const, req: req)
 		case .yesno(let v):
-			p = await decodeAndStore(group: group, vote: v, constituent: const, req: req)
+			p = try await decodeAndStore(group: group, vote: v, constituent: const, req: req)
 		case .simplemajority(let v):
-			p = await decodeAndStore(group: group, vote: v, constituent: const, req: req)
+			p = try await decodeAndStore(group: group, vote: v, constituent: const, req: req)
 		}
 		
 		if let confirmationStrings = p.1{
 			return confirmationStrings
-		} else if p.0 != nil {
-			throw p.0!.error
+        } else if let error = p.0?.error {
+			throw error
 		} else {
 			assertionFailure("This case should never be reached")
 			throw Abort(.internalServerError) //500

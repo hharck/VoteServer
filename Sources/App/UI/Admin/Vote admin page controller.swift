@@ -81,8 +81,8 @@ struct VoteAdminUIController: UITableManager{
 		for const in verified{
 			let imageURL = await group.getGravatarURLForConst(const, size: 30)
 			if tempRows[const] != nil {
-				tempRows[const]!.isVerified = true
-				tempRows[const]!.imageURL = imageURL
+				tempRows[const]?.isVerified = true
+				tempRows[const]?.imageURL = imageURL
 			} else {
 				tempRows[const] = ConstituentAndStatus(constituent: const, hasVoted: false, isVerified: true, imageURL: imageURL)
 			}

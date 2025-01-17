@@ -1,4 +1,5 @@
 import Crypto
+import Foundation
 import VoteKit
 extension Group{
 	fileprivate func getHashFor(_ email: String?) -> String?{
@@ -23,7 +24,7 @@ extension Group{
 		if let hash = self.emailHashCache[trim]{
 			return hash
 		} else {
-			let emailData = trim.data(using: .utf8)!
+			let emailData = Data(trim.utf8)
 			let hash = Insecure.MD5.hash(data: emailData).map {
 				String(format: "%02hhx", $0)
 			}.joined()
@@ -36,11 +37,10 @@ extension Group{
 	
 	func getGravatarURLForConst(_ const: Constituent?, size: UInt? = nil) -> String{
 		if let hash = self.getHashFor(const?.email) {
-			let sParam: String
-			if size != nil {
-				sParam = "&s=\(size!)"
+			let sParam: String = if let size {
+				"&s=\(size)"
 			} else {
-				sParam = ""
+				""
 			}
 			
 			return "https://www.gravatar.com/avatar/" + hash + "?d=mp" + sParam
@@ -50,11 +50,10 @@ extension Group{
 	}
 	
 	func getDefaultGravatar(size: UInt? = nil)->String{
-		let sParam: String
-		if size != nil {
-			sParam = "&s=\(size!)"
+		let sParam: String = if let size {
+			"&s=\(size)"
 		} else {
-			sParam = ""
+			""
 		}
 		return "https://www.gravatar.com/avatar?d=mp" + sParam
 	}

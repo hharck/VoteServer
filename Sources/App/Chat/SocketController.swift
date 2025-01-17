@@ -167,7 +167,9 @@ actor ChatSocketController{
                         (constituent.getNameOrId(), await group.getGravatarURLForConst(constituent))
                     }
                     
-                    let formatted = await chat.chatFormat(senderName: name, imageURL: imageURL)
+                    guard let formatted = await chat.chatFormat(senderName: name, imageURL: imageURL) else {
+                        return
+                    }
                     sendToAll(msg: .newMessage(formatted))
                 }
             }

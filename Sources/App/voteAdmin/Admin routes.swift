@@ -176,7 +176,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 		return LoginUI(showRedirectToPlaza: showRedirectToPlaza)
 	}
 	login.post(use: doLogin)
-    @Sendable func doLogin(req: Request) async throws -> Response{
+    @Sendable func doLogin(req: Request) async throws -> Response {
 		var joinPhrase: JoinPhrase?
 		do{
 			guard

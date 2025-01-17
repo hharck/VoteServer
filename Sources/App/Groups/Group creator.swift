@@ -26,14 +26,14 @@ extension GroupCreatorData{
 	}
 	
 	func getConstituents() throws -> Set<Constituent>{
-		guard self.file != nil, !self.file!.isEmpty else {
+		guard let file, !file.isEmpty else {
             if requiresPasswordGeneration {
                 throw GroupCreationError.passwordGenerationRequiresFile
             } else {
                 return []
             }
 		}
-		if self.file!.count > 1_000_000 {
+		if file.count > 1_000_000 {
 			throw GroupCreationError.nameTooLong
 		}
 		do{
