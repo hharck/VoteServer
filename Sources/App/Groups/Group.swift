@@ -34,7 +34,7 @@ actor Group{
     /// The different kinds of votes, stored by their id
 	private var AltVotesByID = [VoteID: AlternativeVote]()
 	private var SimMajVotesByID = [VoteID: SimpleMajority]()
-	private var YNVotesByID = [VoteID: yesNoVote]()
+	private var YNVotesByID = [VoteID: YesNoVote]()
 	
 	private(set) var verifiedConstituents: Set<Constituent>
 	private(set) var unverifiedConstituents: Set<Constituent> = []
@@ -303,7 +303,7 @@ extension Group {
     
     
 	/// Returns three arrays, all containing all instances for each kind of vote
-	func allVotes() -> ([AlternativeVote],[yesNoVote],[SimpleMajority]){
+	func allVotes() -> ([AlternativeVote],[YesNoVote],[SimpleMajority]){
 		return (Array(AltVotesByID.values), Array(YNVotesByID.values), Array(SimMajVotesByID.values))
 	}
 
@@ -343,7 +343,7 @@ extension Group {
         case .alternative:
 			AltVotesByID[voteID] = vote as? AlternativeVote
         case .yesNo:
-			YNVotesByID[voteID] = vote as? yesNoVote
+			YNVotesByID[voteID] = vote as? YesNoVote
         case .simpleMajority:
 			SimMajVotesByID[voteID] = vote as? SimpleMajority
 		}

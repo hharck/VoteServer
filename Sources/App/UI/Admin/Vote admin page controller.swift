@@ -61,7 +61,7 @@ struct VoteAdminUIController: UITableManager{
         self.isOpen = status == .open
         
         self.voteID = await vote.id.uuidString
-        self.settings = await vote.particularValidators.map(\.name) + vote.genericValidators.map(\.name)
+        self.settings = await vote.allValidators.map(\.name)
         self.options = await vote.options.map(\.name)
         
         

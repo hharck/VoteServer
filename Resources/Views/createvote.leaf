@@ -10,7 +10,7 @@
 				<label for="#(validator.stack)[#(validator.id)]">#(validator.name)</label><br>
 				#endfor
 				<br>
-                #for(validator in validatorsParticular):
+                #for(validator in validatorsCustom):
                 <input type="checkbox" id="#(validator.stack)[#(validator.id)]" name="#(validator.stack)[#(validator.id)]" #if(validator.isEnabled):checked#endif>
                 <label for="#(validator.stack)[#(validator.id)]">#(validator.name)</label><br>
                 #endfor

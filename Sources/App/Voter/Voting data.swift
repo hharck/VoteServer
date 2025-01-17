@@ -7,12 +7,12 @@ import VoteExchangeFormat
 protocol VotingData: VoteData{
     associatedtype Vote: SupportedVoteType
     
-    func asSingleVote(for vote: Vote, constituent: Constituent) async throws -> Vote.voteType
+    func asSingleVote(for vote: Vote, constituent: Constituent) async throws -> Vote.VoteType
     func asCorrespondingPersistenseData()-> Vote.VotePageUI.PersistanceData?
 }
 
 extension YnVotingData: VotingData{
-    func asSingleVote(for vote: yesNoVote, constituent: Constituent) async throws -> yesNoVote.yesNoVoteType{
+    func asSingleVote(for vote: YesNoVote, constituent: Constituent) async throws -> YesNoVote.YesNoVoteType{
         
         // Cheks if the vote is explicitly blank, and whether that is allowed
         guard blank != true, let votes, !votes.isEmpty else {
@@ -27,7 +27,7 @@ extension YnVotingData: VotingData{
             }
         }
         
-        //TODO: Maybe add a cache for this? Of type [vote.id: [UUID: VoteOption]] and a helper function for either generating or accessing this dictionary; this would require vote.options to be constant, or just a hash of vote.options to be saved and compared at every use of the cache
+        // TODO: Maybe add a cache for this? Of type [vote.id: [UUID: VoteOption]] and a helper function for either generating or accessing this dictionary; this would require vote.options to be constant, or just a hash of vote.options to be saved and compared at every use of the cache
         // Lookup for translating UUID -> VoteOption
         let uuidToOption = await vote.options.reduce(into: [UUID: VoteOption]()) { partialResult, option in
             partialResult[option.id] = option
@@ -44,11 +44,11 @@ extension YnVotingData: VotingData{
         
         // Checks if there has been given a preference for all options, the case for blank votes is handled above
         // uuidToOption.count, is synchronous for await vote.options.count
-        if await vote.particularValidators.contains(.preferenceForAllRequired) && values.count != uuidToOption.count{
+        if await vote.customValidators.contains(.preferenceForAllRequired) && values.count != uuidToOption.count{
             throw VotingDataError.allShouldBeFilledIn
         }
         
-        return yesNoVote.yesNoVoteType(constituent: constituent, values: val)
+        return YesNoVote.YesNoVoteType(constituent: constituent, values: val)
     }
     
     // Converts the input into the correct data types
@@ -76,9 +76,7 @@ extension YnVotingData: VotingData{
         } else {
             nil
         }
-        return try? getValues(votes: votes!)
     }
-
 }
 
 extension SimpleMajorityVotingData: VotingData {
@@ -170,7 +168,7 @@ extension AltVotingData: VotingData{
 
 
 		//Check for violations of the preferenceForAllCandidates validator. That is violated if there isn't preferences for all candiates and it isn't a blank vote
-        let preferenceForAll = await vote.particularValidators.contains(.allCandidatesRequiresAVote)
+        let preferenceForAll = await vote.customValidators.contains(.allCandidatesRequiresAVote)
 		if Set(realOptions) != Set(await vote.options) && !realOptions.isEmpty && preferenceForAll{
 			throw VotingDataError.allShouldBeFilledIn
 		}

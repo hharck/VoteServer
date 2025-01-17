@@ -17,7 +17,7 @@ struct YesNoResultsUI: UITableManager{
     var rows: [Row]
 
     
-    init(vote: yesNoVote, count: [VoteOption : (yes: UInt, no: UInt, blank: UInt)]) async{
+    init(vote: YesNoVote, count: [VoteOption : (yes: UInt, no: UInt, blank: UInt)]) async{
         self.title = await vote.name
         self.numberOfVotes = await vote.votes.count
         

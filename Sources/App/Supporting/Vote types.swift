@@ -5,7 +5,7 @@ import VoteExchangeFormat
 
 enum VoteTypes{
     case alternative(AlternativeVote)
-    case yesno(yesNoVote)
+    case yesno(YesNoVote)
     case simplemajority(SimpleMajority)
     
     enum StringStub: String{
@@ -23,6 +23,14 @@ enum VoteTypes{
                 self = .simpleMajority
             }
         }
+        
+        var type: any SupportedVoteType.Type {
+            switch self {
+            case .alternative: AlternativeVote.self
+            case .yesNo: YesNoVote.self
+            case .simpleMajority: SimpleMajority.self
+            }
+        }
     }
     
     init<V: SupportedVoteType>(vote: V){
@@ -30,7 +38,7 @@ enum VoteTypes{
         case .alternative:
             self = .alternative(vote as! AlternativeVote)
         case .yesNo:
-            self = .yesno(vote as! yesNoVote)
+            self = .yesno(vote as! YesNoVote)
         case .simpleMajority:
             self = .simplemajority(vote as! SimpleMajority)
         }
@@ -94,8 +102,25 @@ protocol SupportedVoteType: VoteProtocol{
     associatedtype VotePageUI: VotePage where VotePageUI.VoteType == Self
     static var enumCase: VoteTypes.StringStub {get}
     static var minimumRequiredOptions: Int {get}
+    static var genericValidatorData: [ValidatorData] {get}
+    static var customValidatorData: [ValidatorData] {get}
 }
-
+extension SupportedVoteType {
+    static var genericValidatorData: [ValidatorData] {
+        GenericValidator<Self.VoteType>
+            .allValidators
+            .map {
+                ValidatorData(type: .genericValidators, validator: $0, isEnabled: false)
+            }
+    }
+}
+extension SupportedVoteType where Self: HasCustomValidators {
+    static var customValidatorData: [ValidatorData] {
+        Self.CustomValidators.allValidators.map {
+            ValidatorData(type: .customValidators, validator: $0, isEnabled: false)
+        }
+    }
+}
 
 extension AlternativeVote: SupportedVoteType{
     typealias ReceivedData = AltVotingData
@@ -105,7 +130,7 @@ extension AlternativeVote: SupportedVoteType{
     static let minimumRequiredOptions: Int = 2
 }
 
-extension yesNoVote: SupportedVoteType{
+extension YesNoVote: SupportedVoteType{
     typealias ReceivedData = YnVotingData
     typealias PersistanceData = [UUID:Bool]
     typealias VotePageUI = YesNoVotePage
@@ -119,4 +144,5 @@ extension SimpleMajority: SupportedVoteType{
     typealias VotePageUI = SimMajVotePage
     static let enumCase: VoteTypes.StringStub = .simpleMajority
     static let minimumRequiredOptions: Int = 2
+    static let customValidatorData: [ValidatorData] = []
 }

@@ -1,21 +1,21 @@
-// swift-tools-version:5.7
+// swift-tools-version:6.0
 import PackageDescription
 
 let package = Package(
 	name: "VoteServer",
 	platforms: [
-		.macOS(.v12)
+		.macOS(.v13)
 	],
 	dependencies: [
 		// 💧 A server-side Swift web framework.
-		.package(url: "https://github.com/vapor/vapor.git", from: "4.84.2"),
-		.package(url: "https://github.com/vapor/leaf.git", from: "4.0.0"),
+		.package(url: "https://github.com/vapor/vapor.git", from: "4.111.0"),
+		.package(url: "https://github.com/vapor/leaf.git", from: "4.4.1"),
 		// Fluent
-		.package(url: "https://github.com/vapor/fluent.git", from: "4.0.0"),
-		.package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
+		.package(url: "https://github.com/vapor/fluent.git", from: "4.12.0"),
+		.package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.8.0"),
 		// VoteKit definitions
-        .package(url: "https://github.com/TheHarcker/VoteKit", "0.5.0"..<"0.6.0"), //HTTPS
-		.package(url: "https://github.com/TheHarcker/AltVoteKit", "0.5.1"..<"0.6.0"), //HTTPS
+        .package(url: "https://github.com/TheHarcker/VoteKit", "0.6.5"..<"0.7.0"),
+		.package(url: "https://github.com/TheHarcker/AltVoteKit", "0.6.3"..<"0.7.0"),
 		// VoteExchangeFormat, defines API protocols
 		.package(url: "https://github.com/TheHarcker/VoteExchangeFormat", branch: "main"),
 	],

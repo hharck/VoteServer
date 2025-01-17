@@ -1,33 +1,31 @@
 import VoteKit
-struct VoteCreationReceivedData<V: SupportedVoteType>: Codable{
+struct VoteCreationReceivedData: Codable{
 	let nameOfVote: String
 	let options: String
 	
-	let particularValidators: [String: String]
+	let customValidators: [String: String]
 	let genericValidators: [String: String]
 }
 
-
 extension VoteCreationReceivedData{
 	func getAllEnabledIDs() -> [String]{
-		particularValidators.filter(\.value.isOn).map(\.key)
+        customValidators.filter(\.value.isOn).map(\.key)
 		+
 		genericValidators.filter(\.value.isOn).map(\.key)
 	}
 	
-	func getPartValidators() -> [V.particularValidator] {
-		particularValidators
-			.filter(\.value.isOn)
-			.compactMap{ validator in V.particularValidator.allValidators.first{$0.id == validator.key}}
-	}
-	
-	func getGenValidators() -> [GenericValidator<V.voteType>] {
+    func getGenValidators<V: VoteStub>() -> [GenericValidator<V>] {
 		genericValidators
 			.filter(\.value.isOn)
 			.compactMap{ validator in GenericValidator.allValidators.first{$0.id == validator.key}}
 	}
 	
-	func getOptions() throws -> [VoteOption]{
+    func getCustomValidators<S: VoteStub, T: Validateable<S>>() -> [T] {
+        customValidators
+            .filter(\.value.isOn)
+            .compactMap{ validator in T.allValidators.first { $0.id == validator.key }}
+    }
+    func getOptions<V: SupportedVoteType>(type: V.Type = V.self) throws -> [VoteOption]{
 		if self.options.contains(";"){
 			throw VoteCreationError.invalidOptionName
 		}

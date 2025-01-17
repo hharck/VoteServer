@@ -17,7 +17,7 @@ struct YesNoVotePage: VotePage, UITableManager{
     /// Adds a button after every option allowing the user to deselect misclicked options
     var allowsResetting = false
     
-    init(title: String, vote: yesNoVote?, errorString: String? = nil, persistentData: [UUID:Bool]? = nil) async {
+    init(title: String, vote: YesNoVote?, errorString: String? = nil, persistentData: [UUID:Bool]? = nil) async {
         
         
         if let vote = vote {
@@ -35,7 +35,7 @@ struct YesNoVotePage: VotePage, UITableManager{
                 return Row(id: option.id, name: option.name, status: status)
             }
             
-            allowsResetting = await !vote.particularValidators.contains(.preferenceForAllRequired)
+            allowsResetting = await !vote.customValidators.contains(.preferenceForAllRequired)
         }
         
         self.title = title

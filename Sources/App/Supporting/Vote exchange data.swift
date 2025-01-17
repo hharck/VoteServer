@@ -39,14 +39,13 @@ extension ExchangeOption{
 extension ExtendedVoteData{
     init<V: SupportedVoteType>(_ v: V, constituentID: ConstituentIdentifier, group: Group) async{
         async let metadata = convertVoteToMetadata(v,constituentID: constituentID, group: group)
-        async let validatorKeys = v.genericValidators.map(\.id) + v.particularValidators.map(\.id)
+        async let validatorKeys = v.allValidators.map(\.id)
 		async let options = v.options.map(ExchangeOption.init)
         self = ExtendedVoteData(metadata: await metadata, options: await options, validatorKeys: await validatorKeys)
     }
-    
 }
 
 // Marks all datatypes from the API as 'Content' to allow an instance of these to be returned directly in a route
-extension ExtendedVoteData: Content{}
-extension GroupData: Content{}
-extension VoteMetadata: Content{}
+extension ExtendedVoteData: @retroactive Content {}
+extension GroupData: @retroactive Content {}
+extension VoteMetadata: @retroactive Content {}

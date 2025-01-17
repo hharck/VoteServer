@@ -12,7 +12,7 @@ func checkMessage(msg: String) throws -> String{
 		throw ChatError.messageTooLong
 	}
 	
-	if profanity.contains(where: msg.contains) {
+    if profanity.contains(where: msg.lowercased().contains) {
 		throw ChatError.profanity
 	}
 	
