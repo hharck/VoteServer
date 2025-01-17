@@ -1,7 +1,7 @@
 struct GroupJoinUI: UIManager{
     internal init(title: String, joinPhrase: String = "", userID: String = "", errorString: String? = nil, showRedirectToPlaza: Bool) {
 		self.title = title
-		self.prefilledJF = joinPhrase
+		self.prefilledJoinPhrase = joinPhrase
 		self.prefilledUserid = userID
 		self.errorString = errorString
         
@@ -13,7 +13,7 @@ struct GroupJoinUI: UIManager{
 	}
 	
     var title: String
-	var prefilledJF: String
+	var prefilledJoinPhrase: String
 	var prefilledUserid: String
 	var errorString: String?
     var buttons: [UIButton]

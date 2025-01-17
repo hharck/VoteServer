@@ -1,7 +1,7 @@
 struct LoginUI: UIManager{
-    internal init(prefilledJF: String? = nil, errorString: String? = nil, showRedirectToPlaza: Bool) {
+    internal init(prefilledJoinPhrase: String? = nil, errorString: String? = nil, showRedirectToPlaza: Bool) {
 		self.errorString = errorString
-		self.prefilledJF = prefilledJF
+		self.prefilledJoinPhrase = prefilledJoinPhrase
         
         if showRedirectToPlaza{
             self.buttons = [.backToPlaza, .join, .createGroup]
@@ -16,7 +16,7 @@ struct LoginUI: UIManager{
 	
 	var errorString: String?
 	
-	var prefilledJF: String?
+	var prefilledJoinPhrase: String?
 	
 	static let template: String = "login"
 	

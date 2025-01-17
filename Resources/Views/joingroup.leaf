@@ -3,7 +3,7 @@
 #export("body"):
 	<form method="POST" onsubmit="lockButton()">
 		<label for="joinPhrase">Join code </label>
-		<input type="text" name="joinPhrase" value="#(prefilledJF)">
+		<input type="text" name="joinPhrase" value="#(prefilledJoinPhrase)">
 		<label for="userID">UserID</label>
 		<input type="text" name="userID" value="#(prefilledUserid)">
 		<br>

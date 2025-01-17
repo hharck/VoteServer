@@ -201,7 +201,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
 		} catch {
 			let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
 			
-			guard let UI = (try? await LoginUI(prefilledJF: joinPhrase ?? "", errorString: error.asString(), showRedirectToPlaza: showRedirectToPlaza).encodeResponse(for: req)) else{
+			guard let UI = (try? await LoginUI(prefilledJoinPhrase: joinPhrase ?? "", errorString: error.asString(), showRedirectToPlaza: showRedirectToPlaza).encodeResponse(for: req)) else{
 				throw Redirect(.login)
 			}
 			return UI
