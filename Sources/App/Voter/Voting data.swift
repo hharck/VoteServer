@@ -88,7 +88,7 @@ extension SimpleMajorityVotingData: VotingData {
             throw VotingDataError.invalidRequest
         }
         // Cheks if the vote is explicitly blank, and whether that is allowed
-        guard blank == false, let selectedOption else {
+        guard blank != true, let selectedOption else {
             if await vote.genericValidators.contains(.noBlankVotes){
                 throw VotingDataError.blankVotesNotAllowed
             } else {
