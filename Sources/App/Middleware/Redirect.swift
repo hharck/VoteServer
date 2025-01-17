@@ -1,20 +1,23 @@
 import Vapor
 
-// Intercepts RedirectError and redirects the client to the given page
-struct RedirectErrorHandler:
-	AsyncMiddleware {
-	func respond(to req: Request, chainingTo next: AsyncResponder) async throws -> Response {
-		do {
-			return try await next.respond(to: req)
-		} catch let error as Redirect{
-			return req.redirect(to: error.path)
-		}
-	}
-}
-
-struct Redirect: Error{
-	let path: RedirectionPaths
-	init(_ path: RedirectionPaths){
-		self.path = path
-	}
+enum ResponseOrRedirect<T: AsyncResponseEncodable>: AsyncResponseEncodable {
+    func encodeResponse(for request: Request) async throws -> Response {
+        switch self {
+        case .response(let response, let status, let headers):
+            if let status {
+                if let headers {
+                    return try await response.encodeResponse(status: status, headers: headers, for: request)
+                } else {
+                    return try await response.encodeResponse(status: status, for: request)
+                }
+            } else {
+                assert(headers == nil)
+                return try await response.encodeResponse(for: request)
+            }
+        case .redirect(let redirectionPath): return try redirectionPath.encodeResponse(for: request)
+        }
+    }
+    
+    case response(T, status: HTTPStatus? = nil, headers: HTTPHeaders? = nil)
+    case redirect(RedirectionPaths)
 }

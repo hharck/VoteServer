@@ -5,15 +5,15 @@ func voteCreationRoutes(_ app: Application, groupsManager: GroupsManager) {
     /// Shows admins a page which'' let them create the kind of vote supplied in the "type" parameter
     app.get("createvote", ":type", use: createVote)
 	app.post("createvote", ":type", use: createVote)
-	func createVote(req: Request) async throws -> Response{
+    @Sendable func createVote(req: Request) async -> ResponseOrRedirect<VoteCreatorUI> {
 		guard
 			let sessionID = req.session.authenticated(AdminSession.self),
 			let group = await groupsManager.groupForSession(sessionID)
 		else {
-			throw Redirect(.create)
+            return .redirect(.create)
 		}
 		guard let parameter = req.parameters.get("type"), let type = VoteTypes.StringStub(rawValue: parameter) else {
-			throw Redirect(.admin)
+            return .redirect(.admin)
 		}
 		
 		if req.method == .POST {
@@ -58,31 +58,41 @@ func voteCreationRoutes(_ app: Application, groupsManager: GroupsManager) {
                         await group.addVoteToGroup(vote: vote)
                     }
                     
-                    return req.redirect(to: .admin)
+                    return .redirect(.admin)
                 } catch {
-                    return try await VoteCreatorUI(
+                    return .response(
+                        VoteCreatorUI(
+                            typeName: type.type.typeName,
+                            errorString: error.asString(),
+                            validatorsGeneric: type.type.genericValidatorData,
+                            validatorsCustom: type.type.customValidatorData,
+                            voteHTTPData
+                        )
+                    )
+                }
+            } catch {
+                return .response(
+                    VoteCreatorUI(
                         typeName: type.type.typeName,
                         errorString: error.asString(),
                         validatorsGeneric: type.type.genericValidatorData,
                         validatorsCustom: type.type.customValidatorData,
-                        voteHTTPData
-                    ).encodeResponse(for: req)
-                }
-            } catch {
-                return try await VoteCreatorUI(
-                    typeName: type.type.typeName,
-                    errorString: error.asString(),
-                    validatorsGeneric: type.type.genericValidatorData,
-                    validatorsCustom: type.type.customValidatorData,
-                    nil
-                ).encodeResponse(for: req)
+                        nil
+                    )
+                )
             }
-        
-		} else {
-            return try await VoteCreatorUI(typeName: type.type.typeName, errorString: Optional<String>.none, validatorsGeneric: type.type.genericValidatorData, validatorsCustom: type.type.customValidatorData).encodeResponse(for: req)
             
-		}
-	}
+        } else {
+            return .response(
+                VoteCreatorUI(
+                    typeName: type.type.typeName,
+                    errorString: nil,
+                    validatorsGeneric: type.type.genericValidatorData,
+                    validatorsCustom: type.type.customValidatorData
+                )
+            )
+        }
+    }
 }
 
 struct ValidatorData: Codable{

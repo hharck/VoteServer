@@ -11,16 +11,16 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
     voteadmin.redirectGet(to: .admin)
     
     admin.get(use: getAdminPage)
-    @Sendable func getAdminPage(req: Request) async throws -> AdminUIController {
+    @Sendable func getAdminPage(req: Request) async -> ResponseOrRedirect<AdminUIController> {
         //List of votes
         guard
             let sessionID = req.session.authenticated(AdminSession.self),
             let group = await groupsManager.groupForSession(sessionID)
         else {
-            throw Redirect(.create)
+            return .redirect(.create)
         }
         
-        return await AdminUIController(for: group)
+        return await .response(AdminUIController(for: group))
     }
     
     // Changes the open/closed status of the vote passed as ":voteID"
@@ -41,12 +41,12 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
     // Shows an overview for a specific vote, with information such as who has voted and who has not
     voteadmin.get(":voteID", use: postVoteAdmin)
     voteadmin.post(":voteID", use: postVoteAdmin)
-    @Sendable func postVoteAdmin(req: Request) async throws(Redirect) -> VoteAdminUIController {
+    @Sendable func postVoteAdmin(req: Request) async -> ResponseOrRedirect<VoteAdminUIController> {
         guard
             let voteIDStr = req.parameters.get("voteID"),
             let voteID = UUID(voteIDStr)
         else {
-            throw Redirect(.admin)
+            return .redirect(.admin)
         }
         
         guard
@@ -54,14 +54,14 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
             let group = await groupsManager.groupForSession(adminID),
             let vote = await group.voteForID(voteID)
         else {
-            throw Redirect(.admin)
+            return .redirect(.admin)
         }
         
         if req.method == .POST {
             // Checks requests if they ask for deletion
             if let deleteID = (try? req.content.decode([String:String].self))?["voteToDelete"], voteIDStr == deleteID, await group.statusFor(voteID) == .closed {
                 await group.removeVoteFromGroup(vote: vote)
-                throw Redirect(.admin)
+                return .redirect(.admin)
             }
             
             // Checks if any status change is requested
@@ -70,18 +70,18 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
             }
             
         }
-        return await VoteAdminUIController(vote: vote, group: group)
+        return await .response(VoteAdminUIController(vote: vote, group: group))
     }
     
     // Shows a list of constituents and related settings
     admin.get("constituents", use: constituentsPage)
     admin.post("constituents", use: constituentsPage)
-    @Sendable func constituentsPage(req: Request) async throws -> ConstituentsListUI  {
+    @Sendable func constituentsPage(req: Request) async -> ResponseOrRedirect<ConstituentsListUI> {
         guard
             let sessionID = req.session.authenticated(AdminSession.self),
             let group = await groupsManager.groupForSession(sessionID)
         else {
-            throw Redirect(.admin)
+            return .redirect(.admin)
         }
         
         if req.method == .POST,
@@ -90,7 +90,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
             await group.setSettings(allowsUnverifiedConstituents: status)
         }
         
-        return await ConstituentsListUI(group: group)
+        return await .response(ConstituentsListUI(group: group))
         
         struct ChangeVerificationRequirementsData: Codable {
             private var setVerifiedRequirement: String
@@ -105,33 +105,33 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
     }
     
     admin.get("constituents", "downloadcsv", use: downloadConstituentsCSV)
-    @Sendable func downloadConstituentsCSV(req: Request) async throws-> Response {
+    @Sendable func downloadConstituentsCSV(req: Request) async -> ResponseOrRedirect<String> {
         guard
             let sessionID = req.session.authenticated(AdminSession.self),
             let group = await groupsManager.groupForSession(sessionID)
         else {
-            throw Redirect(.constituents)
+            return .redirect(.constituents)
         }
         
         let csv = await group.allPossibleConstituents().toCSV(config: group.settings.csvConfiguration)
-        return try await downloadResponse(for: req, content: csv, filename: "constituents.csv")
+        return downloadResponse(for: req, content: csv, filename: "constituents.csv")
     }
     
     admin.get("constituents", "downloadcurrentlyin", use: downloadCurrentlyInCSV)
-    @Sendable func downloadCurrentlyInCSV(req: Request) async throws-> Response {
+    @Sendable func downloadCurrentlyInCSV(req: Request) async -> ResponseOrRedirect<String> {
         guard
             let sessionID = req.session.authenticated(AdminSession.self),
             let group = await groupsManager.groupForSession(sessionID)
         else {
-            throw Redirect(.constituents)
+            return .redirect(.constituents)
         }
         
         let csv = await group.joinedConstituentsByID.values.toCSV(config: group.settings.csvConfiguration)
-        return try await downloadResponse(for: req, content: csv, filename: "joined-constituents.csv")
+        return downloadResponse(for: req, content: csv, filename: "joined-constituents.csv")
     }
     
     admin.post("resetaccess", ":userID", use: resetaccess)
-    @Sendable func resetaccess(req: Request) async throws-> Response{
+    @Sendable func resetaccess(req: Request) async-> Response{
         if let userIdentifierbase64 = req.parameters.get("userID")?.trimmingCharacters(in: .whitespacesAndNewlines),
            let userIdentifier = String(urlsafeBase64: userIdentifierbase64),
            let sessionID = req.session.authenticated(AdminSession.self),
@@ -144,10 +144,10 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
         return req.redirect(to: .constituents)
     }
     voteadmin.post("reset", ":voteID", ":userID", use: resetAccessToVote)
-    @Sendable func resetAccessToVote(req: Request) async throws-> Response{
+    @Sendable func resetAccessToVote(req: Request) async -> Response{
         // Retrieves the vote id from the uri
         guard let voteIDStr = req.parameters.get("voteID") else {
-            throw Redirect(.admin)
+            return req.redirect(to: .admin)
         }
         
         // The single cast vote that should be deleted
@@ -170,94 +170,86 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
         return LoginUI(showRedirectToPlaza: showRedirectToPlaza)
     }
     login.post(use: doLogin)
-    @Sendable func doLogin(req: Request) async throws(Redirect) -> Response {
+    @Sendable func doLogin(req: Request) async -> ResponseOrRedirect<LoginUI> {
         guard
             let loginData = try? req.content.decode([String: String].self),
             let pw = loginData["password"],
             let joinPhrase = loginData["joinPhrase"]
         else {
             let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
-            
-            guard let UI = (try? await LoginUI(prefilledJoinPhrase: "", errorString: "Invalid request", showRedirectToPlaza: showRedirectToPlaza).encodeResponse(for: req)) else{
-                throw Redirect(.login)
-            }
-            return UI
+            return .response(LoginUI(prefilledJoinPhrase: "", errorString: "Invalid request", showRedirectToPlaza: showRedirectToPlaza))
         }
         
-        
         // Saves the group
-        guard let session = await groupsManager.login(request: req, joinphrase: joinPhrase, password: pw) else{
+        guard let session = await groupsManager.login(request: req, joinphrase: joinPhrase, password: pw) else {
             let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
             
-            guard let UI = (try? await LoginUI(prefilledJoinPhrase: joinPhrase, errorString: "No match for password and join code", showRedirectToPlaza: showRedirectToPlaza).encodeResponse(for: req)) else{
-                throw Redirect(.login)
-            }
-            return UI
+            return .response(LoginUI(prefilledJoinPhrase: joinPhrase, errorString: "No match for password and join code", showRedirectToPlaza: showRedirectToPlaza))
         }
         
         //Registers the session with the client
         req.session.authenticate(session)
-        return req.redirect(to: .admin)
+        return .redirect(.admin)
     }
     // The admin settings page
     admin.get("settings", use: getSettingsPage)
-    @Sendable func getSettingsPage(req: Request) async throws(Redirect) -> SettingsUI{
+    @Sendable func getSettingsPage(req: Request) async -> ResponseOrRedirect<SettingsUI> {
         guard
             let sessionID = req.session.authenticated(AdminSession.self),
             let group = await groupsManager.groupForSession(sessionID)
         else {
-            throw Redirect(.create)
+            return .redirect(.create)
         }
         
-        return await SettingsUI(for: group)
+        return await .response(SettingsUI(for: group))
     }
     
     // Requests for changing the settings of a group
     admin.post("settings", use: setSettings)
-    @Sendable func setSettings(req: Request) async throws-> SettingsUI {
+    @Sendable func setSettings(req: Request) async -> ResponseOrRedirect<SettingsUI> {
         guard
             let sessionID = req.session.authenticated(AdminSession.self),
             let group = await groupsManager.groupForSession(sessionID)
         else {
-            throw Redirect(.create)
+            return .redirect(.create)
         }
         
         if let newSettings = try? req.content.decode(SetSettings.self){
             await newSettings.saveSettings(to: group)
         }
         
-        return await SettingsUI(for: group)
+        return await .response(SettingsUI(for: group))
     }
     
     admin.get("chats", use: getAdminChats)
-    @Sendable func getAdminChats(req: Request) async throws -> AdminChatPage {
+    @Sendable func getAdminChats(req: Request) async -> ResponseOrRedirect<AdminChatPage> {
         guard
             let sessionID = req.session.authenticated(AdminSession.self),
             let group = await groupsManager.groupForSession(sessionID)
         else {
-            throw Redirect(.create)
+            return .redirect(.create)
         }
         guard await group.settings.chatState != .disabled else {
-            throw Redirect(.admin)
+            return .redirect(.admin)
         }
-        return AdminChatPage()
+        return .response(AdminChatPage())
     }
     admin.get("chats", "downloadcsv", use: downloadChats)
-    @Sendable func downloadChats(req: Request) async throws -> Response {
+    @Sendable func downloadChats(req: Request) async throws(Abort) -> ResponseOrRedirect<String> {
         guard
             Config.enableChat,
             let sessionID = req.session.authenticated(AdminSession.self),
             let group = await groupsManager.groupForSession(sessionID)
                 
         else {
-            return Response(status: .unauthorized)
+            throw Abort(.unauthorized)
         }
         
         guard let allChats = try? await Chats
             .query(on: req.db)
             .filter(\.$groupID == group.id)
             .all() else {
-            return Response(status: .internalServerError)
+            throw Abort(.internalServerError)
         }
         
         let header = "Sender,Message,Timestamp,Systems message\n"
@@ -266,7 +258,7 @@ func adminRoutes(_ app: Application, groupsManager: GroupsManager) {
         }.joined(separator: "\n")
         
         let csv = header + content
-        return try await downloadResponse(for: req, content: csv, filename: "chathistory-\(group.joinPhrase).csv")
+        return downloadResponse(for: req, content: csv, filename: "chathistory-\(group.joinPhrase).csv")
     }
 }
 

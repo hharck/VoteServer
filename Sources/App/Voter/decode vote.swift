@@ -22,10 +22,8 @@ import Vapor
     let voteStub: V.VoteType
     do {
         voteStub = try await votingData.asSingleVote(for: vote, constituent: constituent)
-    } catch let error as VotingDataError {
-        return ((votingData, error), nil)
     } catch {
-        return ((votingData, VotingDataError.invalidRequest), nil)
+        return ((votingData, error), nil)
     }
     
     /// Saves the singleVote to the vote

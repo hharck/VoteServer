@@ -48,7 +48,7 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 		try await App.joinGroup(req, groupsManager, forAPI: true)
 	}
 	
-	API.get("getdata") { req async throws -> GroupData in
+	API.get("getdata") { req async throws(Abort) -> GroupData in
 		guard
 			let (group, const) = await groupsManager.groupAndVoterForAPI(req: req),
 			let data = await group.getExchangeData(for: const.identifier)
@@ -61,7 +61,7 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 	
 	/// Returns full information (metadata, options, validators) regarding a vote only if the client are allowed to vote at the moment
 	API.get("getvote", ":voteID", use: getVote)
-    @Sendable func getVote(req: Request) async throws -> ExtendedVoteData{
+    @Sendable func getVote(req: Request) async throws(Abort) -> ExtendedVoteData{
 		guard let (group, const) = await groupsManager.groupAndVoterForAPI(req: req) else {
 			throw Abort(.unauthorized)
 		}

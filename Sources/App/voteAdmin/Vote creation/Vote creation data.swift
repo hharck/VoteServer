@@ -25,7 +25,7 @@ extension VoteCreationReceivedData{
             .filter(\.value.isOn)
             .compactMap{ validator in T.allValidators.first { $0.id == validator.key }}
     }
-    func getOptions<V: SupportedVoteType>(type: V.Type = V.self) throws -> [VoteOption]{
+    func getOptions<V: SupportedVoteType>(type: V.Type = V.self) throws(VoteCreationError) -> [VoteOption]{
 		if self.options.contains(";"){
 			throw VoteCreationError.invalidOptionName
 		}
@@ -60,7 +60,7 @@ extension VoteCreationReceivedData{
 		return options.map(VoteOption.init)
 	}
 	
-	func getTitle() throws -> String{
+	func getTitle() throws(VoteCreationError) -> String{
 		let title = nameOfVote.trimmingCharacters(in: .whitespacesAndNewlines)
 		guard !title.isEmpty, title.count <= Config.maxNameLength else {
 			throw VoteCreationError.invalidTitle

@@ -1,5 +1,5 @@
 import Vapor
-protocol UIManager: Codable, AsyncResponseEncodable, ResponseEncodable{  
+protocol UIManager: Codable, AsyncResponseEncodable, ResponseEncodable {
     /// The title of the page
 	var title: String {get}
 	
@@ -27,7 +27,7 @@ extension UIManager{
 		try await req.view.render(Self.template, self)
 	}
 	
-	func render(for req: Request) async throws -> Response{
+	func render(for req: Request) async throws -> Response {
 		let view: View = try await self.render(for: req)
 		return try await view.encodeResponse(for: req)
 	}
@@ -36,7 +36,7 @@ extension UIManager{
 		try await self.render(for: req)
 	}
 	
-	func encodeResponse(for req: Request) -> EventLoopFuture<Response>{
+	func encodeResponse(for req: Request) -> EventLoopFuture<Response> {
 		req.view.render(Self.template, self).encodeResponse(for: req)
 	}
 }

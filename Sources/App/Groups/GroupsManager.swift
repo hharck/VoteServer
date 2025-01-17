@@ -66,10 +66,10 @@ extension GroupsManager{
 		}
 	}
 	
-	func createGroup(session: SessionID, db: Database, name: String, constituents: Set<Constituent>, pwdigest: String, allowsUnverified: Bool) async -> Bool{
+	func createGroup(session: SessionID, db: Database, name: String, constituents: Set<Constituent>, pwdigest: String, allowsUnverified: Bool) async throws(Abort) {
         guard let jf = createJoinPhrase() else {
             logger.warning("Joinphrase could not be generated within reasonable time")
-            return false
+            throw Abort(.internalServerError)
         }
 		
 		let socketController = ChatSocketController(db: db)
@@ -82,7 +82,6 @@ extension GroupsManager{
 		updateAccessTimeFor(group)
 		
 		logger.info("Group \"\(name)\" was created, with the joinphrase \"\(jf)\"")
-        return true
 	}
 	
     func deleteGroup(jf: JoinPhrase) async -> Bool{

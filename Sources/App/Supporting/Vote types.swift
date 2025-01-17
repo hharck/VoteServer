@@ -47,6 +47,14 @@ enum VoteTypes{
     func asStub() -> StringStub{
         StringStub(self)
     }
+    
+    var asVoteProtocol: any SupportedVoteType {
+        switch self {
+        case .alternative(let alternativeVote): alternativeVote
+        case .yesno(let yesNoVote): yesNoVote
+        case .simplemajority(let simpleMajority): simpleMajority
+        }
+    }
 }
 
 
@@ -97,7 +105,7 @@ extension VoteTypes{
 }
 
 /// Adds the types associated with each kind of vote
-protocol SupportedVoteType: VoteProtocol{
+protocol SupportedVoteType: VoteProtocol {
     associatedtype ReceivedData: VotingData where ReceivedData.Vote == Self
     associatedtype VotePageUI: VotePage where VotePageUI.VoteType == Self
     static var enumCase: VoteTypes.StringStub {get}

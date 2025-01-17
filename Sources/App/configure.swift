@@ -60,9 +60,6 @@ public func configure(_ app: Application) throws {
     // Enables CLI
     setupCommands(groupsManager: groupsManager, app: app)
     
-    // Handle errors resulting in a redirect
-    app.middleware.use(RedirectErrorHandler())
-    
     // Register routes
     try routes(app, groupsManager: groupsManager)
 }

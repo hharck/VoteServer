@@ -7,55 +7,56 @@ func votingRoutes(_ app: Application, groupsManager: GroupsManager) {
     
     /// Shows the voting ui for the supplied voteID
 	app.get("vote", ":voteID", use: getVote)
-    @Sendable func getVote(req: Request) async throws -> View{
+    @Sendable func getVote(req: Request) async throws -> ResponseOrRedirect<View> {
 		guard let (group, vote, constituent) = await voteGroupAndUserID(for: req) else{
-			throw Redirect(.plaza)
+            return .redirect(.plaza)
 		}
-		switch vote {
+        let ui: UIManager = switch vote {
 		case .alternative(let v):
-			return try await checkAndShow(group: group, constituent: constituent, vote: v).render(for: req)
+            await checkAndShow(group: group, constituent: constituent, vote: v)
 		case .yesno(let v):
-			return try await checkAndShow(group: group, constituent: constituent, vote: v).render(for: req)
+            await checkAndShow(group: group, constituent: constituent, vote: v)
 		case .simplemajority(let v):
-			return try await checkAndShow(group: group, constituent: constituent, vote: v).render(for: req)
+            await checkAndShow(group: group, constituent: constituent, vote: v)
 		}
-		
+        return try await .response(ui.render(for: req))
 		
 	}
     
     /// Receives the vote the constituent wants to cast, and either accepts the vote or an error will be shown to the user
 	app.post("vote", ":voteID", use: postVote)
-    @Sendable func postVote(req: Request) async throws -> View {
+    @Sendable func postVote(req: Request) async throws -> ResponseOrRedirect<View> {
         guard let (group, vote, constituent) = await voteGroupAndUserID(for: req) else{
-			throw Redirect(.plaza)
+            return .redirect(.plaza)
         }
         
         // Checks that the vote is open, otherwise the relevant votepage will be shown in the closed mode
         guard await group.statusFor(await vote.id()) == .open else {
-            switch vote {
+            let view: UIManager = switch vote {
             case .alternative(let v):
-				return try await AltVotePageGenerator.closed(title: v.name).render(for: req)
+				await AltVotePageGenerator.closed(title: v.name)
             case .yesno(let v):
-                return try await YesNoVotePage.closed(title: v.name).render(for: req)
+                await YesNoVotePage.closed(title: v.name)
             case .simplemajority(let v):
-                return try await SimMajVotePage.closed(title: v.name).render(for: req)
+                await SimMajVotePage.closed(title: v.name)
             }
+            return try await .response(view.render(for: req))
         }
         
         switch vote {
         case .alternative(let v):
-            return try await d(group: group, vote: v, constituent: constituent, req: req).render(for: req)
+            return try await .response(d(group: group, vote: v, constituent: constituent, req: req).render(for: req))
         case .yesno(let v):
-            return try await d(group: group, vote: v, constituent: constituent, req: req).render(for: req)
+            return try await .response(d(group: group, vote: v, constituent: constituent, req: req).render(for: req))
         case .simplemajority(let v):
-            return try await d(group: group, vote: v, constituent: constituent, req: req).render(for: req)
+            return try await .response(d(group: group, vote: v, constituent: constituent, req: req).render(for: req))
         }
     }
     
     
     /// Checks that a vote can be accessed and renders the vote page
     /// - Returns: The relevant vote page; either in a "Redy to vote state" or an error state
-    @Sendable func checkAndShow<V: SupportedVoteType>(group: Group, constituent: Constituent, vote: V, errorString: String? = nil, persistentData: V.VotePageUI.PersistanceData? = nil) async -> UIManager{
+    @Sendable func checkAndShow<V: SupportedVoteType>(group: Group, constituent: Constituent, vote: V, errorString: String? = nil, persistentData: V.VotePageUI.PersistanceData? = nil) async -> V.VotePageUI {
         //Checks that the vote is open
         guard await group.statusFor(vote) == .open  else {
             return await V.VotePageUI.closed(title: await vote.name)
@@ -74,13 +75,12 @@ func votingRoutes(_ app: Application, groupsManager: GroupsManager) {
     
     /// Returns a UI dependent on the success of decoding and storing votes
     /// - Returns: The UI to show, either a vote page where the constituent can try to fix the error or a success page which shows what was voted for
-    @Sendable func d<V: SupportedVoteType>(group: Group, vote: V, constituent: Constituent, req: Request) async throws(Abort) -> UIManager{
-        
+    @Sendable func d<V: SupportedVoteType>(group: Group, vote: V, constituent: Constituent, req: Request) async throws(Abort) -> UIManager {
         let p: ((data: V.ReceivedData?, error: Error)?, [String]?) = try await decodeAndStore(group: group, vote: vote, constituent: constituent, req: req)
         assert(p.0 == nil || p.1 == nil)
         
         
-        if let confirmationStrings = p.1{
+        if let confirmationStrings = p.1 {
             let voterID = constituent.getNameOrId()
             return SuccessfullVoteUI(title: await vote.name, voterID: voterID, priorities: confirmationStrings )
         } else {

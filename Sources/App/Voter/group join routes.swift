@@ -10,37 +10,37 @@ func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) {
 	
 	// Prefills the field with the joinphrase and redirects invalid joinphrases
 	app.get("join", ":joinphrase", use: joinWithPhrase)
-    @Sendable func joinWithPhrase(req: Request) async throws -> GroupJoinUI{
+    @Sendable func joinWithPhrase(req: Request) async -> ResponseOrRedirect<GroupJoinUI> {
 		guard
 			let jf = req.parameters.get("joinphrase"),
 			let group = await groupsManager.groupForJoinPhrase(jf)
 		else {
-			throw Redirect(.join)
+            return .redirect(.join)
 		}
 		let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
-		return GroupJoinUI(title: group.name, joinPhrase: jf, showRedirectToPlaza: showRedirectToPlaza)
+        return .response(GroupJoinUI(title: group.name, joinPhrase: jf, showRedirectToPlaza: showRedirectToPlaza))
 	}
 	
 	app.post("join", use: postJoin)
 	app.post("join", ":joinphrase", use: postJoin)
-    @Sendable func postJoin(req: Request) async throws -> Response{
+    @Sendable func postJoin(req: Request) async throws -> Response {
 		try await joinGroup(req, groupsManager, forAPI: false)
 	}
 	
 	// Shows a plaza containing votes available for the user and a chatfield
 	app.get("plaza", use: getPlaza)
-    @Sendable func getPlaza(req: Request) async throws -> PlazaUI {
+    @Sendable func getPlaza(req: Request) async -> ResponseOrRedirect<PlazaUI> {
 		guard let (group, constituent) = await groupsManager.groupAndVoterForReq(req: req) else {
-			throw Redirect(.join)
+            return .redirect(.join)
 		}
 		
-		return await PlazaUI(constituent: constituent, group: group)
+        return await .response(PlazaUI(constituent: constituent, group: group))
 	}
     
 	app.post("plaza", use: postPlaza)
-    @Sendable func postPlaza(req: Request) async throws -> PlazaUI{
+    @Sendable func postPlaza(req: Request) async -> ResponseOrRedirect<PlazaUI> {
 		guard let (group, constituent) = await groupsManager.groupAndVoterForReq(req: req) else {
-			throw Redirect(.join)
+            return .redirect(.join)
 		}
 		
 		if
@@ -54,7 +54,7 @@ func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) {
 		}
 		
 		
-		return await PlazaUI(constituent: constituent, group: group)
+        return await .response(PlazaUI(constituent: constituent, group: group))
 	}
 }
 
@@ -82,16 +82,15 @@ enum joinGroupErrors: ErrorString, Equatable{
 
 
 //Used by the HTML client and the API to join groups
-func joinGroup(_ req: Request, _ groupsManager: GroupsManager, forAPI: Bool) async throws -> Response{
+func joinGroup(_ req: Request, _ groupsManager: GroupsManager, forAPI: Bool) async throws -> Response {
 	struct JoinGroupData: Codable{
 		var userID: String
 		var joinPhrase: String
 	}
 
 	guard let content = try? req.content.decode(JoinGroupData.self) else{
-		throw "Invalid request"
+        throw Abort(.badRequest)
 	}
-	
 	
 	let userID = content.userID.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 	let joinPhrase = content.joinPhrase.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -113,7 +112,6 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager, forAPI: Bool) asy
 
 		groupName = group.name
 
-		
 		// Creates a constituent object for the requesting client
 		let const: Constituent
 		if let c = await group.verifiedConstituent(for: userID){
@@ -133,7 +131,6 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager, forAPI: Bool) asy
 		guard await group.joinConstituent(const, for: constituentID) else {
 			throw joinGroupErrors.constituentIsAlreadyIn
 		}
-		
 
         if forAPI{
             guard let data = await group.getExchangeData(for: userID) else {
@@ -150,7 +147,6 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager, forAPI: Bool) asy
 
             return req.redirect(to: .plaza)
         }
-
 	} catch {
         if forAPI{
             if let er = error as? joinGroupErrors {

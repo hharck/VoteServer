@@ -7,12 +7,12 @@ import VoteExchangeFormat
 protocol VotingData: VoteData{
     associatedtype Vote: SupportedVoteType
     
-    func asSingleVote(for vote: Vote, constituent: Constituent) async throws -> Vote.VoteType
+    func asSingleVote(for vote: Vote, constituent: Constituent) async throws(VotingDataError) -> Vote.VoteType
     func asCorrespondingPersistenseData()-> Vote.VotePageUI.PersistanceData?
 }
 
 extension YnVotingData: VotingData{
-    func asSingleVote(for vote: YesNoVote, constituent: Constituent) async throws -> YesNoVote.YesNoVoteType{
+    func asSingleVote(for vote: YesNoVote, constituent: Constituent) async throws(VotingDataError) -> YesNoVote.YesNoVoteType{
         
         // Cheks if the vote is explicitly blank, and whether that is allowed
         guard blank != true, let votes, !votes.isEmpty else {
@@ -35,11 +35,12 @@ extension YnVotingData: VotingData{
         
         // Converts the input
         let values = try getValues(votes: votes)
-        let val = try values.reduce(into: [VoteOption: Bool]()) { partialResult, d in
-            guard let option = uuidToOption[d.key] else {
+        var dict = [VoteOption: Bool]()
+        for value in values {
+            guard let option = uuidToOption[value.key] else {
                 throw VotingDataError.invalidRequest
             }
-            partialResult[option] = d.value
+            dict[option] = value.value
         }
         
         // Checks if there has been given a preference for all options, the case for blank votes is handled above
@@ -48,29 +49,30 @@ extension YnVotingData: VotingData{
             throw VotingDataError.allShouldBeFilledIn
         }
         
-        return YesNoVote.YesNoVoteType(constituent: constituent, values: val)
+        return YesNoVote.YesNoVoteType(constituent: constituent, values: dict)
     }
     
     // Converts the input into the correct data types
-    private func getValues(votes: [String: String]) throws-> [UUID: Bool]{
-        try votes.reduce(into: [UUID: Bool]()) { partialResult, d in
-            guard let uuid = UUID(d.key) else {
+    private func getValues(votes: [String: String]) throws(VotingDataError) -> [UUID: Bool]{
+        var dict = [UUID: Bool]()
+        for vote in votes {
+            guard let uuid = UUID(vote.key) else {
                 throw VotingDataError.invalidRequest
             }
-            
-            switch d.value{
+            switch vote.value{
             case "yes":
-                partialResult[uuid] = true
+                dict[uuid] = true
             case "no":
-                partialResult[uuid] = false
+                dict[uuid] = false
             default:
                 throw VotingDataError.invalidRequest
             }
         }
+        return dict
     }
     
     
-    func asCorrespondingPersistenseData()-> [UUID:Bool]? {
+    func asCorrespondingPersistenseData() -> [UUID:Bool]? {
         if let votes, !votes.isEmpty {
             try? getValues(votes: votes)
         } else {
@@ -80,13 +82,13 @@ extension YnVotingData: VotingData{
 }
 
 extension SimpleMajorityVotingData: VotingData {
-    func asSingleVote(for vote: SimpleMajority, constituent: Constituent) async throws -> SimpleMajority.SimpleMajorityVote{
+    func asSingleVote(for vote: SimpleMajority, constituent: Constituent) async throws(VotingDataError) -> SimpleMajority.SimpleMajorityVote{
         // A request with blank and selectedOption as nil
         if selectedOption == nil && blank == nil {
             throw VotingDataError.invalidRequest
         }
         // Cheks if the vote is explicitly blank, and whether that is allowed
-        guard blank == false, let selectedOption else {            
+        guard blank == false, let selectedOption else {
             if await vote.genericValidators.contains(.noBlankVotes){
                 throw VotingDataError.blankVotesNotAllowed
             } else {
@@ -129,7 +131,7 @@ extension AltVotingData: VotingData{
 			
 	}
 	
-	func asSingleVote(for vote: AlternativeVote, constituent: Constituent) async throws -> SingleVote{
+	func asSingleVote(for vote: AlternativeVote, constituent: Constituent) async throws(VotingDataError) -> SingleVote{
 		
 		let defaultValue = "default"
 		
