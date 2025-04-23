@@ -2,7 +2,7 @@ version: '2.4'
 
 services:
   app:
-    image: http://ghcr.io/hharck/voteserver:main
+    image: ghcr.io/hharck/voteserver:main
     restart: always
     ports:
       - '8080:8080'
