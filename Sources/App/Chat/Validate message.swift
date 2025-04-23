@@ -1,7 +1,8 @@
 fileprivate let profanity = [
-	"fuck",
- 	"cunt",
- 	"shit",
+	"ballerup",
+ 	"windows_11",
+ 	"Lars D. Christoffersen",
+	"Innovation in Engineering"
  ]
 
 func checkMessage(msg: String) throws -> String{
