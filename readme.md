@@ -2,7 +2,7 @@
 
 Setup script for Ubuntu 20.04 which installs Docker and Docker-compose and continues to run the server.
 
-`wget -O - https://raw.githubusercontent.com/TheHarcker/VoteServer/main/prepare%20docker.sh | bash`
+`wget -O - https://raw.githubusercontent.com/hharck/VoteServer/main/prepare%20docker.sh | bash`
 >**Known issue:**
 >The script may need to run twice to finish
 
@@ -30,10 +30,10 @@ Furthermore for Letsencrypt support (HTTPS), add the following keys to your `.en
 
 ## Related projects
 This project includes 3 first party Swift packages: 
-- [VoteKit](https://github.com/TheHarcker/VoteKit) 
+- [VoteKit](https://github.com/hharck/VoteKit) 
 >Definitions and counting of simple vote types
-- [AltVoteKit](https://github.com/TheHarcker/AltVoteKit) 
+- [AltVoteKit](https://github.com/hharck/AltVoteKit) 
 >Definitions and counting of votes using the Alternative Vote  
-- [VoteExchangeFormat](https://github.com/TheHarcker/VoteExchangeFormat)
+- [VoteExchangeFormat](https://github.com/hharck/VoteExchangeFormat)
 > API object definitions, used by the iOS client
 
