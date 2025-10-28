@@ -4,7 +4,7 @@ fileprivate let profanity = [
  	"shit",
  ]
 
-func checkMessage(msg: String) throws -> String{
+func checkMessage(msg: String) throws(ChatError) -> String{
 	let msg = msg.trimmingCharacters(in: .whitespacesAndNewlines)
 	if msg.isEmpty {
 		throw ChatError.emptyMessage

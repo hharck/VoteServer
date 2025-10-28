@@ -61,5 +61,5 @@ public func configure(_ app: Application) throws {
     setupCommands(groupsManager: groupsManager, app: app)
     
     // Register routes
-    try routes(app, groupsManager: groupsManager)
+    routes(app, groupsManager: groupsManager)
 }

@@ -37,7 +37,7 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 	}
 
 	
-	API.get{ _ throws -> Response in
+	API.get { _ throws(Abort) -> Response in
 		throw Abort(.badRequest)
 	}
 	

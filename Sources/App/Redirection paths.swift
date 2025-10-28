@@ -42,7 +42,7 @@ extension Request{
 }
 
 extension RedirectionPaths: AsyncResponseEncodable, ResponseEncodable{
-    func encodeResponse(for req: Request) throws -> Response {
+    func encodeResponse(for req: Request) -> Response {
         req.redirect(to: self)
     }
 

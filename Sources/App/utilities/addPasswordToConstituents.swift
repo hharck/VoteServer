@@ -20,7 +20,7 @@ func addPasswordToConstituents(data: [HeaderValueDictionary]) throws -> [Constit
 }
 
 
-private func generatePasswords(numberOfPasswords: Int) throws -> Set<String> {
+private func generatePasswords(numberOfPasswords: Int) throws(NumericError) -> Set<String> {
     let numberOfCharacters: UInt = 6
 
     let numberOfUniquePasswords = pow(Double(numberOfPossibleJoinPhraseChars), Double(numberOfCharacters) * 0.5)
@@ -46,7 +46,7 @@ private func generatePasswords(numberOfPasswords: Int) throws -> Set<String> {
     return passwords
 }
 
-fileprivate enum NumericError: String, ErrorString {
+enum NumericError: String, ErrorString {
     case failed = "The server was extremely unlucky in its random number generation"
     case tooLikely = "There are too many constituents to generate an access token for all of them without collisions being likely"
 }

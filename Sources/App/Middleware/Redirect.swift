@@ -14,7 +14,7 @@ enum ResponseOrRedirect<T: AsyncResponseEncodable>: AsyncResponseEncodable {
                 assert(headers == nil)
                 return try await response.encodeResponse(for: request)
             }
-        case .redirect(let redirectionPath): return try redirectionPath.encodeResponse(for: request)
+        case .redirect(let redirectionPath): return redirectionPath.encodeResponse(for: request)
         }
     }
     
