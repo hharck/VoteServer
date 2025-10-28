@@ -1,4 +1,4 @@
-// swift-tools-version:6.0
+// swift-tools-version:6.1
 import PackageDescription
 
 let package = Package(
@@ -14,8 +14,8 @@ let package = Package(
 		.package(url: "https://github.com/vapor/fluent.git", from: "4.12.0"),
 		.package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.8.0"),
 		// VoteKit definitions
-        .package(url: "https://github.com/hharck/VoteKit", "0.6.5"..<"0.7.0"),
-		.package(url: "https://github.com/hharck/AltVoteKit", "0.6.3"..<"0.7.0"),
+        .package(url: "https://github.com/hharck/VoteKit", "0.7.0"..<"0.8.0"),
+		.package(url: "https://github.com/hharck/AltVoteKit", "0.7.0"..<"0.8.0"),
 		// VoteExchangeFormat, defines API protocols
 		.package(url: "https://github.com/hharck/VoteExchangeFormat", branch: "main"),
 	],
