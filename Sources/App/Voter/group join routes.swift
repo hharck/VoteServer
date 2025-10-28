@@ -59,7 +59,7 @@ func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) {
 }
 
 
-enum joinGroupErrors: ErrorString, Equatable{
+enum JoinGroupErrors: ErrorString, Equatable{
 	case userIDIsInvalid
 	case userIsNotAllowedIn
 	case noGroupForJF(JoinPhrase)
@@ -98,16 +98,16 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager, forAPI: Bool) asy
 	var groupName: String?
 	do{
 		guard !userID.isEmpty else {
-			throw joinGroupErrors.userIDIsInvalid
+			throw JoinGroupErrors.userIDIsInvalid
 		}
         
         // Checks that the user id does not contain a comma or a semicolon
 		guard !userID.contains(","), !userID.contains(";"), userID.count <= Config.maxNameLength, !userID.contains("admin") else {
-            throw joinGroupErrors.userIDIsInvalid
+            throw JoinGroupErrors.userIDIsInvalid
         }
 		
 		guard let group = await groupsManager.groupForJoinPhrase(joinPhrase) else {
-			throw joinGroupErrors.noGroupForJF(joinPhrase)
+			throw JoinGroupErrors.noGroupForJF(joinPhrase)
 		}
 
 		groupName = group.name
@@ -119,7 +119,7 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager, forAPI: Bool) asy
 		} else {
 			//Checks if verification is required
             guard await group.settings.allowsUnverifiedConstituents else {
-				throw joinGroupErrors.userIsNotAllowedIn
+				throw JoinGroupErrors.userIsNotAllowedIn
 			}
 			
 			const = Constituent(stringLiteral: userID)
@@ -129,7 +129,7 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager, forAPI: Bool) asy
 		let constituentID = UUID()
 		// Adds the constituent
 		guard await group.joinConstituent(const, for: constituentID) else {
-			throw joinGroupErrors.constituentIsAlreadyIn
+			throw JoinGroupErrors.constituentIsAlreadyIn
 		}
 
         if forAPI{
@@ -149,7 +149,7 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager, forAPI: Bool) asy
         }
 	} catch {
         if forAPI{
-            if let er = error as? joinGroupErrors {
+            if let er = error as? JoinGroupErrors {
                 if er == .constituentIsAlreadyIn{
                     throw Abort(.alreadyReported)
                 }
