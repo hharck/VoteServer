@@ -3,27 +3,27 @@ import AltVoteKit
 import Foundation
 import VoteExchangeFormat
 
-enum VoteTypes{
+enum VoteTypes {
     case alternative(AlternativeVote)
     case yesno(YesNoVote)
     case simplemajority(SimpleMajority)
-    
-    enum StringStub: String{
+
+    enum StringStub: String {
         case alternative = "alternativevote"
         case yesNo = "yesno"
         case simpleMajority = "simplemajority"
-        
-        init(_ voteTypes: VoteTypes){
+
+        init(_ voteTypes: VoteTypes) {
             switch voteTypes {
-            case .alternative(_):
+            case .alternative:
                 self = .alternative
-            case .yesno(_):
+            case .yesno:
                 self = .yesNo
-            case .simplemajority(_):
+            case .simplemajority:
                 self = .simpleMajority
             }
         }
-        
+
         var type: any SupportedVoteType.Type {
             switch self {
             case .alternative: AlternativeVote.self
@@ -32,22 +32,25 @@ enum VoteTypes{
             }
         }
     }
-    
-    init<V: SupportedVoteType>(vote: V){
-        switch V.enumCase{
+
+    init<V: SupportedVoteType>(vote: V) {
+        switch V.enumCase {
         case .alternative:
+            // swiftlint:disable:next force_cast
             self = .alternative(vote as! AlternativeVote)
         case .yesNo:
+            // swiftlint:disable:next force_cast
             self = .yesno(vote as! YesNoVote)
         case .simpleMajority:
+            // swiftlint:disable:next force_cast
             self = .simplemajority(vote as! SimpleMajority)
         }
     }
-    
-    func asStub() -> StringStub{
+
+    func asStub() -> StringStub {
         StringStub(self)
     }
-    
+
     var asVoteProtocol: any SupportedVoteType {
         switch self {
         case .alternative(let alternativeVote): alternativeVote
@@ -57,8 +60,7 @@ enum VoteTypes{
     }
 }
 
-
-extension VoteTypes{
+extension VoteTypes {
     func id() async -> UUID {
         switch self {
         case .alternative(let v):
@@ -69,7 +71,7 @@ extension VoteTypes{
             return await v.id
         }
     }
-    
+
     func name() async -> String {
         switch self {
         case .alternative(let v):
@@ -80,7 +82,7 @@ extension VoteTypes{
             return await v.name
         }
     }
-    
+
     func constituents() async -> Set<Constituent> {
         switch self {
         case .alternative(let v):
@@ -91,7 +93,7 @@ extension VoteTypes{
             return await v.constituents
         }
     }
-    
+
     func options() async -> [VoteOption] {
         switch self {
         case .alternative(let v):
@@ -130,7 +132,7 @@ extension SupportedVoteType where Self: HasCustomValidators {
     }
 }
 
-extension AlternativeVote: SupportedVoteType{
+extension AlternativeVote: SupportedVoteType {
     typealias ReceivedData = AltVotingData
     typealias PersistanceData = AltVotingData
     typealias VotePageUI = AltVotePageGenerator
@@ -138,15 +140,15 @@ extension AlternativeVote: SupportedVoteType{
     static let minimumRequiredOptions: Int = 2
 }
 
-extension YesNoVote: SupportedVoteType{
+extension YesNoVote: SupportedVoteType {
     typealias ReceivedData = YnVotingData
-    typealias PersistanceData = [UUID:Bool]
+    typealias PersistanceData = [UUID: Bool]
     typealias VotePageUI = YesNoVotePage
     static let enumCase: VoteTypes.StringStub = .yesNo
     static let minimumRequiredOptions: Int = 1
 }
 
-extension SimpleMajority: SupportedVoteType{
+extension SimpleMajority: SupportedVoteType {
     typealias ReceivedData = SimpleMajorityVotingData
     typealias PersistanceData = UUID
     typealias VotePageUI = SimMajVotePage

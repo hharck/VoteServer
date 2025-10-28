@@ -17,15 +17,15 @@ public func configure(_ app: Application) throws {
         fatalError()
     }
     logger.info("Configured with: \(config)")
-    
+
     // Allow static files to be served from /Public
     app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
-    
+
     // Adds support for using leaf to render views
     app.views.use(.leaf)
     app.leaf.tags["version"] = VersionTag()
-    
-    //DB
+
+    // DB
 #if os(macOS)
     app.databases.use(.sqlite(.file("db.sqlite")), as: .sqlite)
 #else
@@ -36,30 +36,28 @@ public func configure(_ app: Application) throws {
     } catch {
         logger.error("Unable to store database due to the following error: \(error.localizedDescription)")
         logger.info("Using in-memory database")
-        
+
         app.databases.use(.sqlite(.memory), as: .sqlite)
     }
 #endif
-    
+
     app.migrations.add(CreateChats())
     app.migrations.add(SessionRecord.migration)
-    
+
     try app.autoMigrate().wait()
-    
-    
+
     // Enables sessions
     app.sessions.use(.memory)
     app.middleware.use(app.sessions.middleware)
-    
+
     // Defines password hashing function
     app.passwords.use(.bcrypt)
-    
-    
+
     let groupsManager = GroupsManager()
-    
+
     // Enables CLI
     setupCommands(groupsManager: groupsManager, app: app)
-    
+
     // Register routes
     routes(app, groupsManager: groupsManager)
 }

@@ -15,20 +15,20 @@ func voteCreationRoutes(_ app: Application, groupsManager: GroupsManager) {
 		guard let parameter = req.parameters.get("type"), let type = VoteTypes.StringStub(rawValue: parameter) else {
             return .redirect(.admin)
 		}
-		
+
 		if req.method == .POST {
             // Attempt to create a vote for the request
             do {
                 let voteHTTPData = try req.content.decode(VoteCreationReceivedData.self)
-                
+
                 async let constituents = group.verifiedConstituents.union(await group.unverifiedConstituents)
 
                 // Validates the data and generates a Vote object
                 do {
                     let title = try voteHTTPData.getTitle()
                     let options = try voteHTTPData.getOptions(type: type.type)
-                    
-                    switch type{
+
+                    switch type {
                     case .alternative:
                         let vote = AlternativeVote(
                             name: title,
@@ -57,7 +57,7 @@ func voteCreationRoutes(_ app: Application, groupsManager: GroupsManager) {
                         )
                         await group.addVoteToGroup(vote: vote)
                     }
-                    
+
                     return .redirect(.admin)
                 } catch {
                     return .response(
@@ -81,7 +81,7 @@ func voteCreationRoutes(_ app: Application, groupsManager: GroupsManager) {
                     )
                 )
             }
-            
+
         } else {
             return .response(
                 VoteCreatorUI(
@@ -95,20 +95,20 @@ func voteCreationRoutes(_ app: Application, groupsManager: GroupsManager) {
     }
 }
 
-struct ValidatorData: Codable{
+struct ValidatorData: Codable {
     var id: String
     var name: String
     var isEnabled: Bool
     var stack: ValidatorStacks
 
-    init<V: VoteStub>(type: ValidatorStacks, validator: any Validateable<V>, isEnabled: Bool = false){
+    init<V: VoteStub>(type: ValidatorStacks, validator: any Validateable<V>, isEnabled: Bool = false) {
         self.name = validator.name
         self.id = validator.id
         self.isEnabled = isEnabled
         self.stack = type
     }
-    
-    enum ValidatorStacks: String, Codable{
+
+    enum ValidatorStacks: String, Codable {
         case genericValidators
         case customValidators
     }

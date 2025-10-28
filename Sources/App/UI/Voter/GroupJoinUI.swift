@@ -1,17 +1,17 @@
-struct GroupJoinUI: UIManager{
+struct GroupJoinUI: UIManager {
     internal init(title: String, joinPhrase: String = "", userID: String = "", errorString: String? = nil, showRedirectToPlaza: Bool) {
 		self.title = title
 		self.prefilledJoinPhrase = joinPhrase
 		self.prefilledUserid = userID
 		self.errorString = errorString
-        
-        if showRedirectToPlaza{
+
+        if showRedirectToPlaza {
             self.buttons = [.backToPlaza, .createGroup, .login]
         } else {
             self.buttons = [.createGroup, .login]
         }
 	}
-	
+
     var title: String
 	var prefilledJoinPhrase: String
 	var prefilledUserid: String

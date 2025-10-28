@@ -7,7 +7,7 @@ func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) {
 		let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
 		return GroupJoinUI(title: "Join", showRedirectToPlaza: showRedirectToPlaza)
 	}
-	
+
 	// Prefills the field with the joinphrase and redirects invalid joinphrases
 	app.get("join", ":joinphrase", use: joinWithPhrase)
     @Sendable func joinWithPhrase(req: Request) async -> ResponseOrRedirect<GroupJoinUI> {
@@ -20,51 +20,48 @@ func groupJoinRoutes(_ app: Application, groupsManager: GroupsManager) {
 		let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
         return .response(GroupJoinUI(title: group.name, joinPhrase: jf, showRedirectToPlaza: showRedirectToPlaza))
 	}
-	
+
 	app.post("join", use: postJoin)
 	app.post("join", ":joinphrase", use: postJoin)
     @Sendable func postJoin(req: Request) async throws -> Response {
 		try await joinGroup(req, groupsManager, forAPI: false)
 	}
-	
+
 	// Shows a plaza containing votes available for the user and a chatfield
 	app.get("plaza", use: getPlaza)
     @Sendable func getPlaza(req: Request) async -> ResponseOrRedirect<PlazaUI> {
 		guard let (group, constituent) = await groupsManager.groupAndVoterForReq(req: req) else {
             return .redirect(.join)
 		}
-		
+
         return await .response(PlazaUI(constituent: constituent, group: group))
 	}
-    
+
 	app.post("plaza", use: postPlaza)
     @Sendable func postPlaza(req: Request) async -> ResponseOrRedirect<PlazaUI> {
 		guard let (group, constituent) = await groupsManager.groupAndVoterForReq(req: req) else {
             return .redirect(.join)
 		}
-		
+
 		if
 			await group.settings.constituentsCanSelfResetVotes,
-			let deleteID = (try? req.content.decode([String:String].self))?["deleteId"],
+			let deleteID = (try? req.content.decode([String: String].self))?["deleteId"],
 			let voteID = UUID(deleteID),
 			let vote = await group.voteForID(voteID),
-			await group.statusFor(voteID) == .open
-		{
+			await group.statusFor(voteID) == .open {
 			await group.singleVoteReset(vote: vote, constituentID: constituent.identifier)
 		}
-		
-		
+
         return await .response(PlazaUI(constituent: constituent, group: group))
 	}
 }
 
-
-enum JoinGroupErrors: ErrorString, Equatable{
+enum JoinGroupErrors: ErrorString, Equatable {
 	case userIDIsInvalid
 	case userIsNotAllowedIn
 	case noGroupForJF(JoinPhrase)
 	case constituentIsAlreadyIn
-	
+
 	func errorString() -> String {
 		switch self {
 		case .userIDIsInvalid:
@@ -79,33 +76,31 @@ enum JoinGroupErrors: ErrorString, Equatable{
 	}
 }
 
-
-
-//Used by the HTML client and the API to join groups
+// Used by the HTML client and the API to join groups
 func joinGroup(_ req: Request, _ groupsManager: GroupsManager, forAPI: Bool) async throws -> Response {
-	struct JoinGroupData: Codable{
+	struct JoinGroupData: Codable {
 		var userID: String
 		var joinPhrase: String
 	}
 
-	guard let content = try? req.content.decode(JoinGroupData.self) else{
+	guard let content = try? req.content.decode(JoinGroupData.self) else {
         throw Abort(.badRequest)
 	}
-	
+
 	let userID = content.userID.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 	let joinPhrase = content.joinPhrase.trimmingCharacters(in: .whitespacesAndNewlines)
-	
+
 	var groupName: String?
-	do{
+	do {
 		guard !userID.isEmpty else {
 			throw JoinGroupErrors.userIDIsInvalid
 		}
-        
+
         // Checks that the user id does not contain a comma or a semicolon
 		guard !userID.contains(","), !userID.contains(";"), userID.count <= Config.maxNameLength, !userID.contains("admin") else {
             throw JoinGroupErrors.userIDIsInvalid
         }
-		
+
 		guard let group = await groupsManager.groupForJoinPhrase(joinPhrase) else {
 			throw JoinGroupErrors.noGroupForJF(joinPhrase)
 		}
@@ -114,25 +109,24 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager, forAPI: Bool) asy
 
 		// Creates a constituent object for the requesting client
 		let const: Constituent
-		if let c = await group.verifiedConstituent(for: userID){
+		if let c = await group.verifiedConstituent(for: userID) {
 			const = c
 		} else {
-			//Checks if verification is required
+			// Checks if verification is required
             guard await group.settings.allowsUnverifiedConstituents else {
 				throw JoinGroupErrors.userIsNotAllowedIn
 			}
-			
+
 			const = Constituent(stringLiteral: userID)
 		}
-		
-		
+
 		let constituentID = UUID()
 		// Adds the constituent
 		guard await group.joinConstituent(const, for: constituentID) else {
 			throw JoinGroupErrors.constituentIsAlreadyIn
 		}
 
-        if forAPI{
+        if forAPI {
             guard let data = await group.getExchangeData(for: userID) else {
                 throw Abort(.internalServerError)
             }
@@ -140,7 +134,7 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager, forAPI: Bool) asy
 			req.session.authenticate(await group.groupSession)
 
             return Response(body: .init(data: try JSONEncoder().encode(data)))
-        } else{
+        } else {
             // Adds the group and constituent key to the user's session
             req.session.authenticate(VoterSession(sessionID: constituentID))
 			req.session.authenticate(await group.groupSession)
@@ -148,17 +142,17 @@ func joinGroup(_ req: Request, _ groupsManager: GroupsManager, forAPI: Bool) asy
             return req.redirect(to: .plaza)
         }
 	} catch {
-        if forAPI{
+        if forAPI {
             if let er = error as? JoinGroupErrors {
-                if er == .constituentIsAlreadyIn{
+                if er == .constituentIsAlreadyIn {
                     throw Abort(.alreadyReported)
                 }
             }
            throw Abort(.unauthorized)
-            
+
         } else {
             let showRedirectToPlaza = await groupsManager.groupAndVoterForReq(req: req) != nil
-            
+
             return try await GroupJoinUI(title: groupName ?? "Join", joinPhrase: joinPhrase, userID: userID, errorString: error.asString(), showRedirectToPlaza: showRedirectToPlaza).encodeResponse(for: req)
         }
 	}

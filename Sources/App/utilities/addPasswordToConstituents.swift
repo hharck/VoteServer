@@ -19,7 +19,6 @@ func addPasswordToConstituents(data: [HeaderValueDictionary]) throws -> [Constit
         }.getConstituents()
 }
 
-
 private func generatePasswords(numberOfPasswords: Int) throws(NumericError) -> Set<String> {
     let numberOfCharacters: UInt = 6
 
@@ -29,7 +28,7 @@ private func generatePasswords(numberOfPasswords: Int) throws(NumericError) -> S
         throw NumericError.tooLikely
     }
 
-    var passwords = Set([Void](repeatElement(Void(), count: numberOfPasswords)).map{joinPhraseGenerator(chars: numberOfCharacters)})
+    var passwords = Set([Void](repeatElement(Void(), count: numberOfPasswords)).map {joinPhraseGenerator(chars: numberOfCharacters)})
 
     var attempts = 0
     // Checks if any collisions has happened and generates extra
@@ -39,7 +38,7 @@ private func generatePasswords(numberOfPasswords: Int) throws(NumericError) -> S
             throw NumericError.failed
         }
         let missing = numberOfPasswords - passwords.count
-        passwords.formIntersection(Set([Void](repeatElement(Void(), count: missing)).map{joinPhraseGenerator(chars: numberOfCharacters)}))
+        passwords.formIntersection(Set([Void](repeatElement(Void(), count: missing)).map {joinPhraseGenerator(chars: numberOfCharacters)}))
     }
 
     assert(numberOfPasswords == passwords.count)
@@ -50,4 +49,3 @@ enum NumericError: String, ErrorString {
     case failed = "The server was extremely unlucky in its random number generation"
     case tooLikely = "There are too many constituents to generate an access token for all of them without collisions being likely"
 }
-

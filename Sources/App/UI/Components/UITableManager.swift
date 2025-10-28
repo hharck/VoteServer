@@ -1,12 +1,12 @@
-protocol UITableManager: UIManager{
-    associatedtype rowType: Codable
-    var rows: [rowType] {get}
-    var tableHeaders: [String] {get}
-	
-	var hideIfEmpty: Bool {get}
+protocol UITableManager: UIManager {
+    associatedtype RowType: Codable
+    var rows: [RowType] { get }
+    var tableHeaders: [String] { get }
+
+	var hideIfEmpty: Bool { get }
 
 }
 
-extension UITableManager{
-	var hideIfEmpty: Bool {false}
+extension UITableManager {
+	var hideIfEmpty: Bool { false }
 }

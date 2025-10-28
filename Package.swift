@@ -1,4 +1,4 @@
-// swift-tools-version:6.1
+// swift-tools-version:6.2
 import PackageDescription
 
 let package = Package(
@@ -30,7 +30,7 @@ let package = Package(
 				.product(name: "AltVoteKit", package: "AltVoteKit"),
 				.product(name: "VoteKit", package: "VoteKit"),
 				.product(name: "VoteExchangeFormat", package: "VoteExchangeFormat")
-				
+
 			],
 			swiftSettings: [
 				// Enable better optimizations when building in Release configuration. Despite the use of

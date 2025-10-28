@@ -17,7 +17,7 @@ enum ResponseOrRedirect<T: AsyncResponseEncodable>: AsyncResponseEncodable {
         case .redirect(let redirectionPath): return redirectionPath.encodeResponse(for: request)
         }
     }
-    
+
     case response(T, status: HTTPStatus? = nil, headers: HTTPHeaders? = nil)
     case redirect(RedirectionPaths)
 }

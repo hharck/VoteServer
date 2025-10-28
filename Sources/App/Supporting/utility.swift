@@ -1,6 +1,5 @@
-extension String{
-    var isOn: Bool{
+extension String {
+    var isOn: Bool {
         self == "on"
     }
 }
-

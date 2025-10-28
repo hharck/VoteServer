@@ -1,26 +1,26 @@
 import Foundation
 import VoteKit
-struct YesNoVotePage: VotePage, UITableManager{
+struct YesNoVotePage: VotePage, UITableManager {
     var title: String
-    var errorString: String? = nil
+    var errorString: String?
     var buttons: [UIButton] = [.backToPlaza]
     static let template: String = "votePages/yesno"
-    
+
     var rows: [Row] = []
     var tableHeaders: [String] = ["Name", "Yes", "No"]
-    
+
     var canVoteBlank: Bool = false
     var hideUI: Bool = false
-    
+
     /// Adds a button after every option allowing the user to deselect misclicked options
     var allowsResetting = false
-    
-    init(title: String, vote: YesNoVote?, errorString: String? = nil, persistentData: [UUID:Bool]? = nil) async {
+
+    init(title: String, vote: YesNoVote?, errorString: String? = nil, persistentData: [UUID: Bool]? = nil) async {
         if let vote = vote {
             self.canVoteBlank = await !vote.genericValidators.contains(.noBlankVotes)
-            rows = await vote.options.map{ option in
+            rows = await vote.options.map { option in
                 let status: String
-                switch persistentData?[option.id]{
+                switch persistentData?[option.id] {
                 case true:
                     status = "yes"
                 case false:
@@ -30,18 +30,17 @@ struct YesNoVotePage: VotePage, UITableManager{
                 }
                 return Row(id: option.id, name: option.name, status: status)
             }
-            
+
             allowsResetting = await !vote.customValidators.contains(.preferenceForAllRequired)
         }
-        
+
         self.title = title
         self.errorString = errorString
     }
-    
-    struct Row: Codable{
+
+    struct Row: Codable {
         var id: UUID
         var name: String
         var status: String
     }
 }
-

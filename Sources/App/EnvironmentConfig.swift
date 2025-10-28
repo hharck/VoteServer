@@ -1,5 +1,5 @@
 import Vapor
-struct Config{
+struct Config {
 	let maxNameLength: UInt
 	let joinPhraseLength: UInt
 	let maxChatLength: UInt
@@ -8,25 +8,25 @@ struct Config{
 	let defaultValueForUnverifiedConstituents: Bool
 	let enableChat: Bool
 	let adminProfilePicture: String
-	
+
     // Only set during setup
     nonisolated(unsafe) private(set) static var config: Config! {
         willSet {
             MainActor.assertIsolated()
         }
     }
-	
+
     @MainActor
 	static func setGlobalConfig() {
 		self.config = getEnvironmentConfig()
 	}
-	
+
     @MainActor
-	static func setDefaultConfig(){
+	static func setDefaultConfig() {
 		self.config = getDefaultConfig()
 	}
-	
-	private static func getEnvironmentConfig() -> Config{
+
+	private static func getEnvironmentConfig() -> Config {
 		let defaultConfig = getDefaultConfig()
 		let maxNameLength: UInt = Environment.key("maxNameLength", defaultValue: defaultConfig.maxNameLength)
 		let joinPhraseLength: UInt = Environment.key("joinPhraseLength", defaultValue: defaultConfig.joinPhraseLength)
@@ -36,16 +36,16 @@ struct Config{
 		let defaultValueForUnverifiedConstituents: Bool = Environment.key("defaultValueForUnverifiedConstituents", defaultValue: defaultConfig.defaultValueForUnverifiedConstituents)
 		let enableChat: Bool = Environment.key("enableChat", defaultValue: defaultConfig.enableChat)
 		let adminProfilePicture: String = Environment.key("adminProfilePicture", defaultValue: defaultConfig.adminProfilePicture)
-		
+
 		return Config(maxNameLength: maxNameLength, joinPhraseLength: joinPhraseLength, maxChatLength: maxChatLength, chatQueryLimit: chatQueryLimit, chatRateLimiting: chatRateLimiting, defaultValueForUnverifiedConstituents: defaultValueForUnverifiedConstituents, enableChat: enableChat, adminProfilePicture: adminProfilePicture)
 	}
-	
-	private static func getDefaultConfig() -> Config{
+
+	private static func getDefaultConfig() -> Config {
 		Config(maxNameLength: 100, joinPhraseLength: 6, maxChatLength: 1000, chatQueryLimit: 100, chatRateLimiting: (seconds: 10.0, messages: 10), defaultValueForUnverifiedConstituents: false, enableChat: true, adminProfilePicture: "/img/icon.png")
 	}
 }
 
-extension Config{
+extension Config {
 	static var maxNameLength: UInt {Self.config.maxNameLength}
 	static var joinPhraseLength: UInt {Self.config.joinPhraseLength}
 	static var maxChatLength: UInt {Self.config.maxChatLength}
@@ -57,45 +57,45 @@ extension Config{
 
 }
 
-extension Environment{
-	fileprivate static func key(_ key: String, defaultValue: UInt) -> UInt{
+extension Environment {
+	fileprivate static func key(_ key: String, defaultValue: UInt) -> UInt {
 		guard let v: String = Self.get(key) else {
 			return defaultValue
 		}
-		
+
 		guard let i = UInt(v) else {
 			fatalError("Could not read Environmental variable \"\(key)\", expected unsigned integer (UInt64 on most systems)")
 		}
 		return i
 	}
-	
-	fileprivate static func key(_ key: String, defaultValue: Double) -> Double{
+
+	fileprivate static func key(_ key: String, defaultValue: Double) -> Double {
 		guard let v: String = Self.get(key) else {
 			return defaultValue
 		}
-		
+
 		guard let i = Double(v) else {
 			fatalError("Could not read Environmental variable \"\(key)\", expected floating point value (Double)")
 		}
 		return i
 	}
-	
-	fileprivate static func key(_ key: String, defaultValue: Bool) -> Bool{
+
+	fileprivate static func key(_ key: String, defaultValue: Bool) -> Bool {
 		guard let v: String = Self.get(key) else {
 			return defaultValue
 		}
-		
+
 		guard let i = Bool(v) else {
 			fatalError("Could not read Environmental variable \"\(key)\", expected boolean value (true/false)")
 		}
 		return i
 	}
-	
-	fileprivate static func key(_ key: String, defaultValue: String) -> String{
+
+	fileprivate static func key(_ key: String, defaultValue: String) -> String {
 		guard let v: String = Self.get(key) else {
 			return defaultValue
 		}
-		
+
 		guard !v.isEmpty else {
 			fatalError("Could not read Environmental variable \"\(key)\", expected a non empty string value")
 		}

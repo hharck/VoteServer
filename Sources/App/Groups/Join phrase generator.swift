@@ -11,18 +11,18 @@ func joinPhraseGenerator(chars: UInt = Config.joinPhraseLength) -> String {
 }
 
 let numberOfPossibleJoinPhraseChars = possibleChars.count
-fileprivate let possibleChars: Set<Character> = {
-    //Based on https://stackoverflow.com/a/63760652/5257653
+private let possibleChars: Set<Character> = {
+    // Based on https://stackoverflow.com/a/63760652/5257653
     let aScalars: String.UnicodeScalarView = "a".unicodeScalars
     let aCode = Int(aScalars[aScalars.startIndex].value)
-    
-    let numbers: [Character] = (0...9).map{i -> Character in
+
+    let numbers: [Character] = (0...9).map {i -> Character in
         return Character(i.description)
     }
-    
+
     let chars: [Character] = (0..<26).map { i -> Character in
         return Character(Unicode.Scalar(aCode + i)!)
     }
-    
+
     return Set(chars + numbers)
 }()

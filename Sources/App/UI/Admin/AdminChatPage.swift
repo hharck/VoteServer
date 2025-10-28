@@ -1,7 +1,7 @@
-struct AdminChatPage: UIManager{
+struct AdminChatPage: UIManager {
 	var title: String = "Chats"
-	var errorString: String? = nil
+	var errorString: String?
 	static let template: String = "adminchatpage"
-	
-	var buttons: [UIButton] = [.backToAdmin,]
+
+	var buttons: [UIButton] = [.backToAdmin, ]
 }

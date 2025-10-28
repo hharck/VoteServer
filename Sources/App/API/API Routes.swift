@@ -1,17 +1,17 @@
 import Vapor
 import VoteExchangeFormat
 import Foundation
-func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager: GroupsManager){
+func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager: GroupsManager) {
 	let chat = API.grouped("chat")
 	chat.webSocket("socket", onUpgrade: joinChat)
 	chat.webSocket("adminsocket", onUpgrade: joinChat)
-	
-    @Sendable func joinChat(req: Request, socket: WebSocket) async{
+
+    @Sendable func joinChat(req: Request, socket: WebSocket) async {
 		guard Config.enableChat else {
 			try? await socket.close()
 			return
 		}
-		
+
 		if req.url.path.hasSuffix("adminsocket") {
 			guard
 				let sessionID = req.session.authenticated(AdminSession.self),
@@ -22,13 +22,13 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 			}
 			await group.socketController.connectAdmin(socket)
 			return
-			
+
 		} else if req.url.path.hasSuffix("socket") {
 			guard
 				let (group, constituent) = await groupsManager.groupAndVoterForReq(req: req),
-				//Checks that the constituent is allowed to enter the chat
+				// Checks that the constituent is allowed to enter the chat
 				await group.constituentCanChat(constituent)
-			else{
+			else {
 				try? await socket.close()
 				return
 			}
@@ -36,18 +36,17 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 		}
 	}
 
-	
 	API.get { _ throws(Abort) -> Response in
 		throw Abort(.badRequest)
 	}
-	
+
 	/// userID: String
 	/// joinPhrase: String
 	API.post("join", use: joinGroup)
-	@Sendable func joinGroup(req: Request) async throws -> Response{
+	@Sendable func joinGroup(req: Request) async throws -> Response {
 		try await App.joinGroup(req, groupsManager, forAPI: true)
 	}
-	
+
 	API.get("getdata") { req async throws(Abort) -> GroupData in
 		guard
 			let (group, const) = await groupsManager.groupAndVoterForAPI(req: req),
@@ -55,24 +54,24 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 		else {
 			throw Abort(.unauthorized)
 		}
-		
+
 		return data
 	}
-	
+
 	/// Returns full information (metadata, options, validators) regarding a vote only if the client are allowed to vote at the moment
 	API.get("getvote", ":voteID", use: getVote)
-    @Sendable func getVote(req: Request) async throws(Abort) -> ExtendedVoteData{
+    @Sendable func getVote(req: Request) async throws(Abort) -> ExtendedVoteData {
 		guard let (group, const) = await groupsManager.groupAndVoterForAPI(req: req) else {
 			throw Abort(.unauthorized)
 		}
-		
+
 		guard
 			let voteIDStr = req.parameters.get("voteID"),
 			let vote = await group.voteForID(voteIDStr)
 		else {
 			throw Abort(.notFound)
 		}
-		
+
 		let voteData: ExtendedVoteData
 		let voteStatus = await group.statusFor(await vote.id())
 		switch vote {
@@ -86,29 +85,29 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 			guard !(await v.hasConstituentVoted(const)) && voteStatus == .open else {throw Abort(.unauthorized)}
 			voteData = await ExtendedVoteData(v, constituentID: const.identifier, group: group)
 		}
-		
+
 		return voteData
 	}
-	
+
 	API.post("postvote", ":voteID", use: postVote)
-    @Sendable func postVote(req: Request) async throws -> [String]{
+    @Sendable func postVote(req: Request) async throws -> [String] {
 		// Retrieve contextual information
-		guard let (group, const) = await groupsManager.groupAndVoterForAPI(req: req) else{
-			throw Abort(.unauthorized) //401
+		guard let (group, const) = await groupsManager.groupAndVoterForAPI(req: req) else {
+			throw Abort(.unauthorized) // 401
 		}
-		
+
 		guard
 			let voteIDStr = req.parameters.get("voteID"),
 			let vote = await group.voteForID(voteIDStr)
 		else {
-			throw Abort(.notFound) //404
+			throw Abort(.notFound) // 404
 		}
-		
+
 		// Checks that the vote is open
 		guard await group.statusFor(await vote.id()) == .open else {
-			throw Abort(.unauthorized) //401
+			throw Abort(.unauthorized) // 401
 		}
-		
+
 		// Decodes and stores the vote
 		let p: ((data: Any?, error: Error)?, [String]?)
 		switch vote {
@@ -119,16 +118,14 @@ func APIRoutes(_ app: Application, routesGroup API: RoutesBuilder, groupsManager
 		case .simplemajority(let v):
 			p = try await decodeAndStore(group: group, vote: v, constituent: const, req: req)
 		}
-		
-		if let confirmationStrings = p.1{
+
+		if let confirmationStrings = p.1 {
 			return confirmationStrings
         } else if let error = p.0?.error {
 			throw error
 		} else {
 			assertionFailure("This case should never be reached")
-			throw Abort(.internalServerError) //500
+			throw Abort(.internalServerError) // 500
 		}
 	}
 }
-
-

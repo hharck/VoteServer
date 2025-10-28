@@ -1,6 +1,6 @@
 import VoteKit
 import WebSocketKit
-extension Group{
+extension Group {
 	/// Checks if a constituent is allowed to chat
 	/// - Parameter constituent: The constituent being checked
 	/// - Returns: Whether the constituent is allowed

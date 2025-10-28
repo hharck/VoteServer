@@ -7,7 +7,7 @@ func groupCreationRoutes(_ app: Application, groupsManager: GroupsManager) {
         do {
             let groupData = try req.content.decode(GroupCreatorData.self)
             let session = AdminSession()
-            
+
             do {
                 // Saves the group
                 try await groupsManager.createGroup(
@@ -21,8 +21,8 @@ func groupCreationRoutes(_ app: Application, groupsManager: GroupsManager) {
             } catch {
                 return .response(GroupCreatorUI(errorString: error.asString(), groupData))
             }
-            
-            //Registers the session with the client
+
+            // Registers the session with the client
             req.session.authenticate(session)
             return .redirect(.admin)
         } catch {

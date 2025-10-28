@@ -5,19 +5,19 @@ import Vapor
 /// Decodes and stores data POSTed to /vote/[voteid] OR the API
 /// - Throws: VotingDataError
 /// - Returns: Either a view to be presented be non API clients or the result as a String for API clients
-@Sendable func decodeAndStore<V: SupportedVoteType>(group: Group, vote: V, constituent: Constituent, req: Request) async throws(Abort) -> ((data: V.ReceivedData?, error: Error)?, [String]?){
+@Sendable func decodeAndStore<V: SupportedVoteType>(group: Group, vote: V, constituent: Constituent, req: Request) async throws(Abort) -> ((data: V.ReceivedData?, error: Error)?, [String]?) {
     var votingData: V.ReceivedData
     do {
         votingData = try req.content.decode(V.ReceivedData.self)
     } catch {
         // Workaround for an empty set of radio buttons leading to error 422
-        if (V.enumCase == .yesNo || V.enumCase == .simpleMajority), let e = error as? AbortError, e.status == .unprocessableEntity {
+        if V.enumCase == .yesNo || V.enumCase == .simpleMajority, let e = error as? AbortError, e.status == .unprocessableEntity {
             votingData = V.ReceivedData.blank()
         } else {
             return ((nil, error), nil)
         }
     }
-    
+
     /// The vote as a VoteStub
     let voteStub: V.VoteType
     do {
@@ -25,19 +25,19 @@ import Vapor
     } catch {
         return ((votingData, error), nil)
     }
-    
+
     /// Saves the singleVote to the vote
     guard await vote.addVote(voteStub) else {
         return ((votingData, VotingDataError.attemptedToVoteMultipleTimes), nil)
     }
-    
+
     // Returns a list of priorities to show the user as confirmation for a cast vote
-    let prio: [String] = switch V.enumCase{
+    let prio: [String] = switch V.enumCase {
     case .alternative:
         if let tmp = (voteStub as? SingleVote)?.rankings.map(\.name) {
-            if tmp.isEmpty{
+            if tmp.isEmpty {
                 ["Voted blank"]
-            } else{
+            } else {
                 tmp
             }
         } else {
@@ -49,9 +49,9 @@ import Vapor
                 ["Voted blank"]
             } else {
                 // Fetches the full list of options to recall them in order
-                await vote.options.map{ opt -> String in
+                await vote.options.map { opt -> String in
                     let suffix: String
-                    if let option = val[opt]{
+                    if let option = val[opt] {
                         suffix = option ? "Yes" : "No"
                     } else {
                         suffix = "Blank"

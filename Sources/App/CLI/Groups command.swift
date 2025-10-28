@@ -1,23 +1,23 @@
 import Vapor
 
-struct GroupsCommand: Command{
+struct GroupsCommand: Command {
     let groupsManager: GroupsManager
     weak var app: Application?
-    
+
     struct Signature: CommandSignature {
         @Argument(name: "value")
         var value: String
-        
+
         @Flag(name: "info", short: "i")
         var info: Bool
-        
+
         @Flag(name: "delete", short: "d")
         var delete: Bool
-        
+
         @Option(name: "password", short: "p")
          var newPassword: String?
     }
-    
+
     var help: String {
         """
         Manage groups:
@@ -28,12 +28,12 @@ struct GroupsCommand: Command{
         -p [Password] - Sets the password
         """
     }
-    
+
     func run(using context: CommandContext, signature: Signature) throws {
         let trimVal = signature.value.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        if trimVal.isEmpty || trimVal == "list"{
-            Task{
+
+        if trimVal.isEmpty || trimVal == "list" {
+            Task {
                 context.console.print("All groups:")
                 let allGroups = await groupsManager.listAllGroups()
                 context.console.print(allGroups)
@@ -41,22 +41,22 @@ struct GroupsCommand: Command{
             }
             return
         }
-        
+
 		guard trimVal.count == Config.joinPhraseLength else {
             throw "Invalid joinphrase"
         }
         let joinPhrase = trimVal
-        if signature.info && signature.delete{
+        if signature.info && signature.delete {
             throw "Only one flag at a time"
         }
-        
-        if let newPassword = signature.newPassword, !newPassword.isEmpty{
-            if signature.info || signature.delete{
+
+        if let newPassword = signature.newPassword, !newPassword.isEmpty {
+            if signature.info || signature.delete {
                 throw "Only one flag at a time"
             }
-        
+
             let trimmedPassword = newPassword.trimmingCharacters(in: .whitespacesAndNewlines)
-            
+
             Task {
                 guard let app = app, let group = await groupsManager.groupForJoinPhrase(joinPhrase) else {
                     throw "Group not found"
@@ -68,10 +68,10 @@ struct GroupsCommand: Command{
                 context.console.print("Password was set")
 
             }
-            
-        } else if signature.delete{
+
+        } else if signature.delete {
             Task {
-                if await groupsManager.deleteGroup(jf: joinPhrase){
+                if await groupsManager.deleteGroup(jf: joinPhrase) {
                     context.console.print("Successfully deleted: \(joinPhrase)")
                     return
                 } else {
@@ -86,13 +86,12 @@ struct GroupsCommand: Command{
                 else {
                     throw "Group not found"
                 }
-                
+
                 let result = "Group:\"\(group.name)\"\nWith \(await group.constituentsSessionID.count) constituents in session\nGroup was last accessed at: " + lastAccess
                 context.console.print(result)
-                
+
             }
             return
         }
     }
 }
-

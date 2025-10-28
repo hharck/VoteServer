@@ -1,10 +1,10 @@
-struct genericErrorPage: UIManager{
+struct GenericErrorPage: UIManager {
     var errorString: String?
     var title: String = "Error"
     var buttons: [UIButton] = [.createGroup, .backToPlaza, .backToAdmin]
     static let template: String = "errorpage"
-    
-    init(error: Error){
+
+    init(error: Error) {
         self.errorString = error.asString()
     }
 }
